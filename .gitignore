@@ -1,3 +1,9 @@
-*.o
-*.a
 a.out
+*.o
+*.bin
+*.hex
+*.elf
+*.list
+*.img
+*.bc
+*.clang.opt.s
