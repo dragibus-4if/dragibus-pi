@@ -1,6 +1,10 @@
 #include "process.h"
 #include "dispatcher.h"
 
+/* TODO Place ça dans un autre fichier et choisir une valeur non aléatoire
+ */
+#define STACK_SIZE 42
+
 struct ctx_s ctx_A;
 struct ctx_s ctx_B;
 
