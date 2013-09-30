@@ -1,7 +1,7 @@
 /* types.h
  * Définie des types entiers à taille fixe.
  */
-#define TYPES_H
+#ifndef TYPES_H
 #define TYPES_H
 
 typedef char                int8_t;
