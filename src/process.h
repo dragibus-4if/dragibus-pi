@@ -13,12 +13,12 @@ struct ctx_s {
 };
 
 /* Initialise un contexte */
-extern void init_ctx(struct ctx_s* ctx, func_t f, unsigned int stack_size);
+extern void init_ctx(struct ctx_s * ctx, func_t f, size_t stack_size);
 
 /* Démarre une fonction en utilisant un certain contexte */
-extern void start_ctx(struct ctx_s* ctx, func_t f);
+extern void start_ctx(struct ctx_s * ctx, func_t f);
 
 /* Switch à un autre contexte */
-extern void switch_to(struct ctx_s* ctx);
+extern void switch_to(struct ctx_s * ctx);
 
 #endif
