@@ -26,7 +26,7 @@ Entrée de notmain :
 
     $sp = 0x7fffff4, &code = 0x7fffffc
 
-L'address de code est en-dessous de sp, ceci s'explique par la nécéssité
+L'addresse de code est en-dessous de sp, ceci s'explique par la nécessité
 d'empiler les paramètres et variables locales (pour les sauvegarder) lorsqu'on
 effectue un autre appel à l'intérieur de ce scope.
 
