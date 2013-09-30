@@ -18,7 +18,7 @@ Question 2.1
 
 __Note :__
 Quand on diminue SP, on empile (et inversement).
-La pile crôit donc de haut vers le bas.
+La pile croît donc de haut vers le bas.
 
 ## Comparaison SP/adresses variables locales :
 
