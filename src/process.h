@@ -11,7 +11,7 @@
 struct ctx_s {
     uint32_t pc;
     uint32_t sp;
-    uint32_t regs[15];
+    uint32_t regs[12];
 };
 
 /* Définition d'un Process Control Block (PCB)
