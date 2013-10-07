@@ -58,13 +58,13 @@ void set_current_ctx(struct ctx_s * ctx) {
     _current_ctx = ctx;
 }
 
-void init_ctx ( struct ctx_s* ctx, func_t f, unsigned int stack_size )
+void init_ctx(struct ctx_s* ctx, func_t f, unsigned int stack_size)
 {
     /* Prendre l'adresse de la fonction f et la stocker dans pc */
     ctx->pc = (uint32_t) f;
 
     /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
-    ctx->sp = (uint32_t) AllocateMemory (stack_size) - stack_size;
+    ctx->sp = (uint32_t) AllocateMemory(stack_size) - stack_size;
 }
 
 /* Démarre une fonction en utilisant un certain contexte */
