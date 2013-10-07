@@ -5,6 +5,14 @@
 #include "process.h"
 
 
+/*Variables globales*/
+
+struct current_s
+{
+	struct ctx_s* ctx;
+
+} current;
+
 
 
 void init_ctx ( struct ctx_s* ctx, func_t f, unsigned int stack_size )

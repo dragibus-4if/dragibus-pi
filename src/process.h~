@@ -6,16 +6,6 @@
 /*typedef nécessaire pour que func_t est reconnu en bas dans les déclarations de fonctions*/
 typedef void (*func_t) (void);
 
-
-/*Variables globales*/
-
-struct current_s
-{
-	struct ctx_s* ctx;
-
-} current;
-
-
 struct ctx_s
 {
 	/*process counter*/	
