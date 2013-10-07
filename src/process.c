@@ -1,6 +1,5 @@
 #include "allocateMemory.h"
 #include "process.h"
-#include <assert.h>
 
 /* Contexte courant */
 static struct ctx_s * _current_ctx = NULL;
@@ -10,7 +9,7 @@ struct ctx_s * current_ctx(void) {
 }
 
 void set_current_ctx(struct ctx_s * ctx) {
-    assert(ctx != NULL);
+    /*assert(ctx != NULL);*/
     _current_ctx = ctx;
 }
 
@@ -27,10 +26,8 @@ void init_ctx ( struct ctx_s* ctx, func_t f, unsigned int stack_size )
 
 /* Démarre une fonction en utilisant un certain contexte */
 void start_ctx(struct ctx_s * ctx, func_t f, void * args) {
-    assert(ctx != NULL);
+    /*assert(ctx != NULL);*/
 
-    /* _current_ctx = ctx; */
-    current.ctx = ctx;
-    /*f(args);*/
-    f();
+    set_current_ctx(ctx);
+    f(/*args*/);
 }
