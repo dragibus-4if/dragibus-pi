@@ -21,14 +21,18 @@ struct ctx_s {
  * sp       : "Stack Pointer", pointeur de pile
  * regs     : Liste des registres (r0..r15)
  * state    : 0 si la fonction n'a pas été lancé. 1 si elle l'est. -1 si elle est arreté.
+ * next_pcb : PCB suivant à exécuter
  */
 struct pcb_s {
-    funct_t funct;
+    func_t funct;
     void * args;
 
     uint32_t pc;
     uint32_t sp;
     int32_t regs[15];
+
+    int8_t state;
+    struct pcb_s * next_pcb;
 };
 
 extern void init_ctx(struct ctx_s * ctx, func_t f, unsigned int stack_size);
@@ -42,7 +46,7 @@ extern void set_current_ctx(struct ctx_s *);
 /* Initialise un PCB */
 extern void init_pcb();
 
-extern void create_process(funct_t f, void args);
+extern void create_process(func_t f, void * args);
 
 extern void yield();
 
