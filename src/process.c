@@ -8,12 +8,17 @@
 #define PCB_FUNC_EXECUTING      1
 #define PCB_FUNC_FINISHED       -1
 
+/* Premier élément de la liste */
 static struct pcb_s * _first_pcb = NULL;
+
+/* Dernier élément de la liste de PCB */
 static struct pcb_s * _last_pcb = NULL;
+
+/* PCB courant */
 static struct pcb_s * _current_pcb = NULL;
 
 /* Initialise un PCB */
-void init_pcb(struct pcb_s * pcb, func_t f, void * args, size_t stack_size) {
+static void _init_pcb(struct pcb_s * pcb, func_t f, void * args, size_t stack_size) {
     /* Définie la fonction associé au PCB */
     pcb->func = f;
 
@@ -41,9 +46,16 @@ void init_pcb(struct pcb_s * pcb, func_t f, void * args, size_t stack_size) {
     }
 }
 
+static void _start_process(struct pcb_s * pcb) {
+}
+
+static void _ctx_switch(struct pcb_s * pcb) {
+}
+
 void create_process(func_t f, void * args) {
+    /* TODO Libérer la mémoire allouée */
     struct pcb_s * pcb = (struct pcb_s *) AllocateMemory(sizeof(struct pcb_s));
-    init_pcb(pcb, f, args, STACK_SIZE);
+    _init_pcb(pcb, f, args, STACK_SIZE);
 }
 
 /* Contexte courant */

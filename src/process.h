@@ -14,6 +14,14 @@ struct ctx_s {
     uint32_t regs[12];
 };
 
+extern void init_ctx(struct ctx_s * ctx, func_t f, unsigned int stack_size);
+
+extern void start_ctx(struct ctx_s * ctx, func_t f, void * args);
+
+/* Accesseurs pour le contexte courant (USE AT YOUR OWN RISK) */
+extern struct ctx_s * current_ctx(void);
+extern void set_current_ctx(struct ctx_s *);
+
 /* Définition d'un Process Control Block (PCB)
  * func    : Pointeur vers la fonction à appeler
  * args     : Argument à donners à la fonction
@@ -35,21 +43,9 @@ struct pcb_s {
     struct pcb_s * next_pcb;
 };
 
-extern void init_ctx(struct ctx_s * ctx, func_t f, unsigned int stack_size);
-
-extern void start_ctx(struct ctx_s * ctx, func_t f, void * args);
-
-/* Accesseurs pour le contexte courant (USE AT YOUR OWN RISK) */
-extern struct ctx_s * current_ctx(void);
-extern void set_current_ctx(struct ctx_s *);
-
 /* Crée un process */
 extern void create_process(func_t f, void * args);
 
 extern void yield();
-
-extern void start_current_process();
-
-extern void ctx_switch();
 
 #endif
