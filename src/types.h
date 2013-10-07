@@ -3,7 +3,7 @@
 #define TYPES_H
 
 /* Définie un type de pointeur de fonction */
-typedef void (*func_t)(void);
+typedef void (*func_t)();
 
 #ifndef NULL
 #  define NULL 0
