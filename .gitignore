@@ -7,3 +7,4 @@ a.out
 *.img
 *.bc
 *.clang.opt.s
+*~
