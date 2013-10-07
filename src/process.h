@@ -1,33 +1,34 @@
-#include <stdint.h>
+#ifndef PROCESS_H
+#define PROCESS_H
+
+#include "types.h"
 
 
 
-
-/*typedef nécessaire pour que func_t est reconnu en bas dans les déclarations de fonctions*/
-typedef void (*func_t) (void);
 
 
 /*Variables globales*/
-
 struct current_s
 {
 	struct ctx_s* ctx;
 
 } current;
 
-
-struct ctx_s
-{
-	/*process counter*/	
-	uint32_t pc;
-
-	/*stack pointeur*/	
-	uint32_t sp;
+/* Structure de donnée définissant un contexte:
+ *  pc : "program counter", adresse courante de l'exécution
+ *  sp : "stack pointer", pointeur de pile
+ *  regs : données des registres (r0..15)
+ */
+struct ctx_s {
+    uint32_t pc;
+    uint32_t sp;
+    uint32_t regs[15];
 
 };
 
 
 void init_ctx ( struct ctx_s* ctx, func_t f, unsigned int stack_size );
 
-void start_ctx ( struct ctx_s* ctx, func_t f );
+void start_ctx ( struct ctx_s* ctx, func_t f, void * args );
 
+#endif

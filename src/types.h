@@ -2,12 +2,15 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#ifndef _GCC_STDINT_H
-#define _GCC_STDINT_H
+/* Définie un type de pointeur de fonction */
+typedef void (*func_t)(void);
 
 #ifndef NULL
 #  define NULL 0
 #endif
+
+#ifndef _GCC_STDINT_H
+#define _GCC_STDINT_H
 
 /* Définie des types entiers à taille fixe. */
 typedef char                int8_t;
@@ -19,9 +22,6 @@ typedef unsigned int        uint16_t;
 typedef unsigned long int   uint32_t;
 
 typedef unsigned long int   size_t;
-
-/* Définie un type de pointeur de fonction */
-typedef void (*func_t)(void);
 
 #endif
 
