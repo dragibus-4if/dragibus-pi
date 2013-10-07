@@ -3,12 +3,6 @@
 
 #include "types.h"
 
-/*Variables globales*/
-struct current_s
-{
-    struct ctx_s* ctx;
-} current;
-
 /* Structure de donnée définissant un contexte:
  *  pc : "program counter", adresse courante de l'exécution
  *  sp : "stack pointer", pointeur de pile
@@ -37,9 +31,13 @@ struct pcb_s {
     int32_t regs[15];
 };
 
-void init_ctx ( struct ctx_s* ctx, func_t f, unsigned int stack_size );
+extern void init_ctx(struct ctx_s * ctx, func_t f, unsigned int stack_size);
 
-void start_ctx ( struct ctx_s* ctx, func_t f, void * args );
+extern void start_ctx(struct ctx_s * ctx, func_t f, void * args);
+
+/* Accesseurs pour le contexte courant (USE AT YOUR OWN RISK) */
+extern struct ctx_s * current_ctx(void);
+extern void set_current_ctx(struct ctx_s *);
 
 /* Initialise un PCB */
 extern void init_pcb();
