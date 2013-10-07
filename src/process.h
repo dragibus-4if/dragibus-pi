@@ -3,15 +3,10 @@
 
 #include "types.h"
 
-
-
-
-
 /*Variables globales*/
 struct current_s
 {
-	struct ctx_s* ctx;
-
+    struct ctx_s* ctx;
 } current;
 
 /* Structure de donnée définissant un contexte:
@@ -23,7 +18,6 @@ struct ctx_s {
     uint32_t pc;
     uint32_t sp;
     uint32_t regs[15];
-
 };
 
 
