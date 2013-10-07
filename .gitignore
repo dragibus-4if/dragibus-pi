@@ -8,3 +8,4 @@ a.out
 *.bc
 *.clang.opt.s
 *~
+*.swp
