@@ -11,16 +11,20 @@
 struct ctx_s {
     uint32_t pc;
     uint32_t sp;
-    uint32_t regs[12];
+    /* int32_t regs[12]; */
 };
 
-extern void init_ctx(struct ctx_s * ctx, func_t f, unsigned int stack_size);
+struct current_s {
+    struct ctx_s * ctx;
+} current;
 
-extern void start_ctx(struct ctx_s * ctx, func_t f, void * args);
+extern void init_ctx(struct ctx_s * ctx, func_t f, size_t stack_size);
+
+extern void start_ctx(struct ctx_s * ctx, func_t f);
 
 /* Accesseurs pour le contexte courant (USE AT YOUR OWN RISK) */
-extern struct ctx_s * current_ctx(void);
-extern void set_current_ctx(struct ctx_s *);
+/* extern inline struct ctx_s * current_ctx(void); */
+/* extern inline void set_current_ctx(struct ctx_s *); */
 
 /* Espace utilisateur */
 

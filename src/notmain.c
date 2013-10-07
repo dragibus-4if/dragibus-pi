@@ -32,7 +32,7 @@ void funcB()
 int notmain(void)
 {
     init_ctx(&ctx_B, funcB, STACK_SIZE);
-    start_ctx(&ctx_A, funcA, NULL);
+    start_ctx(&ctx_A, funcA);
 
     /* Pas atteignable vues nos 2 fonctions */
     return 0;

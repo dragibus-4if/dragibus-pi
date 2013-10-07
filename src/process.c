@@ -47,15 +47,6 @@ struct pcb_s {
     struct pcb_s * next_pcb;
 };
 
-/* Premier élément de la liste */
-static struct pcb_s * _first_pcb    = NULL;
-
-/* Dernier élément de la liste de PCB */
-static struct pcb_s * _last_pcb     = NULL;
-
-/* PCB courant */
-static struct pcb_s * _current_pcb  = NULL;
-
 /* \brief Initialise un PCB
  * \param pcb   Pointeur vers le bloc à initialiser
  * \param entry Pointeur vers la fonction d'entrée du processus
@@ -68,9 +59,41 @@ static struct pcb_s * _current_pcb  = NULL;
  * L'état du processus indique alors qu'il n'a jamais été lancé. Le PCB est
  * également ajouté à la liste chaîné des PCBs utilisés par l'ordonnanceur.
  */
-static void _init_pcb(struct pcb_s * pcb,
-        func_t entry,
-        void * args) {
+static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
+
+/*
+ * \brief Exécute une première fois un processus
+ * \param pcb   Bloc d'infomation du processus à commencer
+ *
+ * Exécute pour une première fois seulement un processus. Les informations le
+ * concernant et n'étant toujours pas valide (comme la pile et les registres)
+ * sont récupérées et l'état du processus est alors en cours d'exécution. Un
+ * changement de contexte a alors lieu pour appeler ce processus.
+ *
+ * Si le processus a déjà été initialisé, la fonction ne fait rien.
+ * Dans le cas ou aucun processus n'a déjà été lancé, la stack n'a toujours
+ * pas été fait. Elle est alors alloué et l'adresse correspond au niveau
+ * initial de la stack.
+ */
+static void _start_process(struct pcb_s * pcb);
+
+/* TODO commentaire complet */
+static void _ctx_switch(struct pcb_s * pcb);
+
+/* Premier élément de la liste de PCB */
+static struct pcb_s * _first_pcb    = NULL;
+
+/* Dernier élément de la liste de PCB */
+static struct pcb_s * _last_pcb     = NULL;
+
+/* Pointeur vers le PCB courant */
+static struct pcb_s * _current_pcb  = NULL;
+
+/****************************************************************************/
+/************************ DEFINITION DES FONCTIONS PRIVEE *******************/
+/****************************************************************************/
+
+static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
     pcb->entry  = entry;
     pcb->args   = args;
     pcb->pc     = (uint32_t) pcb->entry;
@@ -87,27 +110,17 @@ static void _init_pcb(struct pcb_s * pcb,
     pcb->next_pcb = _first_pcb;
 }
 
-/*
- * \brief Exécute une première fois un processus
- * \param pcb   Bloc d'infomation du processus à commencer
- *
- * Exécute pour une première fois seulement un processus. Les informations le
- * concernant et n'étant toujours pas valide (comme la pile et les registres)
- * sont récupérées et l'état du processus est alors en cours d'exécution. Un
- * changement de contexte a alors lieu pour appeler ce processus.
- *
- * Si le processus a déjà été initialisé, la fonction ne fait rien.
- * Dans le cas ou aucun processus n'a déjà été lancé, la stack n'a toujours
- * pas été fait. Elle est alors alloué et l'adresse correspond au niveau
- * initial de la stack.
- */
 static void _start_process(struct pcb_s * pcb) {
     /* TODO */
 }
 
-/* TODO commentaire complet + code */
 static void _ctx_switch(struct pcb_s * pcb) {
+    /* TODO */
 }
+
+/****************************************************************************/
+/*********************** DEFINITION DES FONCTIONS PUBLIQUE ******************/
+/****************************************************************************/
 
 void create_process(func_t entry, void * args) {
     /* TODO Libérer la mémoire allouée
@@ -121,27 +134,34 @@ void yield() {
     /* TODO voir process.h pour les commentaires */
 }
 
+/****************************************************************************/
+/******************** ANCIEN CODE POUR L'ORDONNANCEUR SIMPLE ****************/
+/****************************************************************************/
+
 /* Contexte courant */
-static struct ctx_s * _current_ctx = NULL;
+/* static struct ctx_s * _current_ctx = NULL; */
 
-struct ctx_s * current_ctx(void) {
-    return _current_ctx;
-}
+/* struct ctx_s * current_ctx(void) { */
+/*     return _current_ctx; */
+/* } */
 
-void set_current_ctx(struct ctx_s * ctx) {
-    _current_ctx = ctx;
-}
+/* void set_current_ctx(struct ctx_s * ctx) { */
+/*     _current_ctx = ctx; */
+/* } */
 
-void init_ctx(struct ctx_s* ctx, func_t f, unsigned int stack_size) {
+void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
     /* Prendre l'adresse de la fonction f et la stocker dans pc */
     ctx->pc = (uint32_t) f;
 
     /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
     ctx->sp = (uint32_t) AllocateMemory(stack_size) - stack_size;
+
+    return;
 }
 
 /* Démarre une fonction en utilisant un certain contexte */
-void start_ctx(struct ctx_s * ctx, func_t f, void * args) {
-    set_current_ctx(ctx);
-    f(args);
+void start_ctx(struct ctx_s * ctx, func_t f) {
+    current.ctx = ctx;
+    f();
+    return;
 }
