@@ -71,8 +71,9 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
  * changement de contexte a alors lieu pour appeler ce processus.
  *
  * Si le processus a déjà été initialisé, la fonction ne fait rien.
- * Dans le cas ou aucun processus n'a déjà été lancé, la stack n'a toujours
- * pas été fait. Elle est alors alloué et l'adresse correspond au niveau
+ * Dans le cas ou aucun processus n'a pas encore été lancé,
+ * la stack n'a toujours pas été faite.
+ * Elle est alors alloué et l'adresse correspond au niveau
  * initial de la stack.
  */
 static void _start_process(struct pcb_s * pcb);
@@ -111,7 +112,53 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
 }
 
 static void _start_process(struct pcb_s * pcb) {
-    /* TODO */
+    /* Ne rien faire si le pcb a déjà été lancé. */
+    if (state == PCB_FUNC_NOT_EXECUTED) {
+        return;
+    }
+
+    /* Initialisation du stack pointeur, allocation de la pile dans le cas où
+     * aucun pcb n'a été lancé. Sp sera incrémenté dans _ctx_switch, par
+     * rapport aux variables locales/paramètres.
+     */
+    if (_current_pcb == NULL) {
+        pcb->sp = (uint32_t) AllocateMemory(STACK_SIZE) - STACK_SIZE;
+    }
+    else {
+        pcb->sp = _current_pcb->sp;
+
+        /* TODO push {r-1..12, lr} à faire */
+
+        /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
+        __asm("mov %0, sp" : "=r"(_current_pcb->sp));
+
+        /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
+        __asm("mov %0, lr" : "=r"(_current_pcb->pc));
+
+        /* Sauvegarde des registres dans l'ancien contexte */
+        __asm("mov %0, r0"  : "=r"(_current_pcb->regs[0]));
+        __asm("mov %0, r1"  : "=r"(_current_pcb->regs[1]));
+        __asm("mov %0, r2"  : "=r"(_current_pcb->regs[2]));
+        __asm("mov %0, r3"  : "=r"(_current_pcb->regs[3]));
+        __asm("mov %0, r4"  : "=r"(_current_pcb->regs[4]));
+        __asm("mov %0, r5"  : "=r"(_current_pcb->regs[5]));
+        __asm("mov %0, r6"  : "=r"(_current_pcb->regs[6]));
+        __asm("mov %0, r7"  : "=r"(_current_pcb->regs[7]));
+        __asm("mov %0, r8"  : "=r"(_current_pcb->regs[8]));
+        __asm("mov %0, r9"  : "=r"(_current_pcb->regs[9]));
+        __asm("mov %0, r10" : "=r"(_current_pcb->regs[10]));
+        __asm("mov %0, r11" : "=r"(_current_pcb->regs[11]));
+        __asm("mov %0, r12" : "=r"(_current_pcb->regs[12]));
+    }
+
+    /* Changement de contexte.
+     * TODO vérifier les subtilités du changement de
+     * contexte (autrement que _current_pcb = pcb).
+     */
+    _current_pcb = pcb;
+
+    /* Appel de la procédure */
+    _current_pcb->entry(_current_pcb->args);
 }
 
 static void _ctx_switch(struct pcb_s * pcb) {
@@ -155,13 +202,10 @@ void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
 
     /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
     ctx->sp = (uint32_t) AllocateMemory(stack_size) - stack_size;
-
-    return;
 }
 
 /* Démarre une fonction en utilisant un certain contexte */
 void start_ctx(struct ctx_s * ctx, func_t f) {
     current.ctx = ctx;
     f();
-    return;
 }
