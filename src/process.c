@@ -115,8 +115,7 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
         _first_pcb = pcb;
         _last_pcb = pcb;
     }
-    else
-    {
+    else {
         _last_pcb->next_pcb = pcb;
         _last_pcb = pcb;
     }
