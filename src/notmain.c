@@ -38,11 +38,21 @@ void funcB()
     /* switch_to(&ctx_A); */
 }
 
+void pcbFuncA(void * args) {
+    int cptA = 1;
+    while(1) {
+        cptA++;
+    }
+}
+
 //------------------------------------------------------------------------
 int notmain(void)
 {
-    init_ctx(&ctx_B, funcB, STACK_SIZE);
-    start_ctx(&ctx_A, funcA);
+    /* init_ctx(&ctx_B, funcB, STACK_SIZE); */
+    /* start_ctx(&ctx_A, funcA); */
+
+    create_process(pcbFuncA, NULL);
+    yield();
 
     /* Pas atteignable vues nos 2 fonctions */
     return 0;
