@@ -2,7 +2,6 @@
 
 void switch_to(struct ctx_s * ctx)
 {
-	//__asm("push {r0-r12, lr}");
 
     /* Sauvegarde des registres */
     __asm("mov %0, r0" : "=r"(current.ctx->regs[0]));
@@ -21,16 +20,16 @@ void switch_to(struct ctx_s * ctx)
     /* TODO */
 
 	/* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
-    __asm("mov %0, sp" : "=r"(current.ctx->sp));
+    __asm("mov %0, sp" : "=r"(current_ctx->sp));
 
     /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
     __asm("mov %0, lr" : "=r"(current.ctx->pc));
 
     /* Changement de contexte */
-    current.ctx = ctx;
+    current_ctx = ctx;
 
     /* Chargement de la valeur de SP stockée dans le nouveau contexte */
-    __asm("mov sp, %0" : : "r"(current.ctx->sp));
+    __asm("mov sp, %0" : : "r"(current_ctx->sp));
 
     /* Chargement de la valeur de PC stockée dans le nouveau contexte */
     __asm("mov lr, %0" : : "r"(current.ctx->pc));
@@ -51,7 +50,6 @@ void switch_to(struct ctx_s * ctx)
 	__asm("mov r12, %0" : : "r"(current.ctx->regs[12]));
 	
 
-	//__asm("pop {r0-r12, lr}");
     /* TODO */
 
     return;

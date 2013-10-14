@@ -42,17 +42,23 @@ void pcbFuncA(void * args) {
     int cptA = 1;
     while(1) {
         cptA++;
+        if(cptA % 1337 == 0) {
+            cptA = 0;
+            yield();
+        }
     }
 }
 
 //------------------------------------------------------------------------
 int notmain(void)
 {
-    /* init_ctx(&ctx_B, funcB, STACK_SIZE); */
-    /* start_ctx(&ctx_A, funcA); */
+     init_ctx(&ctx_B, funcB, STACK_SIZE); 
+     init_ctx(&ctx_A, funcA, STACK_SIZE);
+	
+     start_ctx(&ctx_A, funcA); 
 
-    create_process(pcbFuncA, NULL);
-    yield();
+  //  create_process(pcbFuncA, NULL);
+//    yield();
 
     /* Pas atteignable vues nos 2 fonctions */
     return 0;
