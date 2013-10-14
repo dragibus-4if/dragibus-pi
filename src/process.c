@@ -78,6 +78,11 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
  */
 static void _start_process(struct pcb_s * pcb);
 
+/* \brief Ferme le processus courant
+ * TODO commentaire complet
+ */
+static void _close_current_process();
+
 /* TODO commentaire complet */
 static void _ctx_switch(struct pcb_s * pcb);
 
@@ -161,6 +166,10 @@ static void _start_process(struct pcb_s * pcb) {
 
     /* Appel de la procédure */
     _current_pcb->entry(_current_pcb->args);
+}
+
+static void _close_current_process() {
+    /* TODO */
 }
 
 static void _ctx_switch(struct pcb_s * pcb) {
