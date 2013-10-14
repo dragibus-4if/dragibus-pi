@@ -77,10 +77,10 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
  */
 static void _start_process(struct pcb_s * pcb);
 
-/* \brief Ferme le processus courant
+/* \brief Ferme le processus du PCB courant
  * TODO commentaire complet
  */
-static void _close_current_process();
+static void _close_current_pcb();
 
 /* TODO commentaire complet */
 static void _ctx_switch(struct pcb_s * pcb);
@@ -163,12 +163,36 @@ static void _start_process(struct pcb_s * pcb) {
      */
     _current_pcb = pcb;
 
+    /* Chargement de la valeur de SP stockée dans le nouveau contexte */
+    __asm("mov sp, %0" : : "r"(_current_pcb->sp));
+
+    /* Chargement de la valeur de PC stockée dans le nouveau contexte */
+    __asm("mov pc, %0" : : "r"(_current_pcb->pc));
+
+    /* Interception de l'arret du PCB sur la fonction _close_current_pcb */
+    __asm("mov lr, %0" : : "r"(_close_current_pcb));
+
+    /* Chargement des registres */
+    __asm("mov r0, %0"  : : "r"(_current_pcb->regs[0]));
+    __asm("mov r1, %0"  : : "r"(_current_pcb->regs[1]));
+    __asm("mov r2, %0"  : : "r"(_current_pcb->regs[2]));
+    __asm("mov r3, %0"  : : "r"(_current_pcb->regs[3]));
+    __asm("mov r4, %0"  : : "r"(_current_pcb->regs[4]));
+    __asm("mov r5, %0"  : : "r"(_current_pcb->regs[5]));
+    __asm("mov r6, %0"  : : "r"(_current_pcb->regs[6]));
+    __asm("mov r7, %0"  : : "r"(_current_pcb->regs[7]));
+    __asm("mov r8, %0"  : : "r"(_current_pcb->regs[8]));
+    __asm("mov r9, %0"  : : "r"(_current_pcb->regs[9]));
+    __asm("mov r10, %0" : : "r"(_current_pcb->regs[10]));
+    __asm("mov r11, %0" : : "r"(_current_pcb->regs[11]));
+    __asm("mov r12, %0" : : "r"(_current_pcb->regs[12]));
+
     /* Appel de la procédure */
     _current_pcb->state = PCB_FUNC_EXECUTING;
     _current_pcb->entry(_current_pcb->args);
 }
 
-static void _close_current_process() {
+static void _close_current_pcb() {
     /* TODO */
 }
 
