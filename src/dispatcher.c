@@ -2,7 +2,7 @@
 
 void switch_to(struct ctx_s * ctx)
 {
-	//__asm("STMFD sp!, {r0-r12, lr};");
+	//__asm("push {r0-r12, lr}");
 
     /* Sauvegarde des registres */
     __asm("mov %0, r0" : "=r"(current.ctx->regs[0]));
@@ -51,7 +51,7 @@ void switch_to(struct ctx_s * ctx)
 	__asm("mov r12, %0" : : "r"(current.ctx->regs[12]));
 	
 
-	//__asm("LDMFD r0!,{r0-r12}");
+	//__asm("pop {r0-r12, lr}");
     /* TODO */
 
     return;

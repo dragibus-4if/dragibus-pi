@@ -16,9 +16,9 @@
  * \var state       Etat d'exécution du processus
  * \var next_pcb    PCB suivant à exécuter
  *
- * Représentent les informations et le contexte d'un processus. Le contexte
- * est stocké dans le Program Counter (PC) qui représente l'adresse mémoire de
- * code que le processeur est en train d'exécuter. Au début d'exécution du
+ * Représentent les informations et le contexte d'un processus. Le contexte est
+ * stocké dans le Program Counter (PC) qui représente l'adresse mémoire de code
+ * que le processeur est en train d'exécuter. Au début d'exécution du
  * processus, celui-ci est placé au niveau du pointeur de fonction. A un
  * changement de contexte, cette adresse est stocké pour pouvoir y retourner
  * quand ce processus se réactive. Le Stack Pointer (SP) représente le niveau
@@ -26,11 +26,11 @@
  * initialisé à la valeur courante de l'état de la pile. A un changement de
  * contexte, il est sauvegardé avant de basculer à un autre processus. Il est
  * remit en état lorsque ce processus est réactivé. Il en est de meme pour les
- * registres d'exécution R0 à R12. Le processus est représenté par une
- * fonction d'entrée prenant un argument ainsi qu'un état. Initialement, cet
- * état indique que le processus n'a jamais été lancé. Elle est mis à jour
- * pour indiquer que le processus est en état d'exécution pendant le démarrage
- * de celui-ci. Lorsque la fonction d'entrée est finie, l'état du processus
+ * registres d'exécution R0 à R12. Le processus est représenté par une fonction
+ * d'entrée prenant un argument ainsi qu'un état. Initialement, cet état
+ * indique que le processus n'a jamais été lancé. Elle est mis à jour pour
+ * indiquer que le processus est en état d'exécution pendant le démarrage de
+ * celui-ci. Lorsque la fonction d'entrée est finie, l'état du processus
  * l'indique pour que l'ordonnanceur nettoie et retire le processus. Les
  * processus forment une liste chaînée pour que l'ordonnanceur puisse les
  * garder en mémoire et naviguer de l'un à l'autre.
@@ -61,8 +61,7 @@ struct pcb_s {
  */
 static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
 
-/*
- * \brief Exécute une première fois un processus
+/* \brief Exécute une première fois un processus
  * \param pcb   Bloc d'infomation du processus à commencer
  *
  * Exécute pour une première fois seulement un processus. Les informations le
@@ -71,11 +70,17 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
  * changement de contexte a alors lieu pour appeler ce processus.
  *
  * Si le processus a déjà été initialisé, la fonction ne fait rien.
- * Dans le cas ou aucun processus n'a déjà été lancé, la stack n'a toujours
- * pas été fait. Elle est alors alloué et l'adresse correspond au niveau
+ * Dans le cas ou aucun processus n'a pas encore été lancé,
+ * la stack n'a toujours pas été faite.
+ * Elle est alors alloué et l'adresse correspond au niveau
  * initial de la stack.
  */
 static void _start_process(struct pcb_s * pcb);
+
+/* \brief Ferme le processus courant
+ * TODO commentaire complet
+ */
+static void _close_current_process();
 
 /* TODO commentaire complet */
 static void _ctx_switch(struct pcb_s * pcb);
@@ -110,10 +115,61 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
     	_last_pcb->next_pcb = pcb;
     	_last_pcb = pcb;
 	}    
-	pcb->next_pcb = _first_pcb;
+    pcb->next_pcb = _first_pcb;
 }
 
 static void _start_process(struct pcb_s * pcb) {
+    /* Ne rien faire si le pcb a déjà été lancé. */
+    if (pcb->state != PCB_FUNC_NOT_EXECUTED) {
+        return;
+    }
+
+    /* Initialisation du stack pointeur, allocation de la pile dans le cas où
+     * aucun pcb n'a été lancé. Sp sera incrémenté dans _ctx_switch, par
+     * rapport aux variables locales/paramètres.
+     */
+    if (_current_pcb == NULL) {
+        pcb->sp = (uint32_t) AllocateMemory(STACK_SIZE) - STACK_SIZE;
+    }
+    else {
+        pcb->sp = _current_pcb->sp;
+
+        /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
+        __asm("mov %0, sp" : "=r"(_current_pcb->sp));
+
+        /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
+        __asm("mov %0, pc" : "=r"(_current_pcb->pc));
+
+        /* Sauvegarde des registres dans l'ancien contexte
+         * TODO push {r-1..12, lr} à faire.
+         */
+        __asm("mov %0, r0"  : "=r"(_current_pcb->regs[0]));
+        __asm("mov %0, r1"  : "=r"(_current_pcb->regs[1]));
+        __asm("mov %0, r2"  : "=r"(_current_pcb->regs[2]));
+        __asm("mov %0, r3"  : "=r"(_current_pcb->regs[3]));
+        __asm("mov %0, r4"  : "=r"(_current_pcb->regs[4]));
+        __asm("mov %0, r5"  : "=r"(_current_pcb->regs[5]));
+        __asm("mov %0, r6"  : "=r"(_current_pcb->regs[6]));
+        __asm("mov %0, r7"  : "=r"(_current_pcb->regs[7]));
+        __asm("mov %0, r8"  : "=r"(_current_pcb->regs[8]));
+        __asm("mov %0, r9"  : "=r"(_current_pcb->regs[9]));
+        __asm("mov %0, r10" : "=r"(_current_pcb->regs[10]));
+        __asm("mov %0, r11" : "=r"(_current_pcb->regs[11]));
+        __asm("mov %0, r12" : "=r"(_current_pcb->regs[12]));
+    }
+
+    /* Changement de contexte.
+     * TODO vérifier les subtilités du changement de
+     * contexte (autrement que _current_pcb = pcb).
+     */
+    _current_pcb = pcb;
+
+    /* Appel de la procédure */
+    _current_pcb->state = PCB_FUNC_EXECUTING;
+    _current_pcb->entry(_current_pcb->args);
+}
+
+static void _close_current_process() {
     /* TODO */
 }
 
@@ -157,6 +213,7 @@ void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
     ctx->pc = (uint32_t) f;
 
     /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
+
     ctx->sp = (uint32_t) AllocateMemory(stack_size*sizeof(uint32_t));
 
     return;
@@ -166,5 +223,4 @@ void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
 void start_ctx(struct ctx_s * ctx, func_t f) {
     current.ctx = ctx;
     f();
-    return;
 }
