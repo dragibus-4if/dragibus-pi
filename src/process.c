@@ -78,7 +78,14 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
 static void _start_process(struct pcb_s * pcb);
 
 /* \brief Ferme le processus du PCB courant
- * TODO commentaire complet
+ *
+ * Se charge d'intercepter les signaux de fin des processus en se placant
+ * constamment dans le registre LR (via _start_process et _ctx_switch). Libère
+ * la mémoire utilisé par le processus courant puis exécute un autre processus
+ * en appelant yield.
+ *
+ * Dans le cas où il n'y a pas de processus en court d'utilisation, cette
+ * fonction ne fait rien.
  */
 static void _close_current_pcb();
 
@@ -193,7 +200,15 @@ static void _start_process(struct pcb_s * pcb) {
 }
 
 static void _close_current_pcb() {
-    /* TODO */
+    if(_current_pcb == NULL)
+        return;
+
+    FreeAllocateMemory(_current_pcb);
+    /* TODO penser a la pauvre Stack qui n'est pas libérée. */
+    /* Liberons les Stack. */
+    /* Mettons fin à ce regne de tyrannie. */
+
+    yield();
 }
 
 static void _ctx_switch(struct pcb_s * pcb) {
