@@ -61,8 +61,7 @@ struct pcb_s {
  */
 static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args);
 
-/*
- * \brief Exécute une première fois un processus
+/* \brief Exécute une première fois un processus
  * \param pcb   Bloc d'infomation du processus à commencer
  *
  * Exécute pour une première fois seulement un processus. Les informations le
@@ -120,7 +119,7 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
 
 static void _start_process(struct pcb_s * pcb) {
     /* Ne rien faire si le pcb a déjà été lancé. */
-    if (state != PCB_FUNC_NOT_EXECUTED) {
+    if (pcb->state != PCB_FUNC_NOT_EXECUTED) {
         return;
     }
 
@@ -134,15 +133,15 @@ static void _start_process(struct pcb_s * pcb) {
     else {
         pcb->sp = _current_pcb->sp;
 
-        /* TODO push {r-1..12, lr} à faire */
-
         /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
         __asm("mov %0, sp" : "=r"(_current_pcb->sp));
 
         /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
-        __asm("mov %0, lr" : "=r"(_current_pcb->pc));
+        __asm("mov %0, pc" : "=r"(_current_pcb->pc));
 
-        /* Sauvegarde des registres dans l'ancien contexte */
+        /* Sauvegarde des registres dans l'ancien contexte
+         * TODO push {r-1..12, lr} à faire.
+         */
         __asm("mov %0, r0"  : "=r"(_current_pcb->regs[0]));
         __asm("mov %0, r1"  : "=r"(_current_pcb->regs[1]));
         __asm("mov %0, r2"  : "=r"(_current_pcb->regs[2]));
@@ -165,6 +164,7 @@ static void _start_process(struct pcb_s * pcb) {
     _current_pcb = pcb;
 
     /* Appel de la procédure */
+    _current_pcb->state = PCB_FUNC_EXECUTING;
     _current_pcb->entry(_current_pcb->args);
 }
 
