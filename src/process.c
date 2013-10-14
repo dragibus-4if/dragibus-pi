@@ -16,9 +16,9 @@
  * \var state       Etat d'exécution du processus
  * \var next_pcb    PCB suivant à exécuter
  *
- * Représentent les informations et le contexte d'un processus. Le contexte
- * est stocké dans le Program Counter (PC) qui représente l'adresse mémoire de
- * code que le processeur est en train d'exécuter. Au début d'exécution du
+ * Représentent les informations et le contexte d'un processus. Le contexte est
+ * stocké dans le Program Counter (PC) qui représente l'adresse mémoire de code
+ * que le processeur est en train d'exécuter. Au début d'exécution du
  * processus, celui-ci est placé au niveau du pointeur de fonction. A un
  * changement de contexte, cette adresse est stocké pour pouvoir y retourner
  * quand ce processus se réactive. Le Stack Pointer (SP) représente le niveau
@@ -26,11 +26,11 @@
  * initialisé à la valeur courante de l'état de la pile. A un changement de
  * contexte, il est sauvegardé avant de basculer à un autre processus. Il est
  * remit en état lorsque ce processus est réactivé. Il en est de meme pour les
- * registres d'exécution R0 à R12. Le processus est représenté par une
- * fonction d'entrée prenant un argument ainsi qu'un état. Initialement, cet
- * état indique que le processus n'a jamais été lancé. Elle est mis à jour
- * pour indiquer que le processus est en état d'exécution pendant le démarrage
- * de celui-ci. Lorsque la fonction d'entrée est finie, l'état du processus
+ * registres d'exécution R0 à R12. Le processus est représenté par une fonction
+ * d'entrée prenant un argument ainsi qu'un état. Initialement, cet état
+ * indique que le processus n'a jamais été lancé. Elle est mis à jour pour
+ * indiquer que le processus est en état d'exécution pendant le démarrage de
+ * celui-ci. Lorsque la fonction d'entrée est finie, l'état du processus
  * l'indique pour que l'ordonnanceur nettoie et retire le processus. Les
  * processus forment une liste chaînée pour que l'ordonnanceur puisse les
  * garder en mémoire et naviguer de l'un à l'autre.
@@ -41,7 +41,7 @@ struct pcb_s {
 
     uint32_t pc;
     uint32_t sp;
-    int32_t regs[12];
+    uint32_t regs[13];
 
     int8_t state;
     struct pcb_s * next_pcb;
@@ -106,8 +106,10 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
         _first_pcb = pcb;
         _last_pcb = pcb;
     }
-    _last_pcb->next_pcb = pcb;
-    _last_pcb = pcb;
+    else {
+        _last_pcb->next_pcb = pcb;
+        _last_pcb = pcb;
+    }
     pcb->next_pcb = _first_pcb;
 }
 
