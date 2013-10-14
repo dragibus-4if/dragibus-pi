@@ -11,7 +11,8 @@
 struct ctx_s {
     uint32_t pc;
     uint32_t sp;
-    uint32_t regs[13];
+    int32_t regs[13];
+
 };
 
 struct current_s {

@@ -41,7 +41,7 @@ struct pcb_s {
 
     uint32_t pc;
     uint32_t sp;
-    uint32_t regs[13];
+    int32_t regs[13];
 
     int8_t state;
     struct pcb_s * next_pcb;
@@ -117,10 +117,11 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
         _first_pcb = pcb;
         _last_pcb = pcb;
     }
-    else {
-        _last_pcb->next_pcb = pcb;
-        _last_pcb = pcb;
-    }
+	else
+	{ 
+    	_last_pcb->next_pcb = pcb;
+    	_last_pcb = pcb;
+	}    
     pcb->next_pcb = _first_pcb;
 }
 
@@ -260,7 +261,10 @@ void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
     ctx->pc = (uint32_t) f;
 
     /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
-    ctx->sp = (uint32_t) AllocateMemory(stack_size) - stack_size;
+
+    ctx->sp = (uint32_t) AllocateMemory(stack_size*sizeof(uint32_t));
+
+    return;
 }
 
 /* Démarre une fonction en utilisant un certain contexte */
