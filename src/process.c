@@ -117,11 +117,11 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
         _first_pcb = pcb;
         _last_pcb = pcb;
     }
-	else
-	{ 
-    	_last_pcb->next_pcb = pcb;
-    	_last_pcb = pcb;
-	}    
+    else
+    {
+        _last_pcb->next_pcb = pcb;
+        _last_pcb = pcb;
+    }
     pcb->next_pcb = _first_pcb;
 }
 
@@ -131,51 +131,22 @@ static void _start_process(struct pcb_s * pcb) {
         return;
     }
 
-    /* Initialisation du stack pointeur, allocation de la pile dans le cas où
-     * aucun pcb n'a été lancé. Sp sera incrémenté dans _ctx_switch, par
-     * rapport aux variables locales/paramètres.
-     */
-    if (_current_pcb == NULL) {
-        pcb->sp = (uint32_t) AllocateMemory(STACK_SIZE * sizeof(uint32_t));
-    }
-    else {
-        pcb->sp = _current_pcb->sp;
-    }
+    _current_pcb->state = PCB_FUNC_EXECUTING;
 
-    /* Changement de contexte.
-     * TODO vérifier les subtilités du changement de
-     * contexte (autrement que _current_pcb = pcb).
-     */
+    pcb->sp = _current_pcb->sp;
+
+    /* Changement de contexte. */
     _current_pcb = pcb;
-
-    /* Chargement des registres */
-    __asm("pop {r0-r12}");
-    /* __asm("mov r0, %0"  : : "r"(_current_pcb->regs[0])); */
-    /* __asm("mov r1, %0"  : : "r"(_current_pcb->regs[1])); */
-    /* __asm("mov r2, %0"  : : "r"(_current_pcb->regs[2])); */
-    /* __asm("mov r3, %0"  : : "r"(_current_pcb->regs[3])); */
-    /* __asm("mov r4, %0"  : : "r"(_current_pcb->regs[4])); */
-    /* __asm("mov r5, %0"  : : "r"(_current_pcb->regs[5])); */
-    /* __asm("mov r6, %0"  : : "r"(_current_pcb->regs[6])); */
-    /* __asm("mov r7, %0"  : : "r"(_current_pcb->regs[7])); */
-    /* __asm("mov r8, %0"  : : "r"(_current_pcb->regs[8])); */
-    /* __asm("mov r9, %0"  : : "r"(_current_pcb->regs[9])); */
-    /* __asm("mov r10, %0" : : "r"(_current_pcb->regs[10])); */
-    /* __asm("mov r11, %0" : : "r"(_current_pcb->regs[11])); */
-    /* __asm("mov r12, %0" : : "r"(_current_pcb->regs[12])); */
 
     /* Chargement de la valeur de SP stockée dans le nouveau contexte */
     __asm("mov sp, %0" : : "r"(_current_pcb->sp));
 
     /* Interception de l'arret du PCB sur la fonction _close_current_pcb */
-    __asm("mov lr, %0" : : "r"(_close_current_pcb));
-
-    /* Chargement de la valeur de PC stockée dans le nouveau contexte */
-    /* __asm("mov pc, %0" : : "r"(_current_pcb->pc)); */
+    /* __asm("mov lr, %0" : : "r"(_close_current_pcb)); */
 
     /* Appel de la procédure */
-    _current_pcb->state = PCB_FUNC_EXECUTING;
     _current_pcb->entry(_current_pcb->args);
+    _close_current_pcb();
 }
 
 static void _close_current_pcb() {
@@ -193,7 +164,20 @@ static void _close_current_pcb() {
 }
 
 static void _ctx_switch(struct pcb_s * pcb) {
-    /* TODO */
+    if(pcb == NULL)
+        return;
+
+    /* Changement de contexte. */
+    _current_pcb = pcb;
+
+    /* Chargement de la valeur de SP stockée dans le nouveau contexte */
+    __asm("mov sp, %0" : : "r"(_current_pcb->sp));
+
+    /* Interception de l'arret du PCB sur la fonction _close_current_pcb */
+    __asm("mov lr, %0" : : "r"(_current_pcb->pc));
+
+    /* Chargement des registres */
+    __asm("pop {r0-r12}");
 }
 
 /****************************************************************************/
@@ -209,36 +193,40 @@ void create_process(func_t entry, void * args) {
 }
 
 void yield() {
-    /* TODO voir process.h pour les commentaires */
-    if(_first_pcb == NULL && _last_pcb == NULL)
-        return;
-    if(_current_pcb != NULL) {
-        /* Sauvegarde des registres dans l'ancien contexte
-         * TODO push {r-1..12, lr} à faire.
-         */
-        __asm("push {r0-r12}");
-        /* __asm("mov %0, r0"  : "=r"(_current_pcb->regs[0])); */
-        /* __asm("mov %0, r1"  : "=r"(_current_pcb->regs[1])); */
-        /* __asm("mov %0, r2"  : "=r"(_current_pcb->regs[2])); */
-        /* __asm("mov %0, r3"  : "=r"(_current_pcb->regs[3])); */
-        /* __asm("mov %0, r4"  : "=r"(_current_pcb->regs[4])); */
-        /* __asm("mov %0, r5"  : "=r"(_current_pcb->regs[5])); */
-        /* __asm("mov %0, r6"  : "=r"(_current_pcb->regs[6])); */
-        /* __asm("mov %0, r7"  : "=r"(_current_pcb->regs[7])); */
-        /* __asm("mov %0, r8"  : "=r"(_current_pcb->regs[8])); */
-        /* __asm("mov %0, r9"  : "=r"(_current_pcb->regs[9])); */
-        /* __asm("mov %0, r10" : "=r"(_current_pcb->regs[10])); */
-        /* __asm("mov %0, r11" : "=r"(_current_pcb->regs[11])); */
-        /* __asm("mov %0, r12" : "=r"(_current_pcb->regs[12])); */
+    /* Stockage des registres avant de les utiliser */
+    __asm("push {r0-r12}");
 
+    /* TODO voir process.h pour les commentaires */
+    if(_first_pcb == NULL && _last_pcb == NULL) {
+        __asm("pop {r0-r12}");
+        return;
+    }
+    if(_current_pcb != NULL) {
         /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
         __asm("mov %0, sp" : "=r"(_current_pcb->sp));
 
         /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
-        __asm("mov %0, pc" : "=r"(_current_pcb->pc));
+        __asm("mov %0, lr" : "=r"(_current_pcb->pc));
+
+        _current_pcb = _current_pcb->next_pcb;
+    }
+    else {
+        _current_pcb = _first_pcb;
+
+        /* Initialisation du stack pointeur, allocation de la pile. Sp sera
+         * incrémenté dans _ctx_switch, par rapport aux variables
+         * locales/paramètres.
+         */
+        _current_pcb->sp = (uint32_t) AllocateMemory(STACK_SIZE * sizeof(uint32_t));
     }
 
-    _start_process(_first_pcb);
+    if(_current_pcb->state == PCB_FUNC_NOT_EXECUTED) {
+        __asm("pop {r0-r12}");
+        _start_process(_current_pcb);
+    }
+    else {
+        _ctx_switch(_current_pcb);
+    }
 }
 
 /****************************************************************************/
