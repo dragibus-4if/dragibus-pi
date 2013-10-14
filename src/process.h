@@ -15,9 +15,7 @@ struct ctx_s {
 
 };
 
-struct current_s {
-    struct ctx_s * ctx;
-} current;
+struct ctx_s * current_ctx;
 
 extern void init_ctx(struct ctx_s * ctx, func_t f, size_t stack_size);
 

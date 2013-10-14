@@ -12,7 +12,6 @@
  * \var args        Argument à donners à la fonction
  * \var pc          "Program Counter", adresse courante de l'exécution
  * \var sp          "Stack Pointer", pointeur de pile
- * \var regs        Liste des registres (r0..r12)
  * \var state       Etat d'exécution du processus
  * \var next_pcb    PCB suivant à exécuter
  *
@@ -41,7 +40,6 @@ struct pcb_s {
 
     uint32_t pc;
     uint32_t sp;
-    int32_t regs[13];
 
     int8_t state;
     struct pcb_s * next_pcb;
@@ -250,13 +248,14 @@ void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
 
     /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
 
-    ctx->sp = (uint32_t) AllocateMemory(stack_size*sizeof(uint32_t));
+    uint32_t* stack_base = (uint32_t*) AllocateMemory(stack_size);
+    ctx->sp = stack_base + stack_size -1; 
 
     return;
 }
 
 /* Démarre une fonction en utilisant un certain contexte */
 void start_ctx(struct ctx_s * ctx, func_t f) {
-    current.ctx = ctx;
+    current_ctx = ctx;
     f();
 }
