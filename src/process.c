@@ -113,7 +113,7 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
 
 static void _start_process(struct pcb_s * pcb) {
     /* Ne rien faire si le pcb a déjà été lancé. */
-    if (state == PCB_FUNC_NOT_EXECUTED) {
+    if (state != PCB_FUNC_NOT_EXECUTED) {
         return;
     }
 
