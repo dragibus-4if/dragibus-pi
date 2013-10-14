@@ -204,7 +204,7 @@ static void _close_current_pcb() {
     if(_current_pcb == NULL)
         return;
 
-    FreeAllocateMemory(_current_pcb);
+    FreeAllocatedMemory(_current_pcb);
     /* TODO penser a la pauvre Stack qui n'est pas libérée. */
     /* Liberons les Stack. */
     /* Mettons fin à ce regne de tyrannie. */
