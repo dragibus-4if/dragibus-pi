@@ -10,22 +10,32 @@ struct ctx_s ctx_B;
 
 void funcA()
 {
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
+    int cptA = 0;
+    while(1) {
+        cptA++;
+        switch_to(&ctx_B);
+    }
+    /* switch_to(&ctx_B); */
+    /* switch_to(&ctx_B); */
+    /* switch_to(&ctx_B); */
+    /* switch_to(&ctx_B); */
+    /* switch_to(&ctx_B); */
+    /* switch_to(&ctx_B); */
 }
 
 void funcB()
 {
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
+    int cptB = 1;
+    while(1) {
+        cptB += 2;
+        switch_to(&ctx_A);
+    }
+    /* switch_to(&ctx_A); */
+    /* switch_to(&ctx_A); */
+    /* switch_to(&ctx_A); */
+    /* switch_to(&ctx_A); */
+    /* switch_to(&ctx_A); */
+    /* switch_to(&ctx_A); */
 }
 
 //------------------------------------------------------------------------
