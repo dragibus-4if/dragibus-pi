@@ -69,7 +69,7 @@ struct pcb_s * schedule(){
 	return _current_pcb->next_pcb;
 }
 
-static void _ctx_switch() {
+void _ctx_switch() {
     if(_current_pcb == NULL)
         return;
 
@@ -77,7 +77,7 @@ static void _ctx_switch() {
     __asm("pop {lr, r0-r12}");
 }
 
-static void _start_current_process() {
+void _start_current_process() {
     /* Ne rien faire si le pcb n'est pas défini. */
     if (_current_pcb == NULL) {
         return;
@@ -95,7 +95,7 @@ static void _start_current_process() {
     _close_current_pcb();
 }
 
-static void _close_current_pcb() {
+void _close_current_pcb() {
     if(_current_pcb == NULL)
         return;
 
