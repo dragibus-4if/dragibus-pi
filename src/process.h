@@ -47,8 +47,6 @@ struct pcb_s {
     struct pcb_s * next_pcb;
 };
 
-
-
 /* Premier élément de la liste de PCB */
 extern struct pcb_s * _first_pcb;
 
