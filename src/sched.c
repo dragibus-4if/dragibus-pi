@@ -1,4 +1,5 @@
 #include "sched.h"
+#include "allocateMemory.h"
 
 /* \brief Exécute une première fois un processus
  * \param pcb   Bloc d'infomation du processus à commencer

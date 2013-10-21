@@ -4,6 +4,6 @@
 #include "process.h"
 
 /* Switch à un autre contexte */
-extern void switch_to();
+/* extern void switch_to(); */
 
 #endif
