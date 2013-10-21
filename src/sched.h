@@ -14,5 +14,5 @@
  * Si il n'y a pas de processus à exécuter, cette fonction ne fait rien.
  */
 extern void yield();
-
+extern struct pcb_s * schedule();
 #endif

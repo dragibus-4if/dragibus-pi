@@ -43,18 +43,30 @@ void yield() {
     if(_current_pcb != NULL) {
         /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
         __asm("mov %0, sp" : "=r"(_current_pcb->sp));
+	      
     }
-
-    /* TODO Placer ce choix dans schedule.c */
-    _current_pcb = _current_pcb->next_pcb;
+	_current_pcb=schedule();
 
     if(_current_pcb->state == PCB_FUNC_NOT_EXECUTED) {
         __asm("pop {lr, r0-r12}");
+        // Charger la sp
         _start_current_process();
     }
     else {
+		// Charger la sp
         _ctx_switch();
     }
+}
+
+struct pcb_s * schedule(){
+	struct pcb_s * pcb = _current_pcb; 
+	while(pcb->next_pcb->state==PCB_FUNC_FINISHED){
+		struct pcb_s * temp = pcb->next_pcb->next_pcb;
+		FreeAllocatedMemory(pcb->next_pcb->sp);
+		FreeAllocatedMemory(pcb->next_pcb);
+		pcb->next_pcb=temp;
+	}
+	return _current_pcb->next_pcb;
 }
 
 void _ctx_switch() {
@@ -88,9 +100,6 @@ void _close_current_pcb() {
         return;
 
     _current_pcb->state = PCB_FUNC_FINISHED;
-
-    FreeAllocatedMemory((uint32_t *) _current_pcb->sp);
-    FreeAllocatedMemory((uint32_t *) _current_pcb);
 
     yield();
 }
