@@ -29,52 +29,48 @@ static void _start_current_process();
  */
 static void _close_current_pcb();
 
-/* TODO commentaire complet */
-static void _ctx_switch();
-
 void yield() {
     /* Stockage des registres avant de les utiliser */
-    __asm("push {lr, r0-r12}");
+    __asm("push {r0-r12, lr}");
 
     if(_first_pcb == NULL && _last_pcb == NULL) {
-        __asm("pop {lr, r0-r12}");
+        __asm("pop {r0-r12, lr}");
         return;
     }
     if(_current_pcb != NULL) {
         /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
         __asm("mov %0, sp" : "=r"(_current_pcb->sp));
-	      
     }
-	_current_pcb=schedule();
+
+    _current_pcb = schedule();
+    if(_current_pcb == NULL) {
+        return;
+    }
+
+    /* Changement de pile */
+    __asm("mov sp, %0" : : "r"(_current_pcb->sp));
 
     if(_current_pcb->state == PCB_FUNC_NOT_EXECUTED) {
-        __asm("pop {lr, r0-r12}");
-        // Charger la sp
         _start_current_process();
     }
     else {
-		// Charger la sp
-        _ctx_switch();
+        /* Chargement des registres */
+        __asm("pop {r0-r12, lr}");
     }
 }
 
-struct pcb_s * schedule(){
-	struct pcb_s * pcb = _current_pcb; 
-	while(pcb->next_pcb->state==PCB_FUNC_FINISHED){
-		struct pcb_s * temp = pcb->next_pcb->next_pcb;
-		FreeAllocatedMemory(pcb->next_pcb->sp);
-		FreeAllocatedMemory(pcb->next_pcb);
-		pcb->next_pcb=temp;
-	}
-	return _current_pcb->next_pcb;
-}
-
-void _ctx_switch() {
+struct pcb_s * schedule() {
     if(_current_pcb == NULL)
-        return;
+        return _first_pcb;
 
-    /* Chargement des registres */
-    __asm("pop {lr, r0-r12}");
+    struct pcb_s * pcb = _current_pcb;
+    while(pcb->next_pcb->state == PCB_FUNC_FINISHED){
+        struct pcb_s * temp = pcb->next_pcb->next_pcb;
+        FreeAllocatedMemory((uint32_t *) pcb->next_pcb->sp);
+        FreeAllocatedMemory((uint32_t *) pcb->next_pcb);
+        pcb->next_pcb = temp;
+    }
+    return _current_pcb->next_pcb;
 }
 
 void _start_current_process() {
@@ -87,6 +83,8 @@ void _start_current_process() {
     if (_current_pcb->state != PCB_FUNC_NOT_EXECUTED) {
         return;
     }
+
+    _current_pcb->state = PCB_FUNC_EXECUTING;
 
     /* Appel de la procédure */
     _current_pcb->entry(_current_pcb->args);
