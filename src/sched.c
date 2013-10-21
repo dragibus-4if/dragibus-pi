@@ -65,10 +65,15 @@ struct pcb_s * schedule() {
 
     struct pcb_s * pcb = _current_pcb;
     while(pcb->next_pcb->state == PCB_FUNC_FINISHED){
-        struct pcb_s * temp = pcb->next_pcb->next_pcb;
+        struct pcb_s * tmp = pcb->next_pcb->next_pcb;
         FreeAllocatedMemory((uint32_t *) pcb->next_pcb->sp);
         FreeAllocatedMemory((uint32_t *) pcb->next_pcb);
-        pcb->next_pcb = temp;
+        pcb->next_pcb = tmp;
+
+        /* Bug fix : maj du dernier élément de la liste */
+        if(tmp == _first_pcb) {
+            _last_pcb = tmp;
+        }
     }
     return _current_pcb->next_pcb;
 }
