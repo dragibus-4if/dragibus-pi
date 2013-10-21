@@ -104,6 +104,7 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
     pcb->args   = args;
     pcb->pc     = (uint32_t) pcb->entry;
     pcb->state  = PCB_FUNC_NOT_EXECUTED;
+    pcb->sp     = (uint32_t) AllocateMemory(STACK_SIZE * sizeof(uint32_t));
 
     /* Ajoute le PCB à la fin de la liste */
     /* Si la liste est vide */
@@ -118,27 +119,21 @@ static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
     pcb->next_pcb = _first_pcb;
 }
 
-static void _start_process(struct pcb_s * pcb) {
-    /* Ne rien faire si le pcb a déjà été lancé. */
-    if (pcb->state != PCB_FUNC_NOT_EXECUTED) {
+static void _start_current_process() {
+    /* Ne rien faire si le pcb n'est pas défini. */
+    if (_current_process == NULL) {
         return;
     }
 
-    _current_pcb->state = PCB_FUNC_EXECUTING;
-
-    pcb->sp = _current_pcb->sp;
-
-    /* Changement de contexte. */
-    _current_pcb = pcb;
-
-    /* Chargement de la valeur de SP stockée dans le nouveau contexte */
-    __asm("mov sp, %0" : : "r"(_current_pcb->sp));
-
-    /* Interception de l'arret du PCB sur la fonction _close_current_pcb */
-    /* __asm("mov lr, %0" : : "r"(_close_current_pcb)); */
+    /* Ne rien faire si le pcb a déjà été lancé. */
+    if (_current_process->state != PCB_FUNC_NOT_EXECUTED) {
+        return;
+    }
 
     /* Appel de la procédure */
     _current_pcb->entry(_current_pcb->args);
+
+    /* Ferme le processus */
     _close_current_pcb();
 }
 
@@ -146,71 +141,45 @@ static void _close_current_pcb() {
     if(_current_pcb == NULL)
         return;
 
-    /* TODO enlever le pcb de la liste circulaire */
+    _current_pcb->state = PCB_FUNC_FINISHED;
 
+    FreeAllocatedMemory((uint32_t *) _current_pcb->sp);
     FreeAllocatedMemory((uint32_t *) _current_pcb);
-    /* TODO penser a la pauvre Stack qui n'est pas libérée. */
-    /* Liberons les Stack. */
-    /* Mettons fin à ce regne de tyrannie. */
 
     yield();
 }
 
-static void _ctx_switch(struct pcb_s * pcb) {
-    if(pcb == NULL)
+static void _ctx_switch() {
+    if(_current_pcb == NULL)
         return;
 
-    /* Changement de contexte. */
-    _current_pcb = pcb;
-
-    /* Chargement de la valeur de SP stockée dans le nouveau contexte */
-    __asm("mov sp, %0" : : "r"(_current_pcb->sp));
-
-    /* Interception de l'arret du PCB sur la fonction _close_current_pcb */
-    __asm("mov lr, %0" : : "r"(_current_pcb->pc));
-
     /* Chargement des registres */
-    __asm("pop {r0-r12}");
+    __asm("pop {lr r0-r12}");
 }
 
 void create_process(func_t entry, void * args) {
-    /* TODO Libérer la mémoire allouée
-     * Normalement celle-ci se fait lorsque le processus est fini
-     */
     struct pcb_s * pcb = (struct pcb_s *) AllocateMemory(sizeof(struct pcb_s));
     _init_pcb(pcb, entry, args);
 }
 
 void yield() {
     /* Stockage des registres avant de les utiliser */
-    __asm("push {r0-r12}");
+    __asm("push {lr r0-r12}");
 
-    /* TODO voir process.h pour les commentaires */
     if(_first_pcb == NULL && _last_pcb == NULL) {
-        __asm("pop {r0-r12}");
+        __asm("pop {lr r0-r12}");
         return;
     }
     if(_current_pcb != NULL) {
         /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
         __asm("mov %0, sp" : "=r"(_current_pcb->sp));
-
-        /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
-        __asm("mov %0, lr" : "=r"(_current_pcb->pc));
-
-        _current_pcb = _current_pcb->next_pcb;
     }
-    else {
-        _current_pcb = _first_pcb;
 
-        /* Initialisation du stack pointeur, allocation de la pile. Sp sera
-         * incrémenté dans _ctx_switch, par rapport aux variables
-         * locales/paramètres.
-         */
-        _current_pcb->sp = (uint32_t) AllocateMemory(STACK_SIZE * sizeof(uint32_t));
-    }
+    /* TODO Placer ce choix dans schedule.c */
+    _current_pcb = _current_pcb->next_pcb;
 
     if(_current_pcb->state == PCB_FUNC_NOT_EXECUTED) {
-        __asm("pop {r0-r12}");
+        __asm("pop {lr r0-r12}");
         _start_process(_current_pcb);
     }
     else {
