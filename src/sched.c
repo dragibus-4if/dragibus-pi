@@ -24,11 +24,24 @@ void yield()
 
         /* Sauvegarde de la valeur actuelle de SP dans l'ancien contexte */
         __asm("mov %0, sp" : "=r"(_current_pcb->sp));
-
+		
+		current_process=schedule();
         /* Sauvegarde de la valeur actuelle de PC dans l'ancien contexte */
         __asm("mov %0, pc" : "=r"(_current_pcb->pc));
     }
     _start_process(_first_pcb);
+}
+
+void schedule(){
+	chainePCB = current_pcb->next;
+	struct pcb_s * pcb = current_pcb; 
+	while(pcb->next->state==PCB_FUNC_FINISHED){
+		struct pcb_s * temp = pcb->next->next;
+		FreeAllocatedMemory(pcb->next);
+		pcb->next=temp;
+	}
+	chainePCB=current_pcb->next;
+	
 }
 
 void start_current_process()
