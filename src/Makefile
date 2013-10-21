@@ -10,7 +10,7 @@ OBJCOPY = $(ARMGNU)-objcopy
 CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm
 ASFLAGS = -g -march=armv6z
 
-C_FILES = notmain.c hw.c allocateMemory.c process.c dispatcher.c
+C_FILES = notmain.c hw.c allocateMemory.c process.c dispatcher.c sched.c
 AS_FILES = vectors.s
 
 OBJS = $(patsubst %.s,%.o, $(AS_FILES))
