@@ -3,14 +3,16 @@
 
 #include "process.h"
 
-/* TODO commentaires */
-
-pcb_s* chainePCB;
-
-void create_process(func_t f, void* args);
-
-void yield();
-
-void start_current_process();
-
+/* \brief Sauvegarde le contexte courant et passe la main au suivant
+ *
+ * Enregistre le contexte du processus en cours d'utilisation puis
+ * sélectionne le processus suivant à exécuter. Le contexte de ce dernier est
+ * chargé en mémoire puis est défini comme le courant.
+ *
+ * Si il n'y a pas de processus en exécution, cette fonction s'exécute tout de
+ * meme sans enregistrer précedemment le contexte.
+ * Si il n'y a pas de processus à exécuter, cette fonction ne fait rien.
+ */
+extern void yield();
+extern struct pcb_s * schedule();
 #endif
