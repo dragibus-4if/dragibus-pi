@@ -12,7 +12,6 @@ struct ctx_s {
     uint32_t pc;
     uint32_t sp;
     int32_t regs[13];
-
 };
 
 struct ctx_s * current_ctx;
@@ -20,10 +19,6 @@ struct ctx_s * current_ctx;
 extern void init_ctx(struct ctx_s * ctx, func_t f, size_t stack_size);
 
 extern void start_ctx(struct ctx_s * ctx, func_t f);
-
-/* Accesseurs pour le contexte courant (USE AT YOUR OWN RISK) */
-/* extern inline struct ctx_s * current_ctx(void); */
-/* extern inline void set_current_ctx(struct ctx_s *); */
 
 /* Espace utilisateur */
 

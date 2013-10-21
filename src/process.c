@@ -5,7 +5,7 @@
 
 #define PCB_FUNC_NOT_EXECUTED   0
 #define PCB_FUNC_EXECUTING      1
-#define PCB_FUNC_FINISHED       -1
+#define PCB_FUNC_FINISHED      -1
 
 /* \brief Définition d'un Process Control Block (PCB)
  * \var entry       Pointeur vers la fonction d'entrée à appeler
@@ -99,10 +99,6 @@ static struct pcb_s * _last_pcb     = NULL;
 /* Pointeur vers le PCB courant */
 static struct pcb_s * _current_pcb  = NULL;
 
-/****************************************************************************/
-/************************ DEFINITION DES FONCTIONS PRIVEE *******************/
-/****************************************************************************/
-
 static void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
     pcb->entry  = entry;
     pcb->args   = args;
@@ -177,10 +173,6 @@ static void _ctx_switch(struct pcb_s * pcb) {
     __asm("pop {r0-r12}");
 }
 
-/****************************************************************************/
-/*********************** DEFINITION DES FONCTIONS PUBLIQUE ******************/
-/****************************************************************************/
-
 void create_process(func_t entry, void * args) {
     /* TODO Libérer la mémoire allouée
      * Normalement celle-ci se fait lorsque le processus est fini
@@ -224,37 +216,4 @@ void yield() {
     else {
         _ctx_switch(_current_pcb);
     }
-}
-
-/****************************************************************************/
-/******************** ANCIEN CODE POUR L'ORDONNANCEUR SIMPLE ****************/
-/****************************************************************************/
-
-/* Contexte courant */
-/* static struct ctx_s * _current_ctx = NULL; */
-
-/* struct ctx_s * current_ctx(void) { */
-/*     return _current_ctx; */
-/* } */
-
-/* void set_current_ctx(struct ctx_s * ctx) { */
-/*     _current_ctx = ctx; */
-/* } */
-
-void init_ctx(struct ctx_s* ctx, func_t f, size_t stack_size) {
-    /* Prendre l'adresse de la fonction f et la stocker dans pc */
-    ctx->pc = (uint32_t) f;
-
-    /* Réserver de la mémoire et stocker dans sp, parce que AllMem renvoie un pointeur */
-
-    uint32_t* stack_base = (uint32_t*) AllocateMemory(stack_size);
-    ctx->sp = stack_base + stack_size -1; 
-
-    return;
-}
-
-/* Démarre une fonction en utilisant un certain contexte */
-void start_ctx(struct ctx_s * ctx, func_t f) {
-    current_ctx = ctx;
-    f();
 }
