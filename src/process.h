@@ -3,8 +3,6 @@
 
 #include "types.h"
 
-#define STACK_SIZE 128
-
 #define PCB_FUNC_NOT_EXECUTED   0
 #define PCB_FUNC_EXECUTING      1
 #define PCB_FUNC_FINISHED      -1

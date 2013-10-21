@@ -1,6 +1,8 @@
 #include "allocateMemory.h"
 #include "process.h"
 
+#define STACK_SIZE 128
+
 /* \brief Initialise un PCB
  * \param pcb   Pointeur vers le bloc à initialiser
  * \param entry Pointeur vers la fonction d'entrée du processus
