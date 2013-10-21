@@ -24,7 +24,7 @@ void _init_pcb(struct pcb_s * pcb, func_t entry, void * args) {
     pcb->args   = args;
     pcb->pc     = (uint32_t) pcb->entry;
     pcb->state  = PCB_FUNC_NOT_EXECUTED;
-    pcb->sp     = (uint32_t) AllocateMemory(STACK_SIZE * sizeof(uint32_t));
+    pcb->sp     = (uint32_t) AllocateMemory(STACK_SIZE) + STACK_SIZE - 1;
 
     /* Ajoute le PCB à la fin de la liste */
     /* Si la liste est vide */
