@@ -23,7 +23,6 @@ static void pcbFuncB(void * args) {
     }
 }
 
-//------------------------------------------------------------------------
 int notmain(void)
 {
      create_process(pcbFuncA, NULL);
