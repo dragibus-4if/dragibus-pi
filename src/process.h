@@ -54,7 +54,6 @@ extern struct pcb_s * _last_pcb;
 /* Pointeur vers le PCB courant */
 extern struct pcb_s * _current_pcb;
 
-
 /* \brief Crée un processus à partir d'une function qui prend un paramètre
  * \param entry function d'entrée du processus
  * \param args  argument à donner à la fonction à l'appel
