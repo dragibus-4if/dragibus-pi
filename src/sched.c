@@ -6,11 +6,13 @@
 struct pcb_s idle;
 struct pcb_s* ready_queue = (struct pcb_s *)0;
 struct pcb_s* current_process = (struct pcb_s *) NULL;
+struct pcb_s* waiting_queue = (struct pcb_s *)0;
 
 extern void processus_A();
 
 #define PRINT(MSG) ;
 #define EXIT(CODE) ;
+
 
 void
 start_current_process()
