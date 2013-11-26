@@ -11,6 +11,9 @@ typedef void (*func_t)();
 #  define NULL 0
 #endif
 
+#ifndef _SIZE_T_DEFINED_
+#define _SIZE_T_DEFINED_
 typedef uint32_t size_t;
+#endif
 
 #endif

@@ -1,39 +1,44 @@
+#include "sched.h"
 #include "process.h"
-#include "dispatcher.h"
 
-/* TODO Place ça dans un autre fichier et choisir une valeur non aléatoire
-*/
-#define STACK_SIZE 128
-
-struct ctx_s ctx_A;
-struct ctx_s ctx_B;
-
-void funcA()
-{
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
-    switch_to(&ctx_B);
+static void pcbFuncA(void * args) {
+    int cptA = 1;
+    while (1) {
+        cptA++;
+        if (cptA % 1337 == 0) {
+            cptA = 0;
+            yield();
+        }
+    }
 }
 
-void funcB()
-{
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
-    switch_to(&ctx_A);
+static void pcbFuncB(void * args) {
+    int cptB = 1;
+    while (1) {
+        cptB++;
+        if (cptB % 1337 == 0) {
+            cptB = 0;
+            yield();
+        }
+    }
 }
 
-//------------------------------------------------------------------------
+static void pcbFuncC(void * args) {
+    int i;
+    for (i = 42; i > 0; i--);
+    yield();
+    for (i = 42; i > 0; i--);
+}
+
 int notmain(void)
 {
-    init_ctx(&ctx_B, funcB, STACK_SIZE);
-    start_ctx(&ctx_A, funcA);
+    /* Ajout des processus */
+    create_process(pcbFuncA, NULL);
+    create_process(pcbFuncB, NULL);
+    create_process(pcbFuncC, NULL);
 
-    /* Pas atteignable vues nos 2 fonctions */
+    /* Démarrage de l'ordonnanceur */
+    yield();
+
     return 0;
 }
