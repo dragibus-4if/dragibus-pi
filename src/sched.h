@@ -25,11 +25,13 @@ struct pcb_s {
   struct pcb_s *next;
 };
 
+
 int create_process(func_t* f, unsigned size);
 void yield();
 void start_sched();
 void schedule();
 void start_current_process();
-
+void process_block();
+void process_release(pcb_s* pcb);
 
 #endif
