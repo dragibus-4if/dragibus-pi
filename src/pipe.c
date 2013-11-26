@@ -10,8 +10,7 @@ static const size_t _pipe_max_size = 1048576;
  */
 static enum _pipe_end_state_t {
     READABLE,
-    WRITABLE,
-    CLOSED
+    WRITABLE
 };
 
 static struct _pipe_end_s {
@@ -28,7 +27,31 @@ static struct _pipe_end_s {
     /* TODO ajouter le mutex commun du pipe */
 };
 
-int pipe_create(int * in_des, int * out_des);
+int pipe_create(int * in_des, int * out_des) {
+    struct _pipe_end_s * read_end;
+    struct _pipe_end_s * write_end;
+
+    write_end = (struct _pipe_end_s *) malloc_alloc(sizeof(struct _pipe_end_s));
+    if (write_end == NULL) {
+        return -1;
+    }
+    write_end->des = (int) write_end;
+    write_end->state = WRITABLE;
+    write_end->buffer = NULL;
+    write_end->bufsize = 0;
+
+    read_end = (struct _pipe_end_s *) malloc_alloc(sizeof(struct _pipe_end_s));
+    if (read_end == NULL) {
+        malloc_free(write_end);
+        return -1;
+    }
+    read_end->des = (int) read_end;
+    read_end->state = READABLE;
+    read_end->buffer = NULL;
+    read_end->bufsize = 0;
+
+    /* TODO créer le pipe buffer commun */
+}
 
 int pipe_close(int des);
 
