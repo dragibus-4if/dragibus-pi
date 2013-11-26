@@ -1,4 +1,5 @@
 #include "pipe.h"
+#include "malloc.h"
 
 /**
  * Taille max d'un pipe, inspiré des sources de linux.
@@ -28,9 +29,28 @@ static struct _pipe_end_s {
     /* TODO ajouter le mutex commun du pipe */
 };
 
+/* TODO commentaire */
+static int _pipe_des_to_pipe_end(int des, _pipe_end_s * pipe) {
+    /* TODO check if the pipe is good */
+    if(des < 0) {
+        return -1;
+    }
+    *pipe = * (_pipe_end_s *) des;
+    if(pipe->des != des) {
+        return -1;
+    }
+    return 0;
+}
+
 int pipe_create(int * in_des, int * out_des);
 
-int pipe_close(int des);
+int pipe_close(int des) {
+    _pipe_end_s * pipe_end = NULL;
+    if(_pipe_des_to_pipe_end(des, pipe_end) == -1) {
+        return -1;
+    }
+    malloc_free((void *) pipe_end);
+}
 
 ssize_t pipe_read(int * des, void * buffer, size_t bufsize);
 
