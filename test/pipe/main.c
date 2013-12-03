@@ -5,12 +5,15 @@ int main(void) {
     /* Initialisation de la RAM */
     char mem[0x30000 - 0x8000];
     malloc_init((void * )&mem);
+    malloc_free((void *)malloc_alloc(10000));
 
-    int in, out;
+    intptr_t in, out;
     if(pipe_create(&in, &out) == 0) {
         pipe_close(in);
         pipe_close(out);
     }
+    else
+      return -1;
     return 0;
 }
 

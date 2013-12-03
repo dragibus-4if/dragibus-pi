@@ -191,7 +191,6 @@ static enum _pipe_end_state_t {
 };
 
 static struct _pipe_end_s {
-    int des;
     enum _pipe_end_state_t state;
 
     struct _pipe_end_s * other_side;
@@ -207,18 +206,15 @@ static struct _pipe_end_s {
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
  * l'élément de la structure correspondant */
-static int _pipe_des_to_end(int des, struct _pipe_end_s * pipe) {
+static int _pipe_des_to_end(intptr_t des, struct _pipe_end_s * pipe) {
     if (des <= 0) {
         return -1;
     }
     *pipe = *(struct _pipe_end_s *) des;
-    if (pipe->des != des) {
-        return -1;
-    }
     return 0;
 }
 
-int pipe_create(int * in_des, int * out_des) {
+int pipe_create(intptr_t * in_des, intptr_t * out_des) {
     struct _pipe_end_s * read_end;
     struct _pipe_end_s * write_end;
 
@@ -232,7 +228,6 @@ int pipe_create(int * in_des, int * out_des) {
     if (write_end == NULL) {
         return -1;
     }
-    write_end->des = (int) write_end;
     write_end->state = WRITABLE;
 
     /* Création du point de sortie */
@@ -241,7 +236,6 @@ int pipe_create(int * in_des, int * out_des) {
         malloc_free(write_end);
         return -1;
     }
-    read_end->des = (int) read_end;
     read_end->state = READABLE;
 
     /* Passage d'un côté à l'autre du pipe */
@@ -259,52 +253,52 @@ int pipe_create(int * in_des, int * out_des) {
     /* TODO création du mutex du buffer */
 
     /* Retour par paramètre */
-    *in_des = (int) read_end;
-    *out_des = (int) write_end;
+    *in_des = (intptr_t) read_end;
+    *out_des = (intptr_t) write_end;
     return 0;
 }
 
-int pipe_close(int des) {
-    struct _pipe_end_s * pipe_end = NULL;
-    if (_pipe_des_to_end(des, pipe_end) == -1) {
+int pipe_close(intptr_t des) {
+    struct _pipe_end_s pipe_end;
+    if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
     }
-    if (pipe_end->other_side == NULL) {
-      _buffer_free(pipe_end->buffer);
+    if (pipe_end.other_side == NULL) {
+      _buffer_free(pipe_end.buffer);
     } else {
-      pipe_end->other_side->other_side = NULL;
+      pipe_end.other_side->other_side = NULL;
     }
-    malloc_free((void *) pipe_end);
+    malloc_free((void *) &pipe_end);
     return 0;
 }
 
-ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
-    struct _pipe_end_s * pipe_end = NULL;
-    if (_pipe_des_to_end(des, pipe_end) == -1) {
+ssize_t pipe_read(intptr_t des, void * buffer, size_t bufsize) {
+    struct _pipe_end_s pipe_end;
+    if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
     }
-    if (pipe_end->state != READABLE) {
+    if (pipe_end.state != READABLE) {
         return -1;
     }
 
     /* TODO bloquer le mutex du buffer */
-    ssize_t return_value = _buffer_read(pipe_end->buffer, (char *) buffer, bufsize);
+    ssize_t return_value = _buffer_read(pipe_end.buffer, (char *) buffer, bufsize);
     /* TODO libérer le mutex du buffer */
     return return_value;
 }
 
-ssize_t pipe_write(int des, const void * buffer, size_t bufsize) {
+ssize_t pipe_write(intptr_t des, const void * buffer, size_t bufsize) {
     /* Vérification des paramètres */
-    struct _pipe_end_s * pipe_end = NULL;
-    if (_pipe_des_to_end(des, pipe_end) == -1) {
+    struct _pipe_end_s pipe_end;
+    if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
     }
-    if (pipe_end != WRITABLE) {
+    if (pipe_end.state != WRITABLE) {
         return -1;
     }
 
     /* TODO bloquer le mutex associé */
-    ssize_t return_value =_buffer_write(pipe_end->buffer, buffer, bufsize);
+    ssize_t return_value =_buffer_write(pipe_end.buffer, buffer, bufsize);
     /* TODO libérer le mutex associé */
 
     return return_value;
