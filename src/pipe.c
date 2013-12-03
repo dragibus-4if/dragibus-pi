@@ -1,5 +1,6 @@
 #include "pipe.h"
 #include "malloc.h"
+#include "mutex.h"
 
 /* Taille (fixée) d'un block buffer */
 static const size_t _buffer_block_size = 512;
@@ -203,7 +204,8 @@ static struct _pipe_end_s {
      */
     struct _buffer_s * buffer;
 
-    /* TODO ajouter le mutex commun du pipe */
+    /* Mutex commun du pipe */
+    int mutex;
 };
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
@@ -257,6 +259,16 @@ int pipe_create(int * in_des, int * out_des) {
         return -1;
     }
 
+    /* Création du mutex commun */
+    int mutex = 0;
+    if (mutex_create(&mutex) == -1) {
+        _buffer_free(write_end->buffer);
+        malloc_free(read_end);
+        malloc_free(write_end);
+        return -1;
+    }
+    read_end->mutex = write_end->mutex = mutex;
+
     /* Retour par paramètre */
     *in_des = (int) read_end;
     *out_des = (int) write_end;
@@ -268,13 +280,20 @@ int pipe_close(int des) {
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
+
+    int return_value = 0;
     if (pipe_end->other_side == NULL) {
-      _buffer_free(pipe_end->buffer);
+        if (_buffer_free(pipe_end->buffer) == -1) {
+            return_value = -1;
+        }
+        if (mutex_free(pipe_end->mutex) == -1) {
+            return_value = -1;
+        }
     } else {
-      pipe_end->other_side->other_side = NULL;
+        pipe_end->other_side->other_side = NULL;
     }
     malloc_free((void *) pipe_end);
-    return 0;
+    return return_value;
 }
 
 ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
