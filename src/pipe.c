@@ -24,10 +24,25 @@ static _buffer_s * _buffer_create() {
     return -1;
 }
 
-/* TODO commentaire */
+/* Désallouer un buffer */
 static int _buffer_destroy(struct _buffer_s * buffer) {
-    /* TODO */
-    return -1;
+    /* Vérification des paramètres */
+    if (buffer == NULL) {
+        return -1;
+    }
+
+    /* Parcours et désallocation */
+    struct _buffer_block_s current = buffer->head;
+    while (current != NULL) {
+        struct _buffer_block_s tmp = current;
+        current = current->next;
+        malloc_free(tmp);
+        malloc_free(tmp->data);
+    }
+
+    /* Désallocation */
+    malloc_free(buffer);
+    return 0;
 }
 
 /* TODO commentaire */
