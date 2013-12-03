@@ -117,6 +117,7 @@ ssize_t pipe_read(int * des, void * buffer, size_t bufsize) {
     return -1;
 }
 
-ssize_t pipe_write(int * des, const void * buffer, size_t bufsize);
+ssize_t pipe_write(int * des, const void * buffer, size_t bufsize) {
+}
 
-/* vim: ft=c et sw=4 sts=4 */
+/* vim: set ft=c et sw=4 sts=4 */
