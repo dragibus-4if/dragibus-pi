@@ -1,6 +1,5 @@
 #include "pipe.h"
 #include "malloc.h"
-#include "mutex.h"
 
 /* Taille (fixée) d'un block buffer */
 static const size_t _buffer_block_size = 512;
@@ -204,8 +203,7 @@ static struct _pipe_end_s {
      */
     struct _buffer_s * buffer;
 
-    /* Mutex commun du pipe */
-    int mutex;
+    /* TODO ajouter le mutex commun du pipe */
 };
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
@@ -259,15 +257,7 @@ int pipe_create(int * in_des, int * out_des) {
         return -1;
     }
 
-    /* Création du mutex commun */
-    int mutex = 0;
-    if (mutex_create(&mutex) == -1) {
-        _buffer_free(write_end->buffer);
-        malloc_free(read_end);
-        malloc_free(write_end);
-        return -1;
-    }
-    read_end->mutex = write_end->mutex = mutex;
+    /* TODO création du mutex du buffer */
 
     /* Retour par paramètre */
     *in_des = (int) read_end;
@@ -280,12 +270,10 @@ int pipe_close(int des) {
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
-
     if (pipe_end->other_side == NULL) {
-        _buffer_free(pipe_end->buffer);
-        mutex_free(pipe_end->mutex);
+      _buffer_free(pipe_end->buffer);
     } else {
-        pipe_end->other_side->other_side = NULL;
+      pipe_end->other_side->other_side = NULL;
     }
     malloc_free((void *) pipe_end);
     return 0;
@@ -300,9 +288,9 @@ ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
         return -1;
     }
 
-    mutex_acquire(pipe_end->mutex);
+    /* TODO bloquer le mutex du buffer */
     ssize_t return_value = _buffer_read(pipe_end->buffer, buffer, bufsize);
-    mutex_release(pipe_end->mutex);
+    /* TODO libérer le mutex du buffer */
     return return_value;
 }
 
@@ -316,9 +304,10 @@ ssize_t pipe_write(int des, const void * buffer, size_t bufsize) {
         return -1;
     }
 
-    mutex_acquire(pipe_end->mutex);
-    ssize_t return_value = _buffer_write(pipe_end->buffer, buffer, bufsize);
-    mutex_release(pipe_end->mutex);
+    /* TODO bloquer le mutex associé */
+    ssize_t return_value =_buffer_write(pipe_end->buffer, buffer, bufsize);
+    /* TODO libérer le mutex associé */
+
     return return_value;
 }
 
