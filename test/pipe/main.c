@@ -51,6 +51,11 @@ int main(void) {
             ASSERT(nb_read != -1);
             ASSERT(nb_read <= 10);
 
+            /* Normalement dans un cas monoproc, l'écriture et la lecture ne
+             * pose pas de problème. */
+            ASSERT(nb_write == 10);
+            ASSERT(nb_read == 10);
+
             /* Vérification de l'égalité des buffers */
             for(i = 0 ; i < nb_read ; i++) {
                 ASSERT(buffer1[i] == buffer2[i]);
@@ -82,6 +87,11 @@ int main(void) {
             ssize_t nb_read = pipe_read(readable, buffer2, 1024);
             ASSERT(nb_read != 1);
             ASSERT(nb_read <= nb_write);
+
+            /* Normalement dans un cas monoproc, l'écriture et la lecture ne
+             * pose pas de problème. */
+            ASSERT(nb_write == 1024);
+            ASSERT(nb_read == 1024);
 
             /* On ne peut pas lire dans le pipe (plus rien à lire) */
             ASSERT(pipe_read(readable, buffer2, 10) == 0);
