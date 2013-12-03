@@ -75,7 +75,10 @@ int pipe_create(int * in_des, int * out_des) {
     read_end->des = (int) read_end;
     read_end->state = READABLE;
 
-<<<<<<< HEAD
+    /* Passage d'un côté à l'autre du pipe */
+    read_end->other_side = write_end;
+    write_end->other = read_end;
+
     /* Création du buffer commun */
     write_end->bufsize = read_end->bufsize = bufsize;
     write_end->buffer = read_end->buffer = return malloc_alloc(bufsize * sizeof(_buffer_t));
@@ -89,12 +92,6 @@ int pipe_create(int * in_des, int * out_des) {
     *in_des = (int) read_end;
     *out_des = (int) write_end;
     return 0;
-=======
-    read_end->other_side = write_end;
-    write_end->other = read_end;
-
-    /* TODO créer le pipe buffer commun */
->>>>>>> 175629b242b325c10d068759eb442d34c8897653
 }
 
 int pipe_close(int des) {
@@ -102,18 +99,13 @@ int pipe_close(int des) {
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
-<<<<<<< HEAD
-    malloc_free(pipe_end);
-=======
-    if(pipe_end->other_side == NULL) {
+    if (pipe_end->other_side == NULL) {
       malloc_free((void *) pipe_end->buffer);
-    }
-    else {
+    } else {
       pipe_end->other_side->other_side = NULL;
     }
     malloc_free((void *) pipe_end);
     return 0;
->>>>>>> 175629b242b325c10d068759eb442d34c8897653
 }
 
 ssize_t pipe_read(int * des, void * buffer, size_t bufsize);
