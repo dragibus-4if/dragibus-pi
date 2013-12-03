@@ -30,31 +30,43 @@ static struct _pipe_end_s {
     /* TODO ajouter le mutex commun du pipe */
 };
 
-/* TODO commentaire */
+/* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
+ * l'élément de la structure correspondant */
 static int _pipe_des_to_end(int des, _pipe_end_s * pipe) {
-    if(des <= 0) {
+    if (des <= 0) {
         return -1;
     }
     *pipe = *(_pipe_end_s *) des;
-    if(pipe->des != des) {
+    if (pipe->des != des) {
         return -1;
     }
     return 0;
 }
 
+/* Type des données */
+typedef char _buffer_t;
+
 int pipe_create(int * in_des, int * out_des) {
     struct _pipe_end_s * read_end;
     struct _pipe_end_s * write_end;
 
+    /* TODO fixer la taille de départ */
+    static const size_t bufsize = 1000;
+
+    /* Vérification des paramètres */
+    if (in_des == NULL || out_des == NULL) {
+        return -1;
+    }
+
+    /* Création du point d'entrée */
     write_end = (struct _pipe_end_s *) malloc_alloc(sizeof(struct _pipe_end_s));
     if (write_end == NULL) {
         return -1;
     }
     write_end->des = (int) write_end;
     write_end->state = WRITABLE;
-    write_end->buffer = NULL;
-    write_end->bufsize = 0;
 
+    /* Création du point de sortie */
     read_end = (struct _pipe_end_s *) malloc_alloc(sizeof(struct _pipe_end_s));
     if (read_end == NULL) {
         malloc_free(write_end);
@@ -62,24 +74,34 @@ int pipe_create(int * in_des, int * out_des) {
     }
     read_end->des = (int) read_end;
     read_end->state = READABLE;
-    read_end->buffer = NULL;
-    read_end->bufsize = 0;
 
+    /* Passage d'un côté à l'autre du pipe */
     read_end->other_side = write_end;
     write_end->other = read_end;
 
-    /* TODO créer le pipe buffer commun */
+    /* Création du buffer commun */
+    write_end->bufsize = read_end->bufsize = bufsize;
+    write_end->buffer = read_end->buffer = return malloc_alloc(bufsize * sizeof(_buffer_t));
+    if (write_end->buffer == NULL) {
+        malloc_free(read_end);
+        malloc_free(write_end);
+        return -1;
+    }
+
+    /* Retour par paramètre */
+    *in_des = (int) read_end;
+    *out_des = (int) write_end;
+    return 0;
 }
 
 int pipe_close(int des) {
     _pipe_end_s * pipe_end = NULL;
-    if(_pipe_des_to_end(des, pipe_end) == -1) {
+    if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
-    if(pipe_end->other_side == NULL) {
+    if (pipe_end->other_side == NULL) {
       malloc_free((void *) pipe_end->buffer);
-    }
-    else {
+    } else {
       pipe_end->other_side->other_side = NULL;
     }
     malloc_free((void *) pipe_end);
@@ -96,3 +118,5 @@ ssize_t pipe_read(int * des, void * buffer, size_t bufsize) {
 }
 
 ssize_t pipe_write(int * des, const void * buffer, size_t bufsize);
+
+/* vim: ft=c et sw=4 sts=4 */
