@@ -19,26 +19,26 @@ static struct _buffer_s {
 };
 
 /* TODO commentaire */
-static _buffer_s * buffer_create() {
+static _buffer_s * _buffer_create() {
     /* TODO */
     return -1;
 }
 
 /* TODO commentaire */
-static int buffer_destroy(struct _buffer_s * buffer) {
+static int _buffer_destroy(struct _buffer_s * buffer) {
     /* TODO */
     return -1;
 }
 
 /* TODO commentaire */
-static ssize_t buffer_read(struct _buffer_s * buffer,
+static ssize_t _buffer_read(struct _buffer_s * buffer,
         void * data, size_t size) {
     /* TODO */
     return -1;
 }
 
 /* TODO commentaire */
-static ssize_t buffer_write(struct _buffer_s * buffer,
+static ssize_t _buffer_write(struct _buffer_s * buffer,
         const void * data, size_t size) {
     /* TODO */
     return -1;
