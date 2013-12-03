@@ -9,12 +9,12 @@ struct pcb_Sem {
 };
 
 struct sem_s {
-    int32_t counter;
+    int counter;
     struct pcb_Sem* pcbSemF;
     struct pcb_Sem* pcbSemL;
 };
 
-void sem_init(struct sem_s* sem, int32_t val);
+void sem_init(struct sem_s* sem, int val);
 void sem_up(struct sem_s* sem);
 void sem_down(struct sem_s* sem);
 
