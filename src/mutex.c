@@ -10,7 +10,7 @@ static struct _mutex_s {
 
 /* Permet de convertir le descripteur de mutex en mutex réel. Cas d'erreur :
  * - desc est négatif ou nul : adresse invalide */
-static int _mutex_desc_convert(int desc, _mutex_s * mutex) {
+static int _mutex_desc_convert(intptr_t desc, _mutex_s * mutex) {
     if (desc <= 0) {
         return -1;
     }
@@ -18,7 +18,7 @@ static int _mutex_desc_convert(int desc, _mutex_s * mutex) {
     return 0;
 }
 
-int mutex_create(int * desc) {
+int mutex_create(intptr_t * desc) {
     /* Vérification des paramètres */
     if (desc == NULL) {
         return -1;
@@ -35,11 +35,11 @@ int mutex_create(int * desc) {
     mutex->owner = NULL;
 
     /* Retour */
-    *desc = (int) mutex;
+    *desc = (intptr_t) mutex;
     return 0;
 }
 
-int mutex_free(int desc) {
+int mutex_free(intptr_t desc) {
     struct _mutex_s * mutex = NULL;
     if (_mutex_desc_convert(desc, mutex) == -1) {
         return -1;
@@ -50,7 +50,7 @@ int mutex_free(int desc) {
     return 0;
 }
 
-void mutex_acquire(int desc) {
+void mutex_acquire(intptr_t desc) {
     /* Convertir le descripteur en mutex */
     struct _mutex_s * mutex = NULL;
     if (_mutex_desc_convert(desc, mutex) == -1) {
@@ -67,6 +67,6 @@ void mutex_acquire(int desc) {
     return 0;
 }
 
-void mutex_release(int desc) {
+void mutex_release(intptr_t desc) {
     /* TODO */
 }
