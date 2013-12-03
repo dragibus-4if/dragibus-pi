@@ -64,7 +64,7 @@ static struct _buffer_s * _buffer_create() {
     }
 
     struct _buffer_block_s * block = _buffer_block_create();
-    if(block == NULL) {
+    if (block == NULL) {
         malloc_free(buffer);
         return NULL;
     }
@@ -123,7 +123,7 @@ static ssize_t _buffer_read(struct _buffer_s * buffer,
         }
 
         /* Suppression du premier block si on ne l'utilise plus */
-        if(buffer->rd_cursor == end) {
+        if (buffer->rd_cursor == end) {
             /* Déplace la lecture au prochain block */
             struct _buffer_block_s * old = buffer->head;
             struct _buffer_block_s * block = old->next;
@@ -162,7 +162,7 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
         }
 
         /* Création d'un nouveau block si on arrive à la fin */
-        if(buffer->wr_cursor == end) {
+        if (buffer->wr_cursor == end) {
             struct _buffer_block_s * block = buffer_block_create();
             if (block == NULL) {
                 return write_size;
@@ -257,6 +257,8 @@ int pipe_create(int * in_des, int * out_des) {
         return -1;
     }
 
+    /* TODO création du mutex du buffer */
+
     /* Retour par paramètre */
     *in_des = (int) read_end;
     *out_des = (int) write_end;
@@ -303,15 +305,10 @@ ssize_t pipe_write(int des, const void * buffer, size_t bufsize) {
     }
 
     /* TODO bloquer le mutex associé */
-
-    if (_buffer_write(pipe_end->buffer, buffer, bufsize) == -1) {
-        /* TODO libérer le mutex associé */
-        return -1;
-    }
-
+    ssize_t return_value =_buffer_write(pipe_end->buffer, buffer, bufsize);
     /* TODO libérer le mutex associé */
 
-    return -1;
+    return return_value;
 }
 
 /* vim: set ft=c et sw=4 sts=4 */
