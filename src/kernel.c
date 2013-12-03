@@ -1,6 +1,7 @@
 #include "hw.h"
 #include "sched.h"
 #include "malloc.h"
+#include <stdio.h>
 
 void
 processus_A()
@@ -8,7 +9,7 @@ processus_A()
   int i = 0;
   
   while (1) {
-    led_on();
+    
     while ( i++ < 2000000);
     i = 0;
   }
@@ -20,7 +21,7 @@ processus_B()
   int i = 0;
 
   while (1) {
-    led_off();
+    
     while ( i++ < 2000000);
     i = 0;
   }
