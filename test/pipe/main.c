@@ -11,6 +11,7 @@ int main(void) {
 
     intptr_t readable, writable;
 
+    /* Test les cas d'erreurs */
     ASSERT(pipe_create(NULL, NULL) == -1);
     ASSERT(pipe_create(&readable, NULL) == -1);
     ASSERT(pipe_create(NULL, &writable) == -1);
@@ -39,14 +40,19 @@ int main(void) {
             char buffer1[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
             char buffer2[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+            /* Ecriture du buffer1 dans le pipe */
             ssize_t nb_write = pipe_write(writable, buffer1, 10);
+
+            /* Lecture dans le pipe comme un porc (mais tout va bien) */
             ssize_t nb_read = pipe_read(readable, buffer2, 10000);
+
+            /* Quelques tests de base */
             ASSERT(nb_write != -1);
             ASSERT(nb_read != -1);
             ASSERT(nb_read <= 10);
 
-            ssize_t nb = nb_write > nb_read ? nb_read : nb_write;
-            for(i = 0 ; i < nb ; i++) {
+            /* Vérification de l'égalité des buffers */
+            for(i = 0 ; i < nb_read ; i++) {
                 ASSERT(buffer1[i] == buffer2[i]);
             }
         }
@@ -55,11 +61,14 @@ int main(void) {
             int i;
             char buffer1[1024] = {0};
             char buffer2[1024] = {0};
+
+            /* Remplissage les buffer (OSEF des valeurs) */
             for(i = 0 ; i < 1024 ; i++) {
                 buffer1[i] = i % 100;
                 buffer2[i] = (i + 3) % 42;
             }
 
+            /* Ecriture dans le pipe petit bout par petit bout */
             ssize_t nb_write = 0;
             for(i = 0 ; i < 100 ; i++) {
                 ssize_t nb = pipe_write(writable, buffer1 + (i * 10), 10);
@@ -67,14 +76,18 @@ int main(void) {
                 ASSERT(nb <= 10);
                 nb_write += nb;
             }
-            ssize_t nb_read = pipe_write(writable, buffer1 + 1000, 24);
+            nb_write += pipe_write(writable, buffer1 + 1000, 24);
+
+            /* Lecture dans le pipe d'un coup */
+            ssize_t nb_read = pipe_read(readable, buffer2, 1024);
             ASSERT(nb_read != 1);
             ASSERT(nb_read <= nb_write);
-            ASSERT(pipe_read(readable, buffer2, 1024) != -1);
-            ASSERT(pipe_read(readable, buffer2, 1) == 0);
 
-            ssize_t nb = nb_write > nb_read ? nb_read : nb_write;
-            for(i = 0 ; i < nb ; i++) {
+            /* On ne peut pas lire dans le pipe (plus rien à lire) */
+            ASSERT(pipe_read(readable, buffer2, 10) == 0);
+
+            /* Vérification de l'égalité des buffers */
+            for(i = 0 ; i < nb_read ; i++) {
                 ASSERT(buffer1[i] == buffer2[i]);
             }
         }
