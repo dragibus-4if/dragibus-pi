@@ -86,6 +86,13 @@ int pipe_close(int des) {
     return 0;
 }
 
-ssize_t pipe_read(int * des, void * buffer, size_t bufsize);
+ssize_t pipe_read(int * des, void * buffer, size_t bufsize) {
+    _pipe_end_s * pipe_end = NULL;
+    if (_pipe_des_to_end(des, pipe_end) == -1) {
+        return -1;
+    }
+    /* TODO finir la fonction */
+    return -1;
+}
 
 ssize_t pipe_write(int * des, const void * buffer, size_t bufsize);
