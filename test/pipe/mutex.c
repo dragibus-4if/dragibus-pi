@@ -1,18 +1,18 @@
 #include "mutex.h"
 
-int mutex_create(int * desc) {
+int mutex_create(intptr_t * desc) {
     return 0;
 }
 
-int mutex_free(int desc) {
+int mutex_free(intptr_t desc) {
     return 0;
 }
 
-int mutex_acquire(int desc) {
+int mutex_acquire(intptr_t desc) {
     return 0;
 }
 
-int mutex_release(int desc) {
+int mutex_release(intptr_t desc) {
     return 0;
 }
 
