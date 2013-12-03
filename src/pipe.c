@@ -143,7 +143,7 @@ int pipe_close(int des) {
         return -1;
     }
     if (pipe_end->other_side == NULL) {
-      malloc_free((void *) pipe_end->buffer);
+      _buffer_destroy(pipe_end->buffer);
     } else {
       pipe_end->other_side->other_side = NULL;
     }
@@ -159,18 +159,11 @@ ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
     if (pipe_end->state != READABLE) {
         return -1;
     }
-    if (buffer == NULL)
-        return -1;
 
     /* TODO bloquer le mutex du buffer */
-    /* TODO Finir en utilisant l'interface */
-    /* void * it; */
-    /* void * begin = pipe_end->buffer + pipe_end->read_offset; */
-    /* void * end = pipe_end->buffer + pipe_end->bufsize; */
-    /* for (it = begin ; it != end && *it != 0 ; it++) { */
-    /* } */
+    ssize_t return_value = _buffer_read(pipe_end->buffer, buffer, bufsize);
     /* TODO libérer le mutex du buffer */
-    return -1;
+    return return_value;
 }
 
 ssize_t pipe_write(int * des, const void * buffer, size_t bufsize);
