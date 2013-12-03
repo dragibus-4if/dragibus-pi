@@ -281,19 +281,14 @@ int pipe_close(int des) {
         return -1;
     }
 
-    int return_value = 0;
     if (pipe_end->other_side == NULL) {
-        if (_buffer_free(pipe_end->buffer) == -1) {
-            return_value = -1;
-        }
-        if (mutex_free(pipe_end->mutex) == -1) {
-            return_value = -1;
-        }
+        _buffer_free(pipe_end->buffer);
+        mutex_free(pipe_end->mutex);
     } else {
         pipe_end->other_side->other_side = NULL;
     }
     malloc_free((void *) pipe_end);
-    return return_value;
+    return 0;
 }
 
 ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
