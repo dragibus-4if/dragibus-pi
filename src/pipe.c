@@ -80,7 +80,10 @@ static int _buffer_destroy(struct _buffer_s * buffer) {
 /* TODO commentaire */
 static ssize_t _buffer_read(struct _buffer_s * buffer,
         void * data, size_t size) {
-    /* TODO */
+    /* Vérification des paramètres */
+    if (buffer == NULL || data == NULL) {
+        return -1;
+    }
     return -1;
 }
 
