@@ -36,7 +36,7 @@ void malloc_free(void *ptr) {
   uint32 parent = curr / 2;
   malloc_free_list->entries[curr] = entry;
   while( curr != 0 ) {
-    if ( 
+    if (
         malloc_free_list->entries[curr]->size <
         malloc_free_list->entries[parent]->size
        ) {
