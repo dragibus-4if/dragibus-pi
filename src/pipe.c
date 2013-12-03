@@ -305,9 +305,9 @@ ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
         return -1;
     }
 
-    /* TODO bloquer le mutex du buffer */
+    mutex_acquire(pipe_end->mutex);
     ssize_t return_value = _buffer_read(pipe_end->buffer, buffer, bufsize);
-    /* TODO libérer le mutex du buffer */
+    mutex_release(pipe_end->mutex);
     return return_value;
 }
 
@@ -321,15 +321,13 @@ ssize_t pipe_write(int des, const void * buffer, size_t bufsize) {
         return -1;
     }
 
-    /* TODO bloquer le mutex associé */
-
+    mutex_acquire(pipe_end->mutex);
     if (_buffer_write(pipe_end->buffer, buffer, bufsize) == -1) {
-        /* TODO libérer le mutex associé */
+        mutex_release(pipe_end->mutex);
         return -1;
     }
 
-    /* TODO libérer le mutex associé */
-
+    mutex_release(pipe_end->mutex);
     return -1;
 }
 
