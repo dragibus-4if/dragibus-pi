@@ -19,13 +19,13 @@ extern int pipe_close(int des);
  * *buffer*, un buffer de sortie d'une taille d'au moins *bufsize*.
  * Retourne le nombre d'octets lus, ou -1 si une erreur a eu lieu.
  */
-extern ssize_t pipe_read(int * des, void * buffer, size_t bufsize);
+extern ssize_t pipe_read(int des, void * buffer, size_t bufsize);
 
 /**
  * Écrit au maximum *bufsize* octets à partir du descripteur de pipe *des*
  * dans *buffer*, un buffer d'entrée d'une taille d'au moins *bufsize*.
  * Retourne le nombre d'octets écrits, ou -1 si une erreur a eu lieu.
  */
-extern ssize_t pipe_write(int * des, const void * buffer, size_t bufsize);
+extern ssize_t pipe_write(int des, const void * buffer, size_t bufsize);
 
 #endif
