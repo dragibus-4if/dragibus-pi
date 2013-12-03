@@ -82,6 +82,7 @@ static int _buffer_destroy(struct _buffer_s * buffer) {
  * lus, ou -1 si une erreur a eu lieu. */
 static ssize_t _buffer_read(struct _buffer_s * buffer,
         void * data, size_t size) {
+    /* Vérification des paramètres */
     if (buffer == NULL || data == NULL) {
         return -1;
     }
