@@ -4,6 +4,8 @@
 private char keysNormal [104];
 private char keysShift [104];
 
+//http://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/input01.html
+
 keysNormal = {
 	0x0, 0x0, 0x0, 0x0, 'a', 'b', 'c', 'd',
 	 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
