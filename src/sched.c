@@ -13,6 +13,10 @@ extern void processus_A();
 #define PRINT(MSG) ;
 #define EXIT(CODE) ;
 
+void
+process_release(pcb_s* toFree){
+
+}
 
 void
 start_current_process()
