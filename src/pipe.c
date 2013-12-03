@@ -35,7 +35,7 @@ static int _pipe_des_to_end(int des, _pipe_end_s * pipe) {
     if(des <= 0) {
         return -1;
     }
-    *pipe = * (_pipe_end_s *) des;
+    *pipe = *(_pipe_end_s *) des;
     if(pipe->des != des) {
         return -1;
     }
