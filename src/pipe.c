@@ -21,11 +21,10 @@ static struct _pipe_end_s {
     struct _pipe_end_s * other_side;
 
     /**
-     * Buffer du pipe, actuellement représenté par une zone mémoire réallouée à
-     * chaque écriture/copie.
+     * Buffer du pipe, actuellement représenté par une liste chaînée de blocks
+     * mémoire.
      */
-    void * buffer;
-    size_t bufsize;
+    struct _buffer_s * buffer;
 
     /* TODO ajouter le mutex commun du pipe */
 };
@@ -43,15 +42,9 @@ static int _pipe_des_to_end(int des, _pipe_end_s * pipe) {
     return 0;
 }
 
-/* Type des données */
-typedef char _buffer_t;
-
 int pipe_create(int * in_des, int * out_des) {
     struct _pipe_end_s * read_end;
     struct _pipe_end_s * write_end;
-
-    /* TODO fixer la taille de départ */
-    static const size_t bufsize = 1000;
 
     /* Vérification des paramètres */
     if (in_des == NULL || out_des == NULL) {
@@ -80,8 +73,7 @@ int pipe_create(int * in_des, int * out_des) {
     write_end->other = read_end;
 
     /* Création du buffer commun */
-    write_end->bufsize = read_end->bufsize = bufsize;
-    write_end->buffer = read_end->buffer = return malloc_alloc(bufsize * sizeof(_buffer_t));
+    write_end->buffer = read_end->buffer = _buffer_create();
     if (write_end->buffer == NULL) {
         malloc_free(read_end);
         malloc_free(write_end);
@@ -117,7 +109,26 @@ ssize_t pipe_read(int * des, void * buffer, size_t bufsize) {
     return -1;
 }
 
-ssize_t pipe_write(int * des, const void * buffer, size_t bufsize) {
+ssize_t pipe_write(int des, const void * buffer, size_t bufsize) {
+    /* Vérification des paramètres */
+    _pipe_end_s * pipe_end = NULL;
+    if (_pipe_des_to_end(des, pipe_end) == -1) {
+        return -1;
+    }
+    if (pipe_end != WRITABLE) {
+        return -1;
+    }
+
+    /* TODO bloquer le mutex associé */
+
+    if (_buffer_write(pipe_end->buffer, buffer, bufsize) == -1) {
+        /* TODO libérer le mutex associé */
+        return -1;
+    }
+
+    /* TODO libérer le mutex associé */
+
+    return -1;
 }
 
 /* vim: set ft=c et sw=4 sts=4 */
