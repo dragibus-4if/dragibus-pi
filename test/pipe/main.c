@@ -37,14 +37,14 @@ int main(void) {
 
         {
             int i;
-            char buffer1[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-            char buffer2[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            char buffer1[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+            char buffer2[16] = {0};
 
             /* Ecriture du buffer1 dans le pipe */
-            ssize_t nb_write = pipe_write(writable, buffer1, 10);
+            ssize_t nb_write = pipe_write(writable, buffer1, 8);
 
             /* Lecture dans le pipe comme un porc (mais tout va bien) */
-            ssize_t nb_read = pipe_read(readable, buffer2, 10000);
+            ssize_t nb_read = pipe_read(readable, buffer2, 4096);
 
             /* Quelques tests de base */
             ASSERT(nb_write != -1);
@@ -75,13 +75,12 @@ int main(void) {
 
             /* Ecriture dans le pipe petit bout par petit bout */
             ssize_t nb_write = 0;
-            for(i = 0 ; i < 100 ; i++) {
-                ssize_t nb = pipe_write(writable, buffer1 + (i * 10), 10);
+            for(i = 0 ; i < 128 ; i++) {
+                ssize_t nb = pipe_write(writable, buffer1 + (i * 8), 8);
                 ASSERT(nb != -1);
-                ASSERT(nb <= 10);
+                ASSERT(nb <= 8);
                 nb_write += nb;
             }
-            nb_write += pipe_write(writable, buffer1 + 1000, 24);
 
             /* Lecture dans le pipe d'un coup */
             ssize_t nb_read = pipe_read(readable, buffer2, 1024);
@@ -94,7 +93,7 @@ int main(void) {
             ASSERT(nb_read == 1024);
 
             /* On ne peut pas lire dans le pipe (plus rien à lire) */
-            ASSERT(pipe_read(readable, buffer2, 10) == 0);
+            ASSERT(pipe_read(readable, buffer2, 1024) == 0);
 
             /* Vérification de l'égalité des buffers */
             for(i = 0 ; i < nb_read ; i++) {
