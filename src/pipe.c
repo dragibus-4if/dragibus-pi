@@ -18,6 +18,8 @@ static struct _pipe_end_s {
     int des;
     enum _pipe_end_state_t state;
 
+    struct _pipe_end_s * other_side;
+
     /**
      * Buffer du pipe, actuellement représenté par une zone mémoire réallouée à
      * chaque écriture/copie.
@@ -28,10 +30,10 @@ static struct _pipe_end_s {
     /* TODO ajouter le mutex commun du pipe */
 };
 
-/* TODO commentaire */
+/* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
+ * l'élément de la structure correspondant */
 static int _pipe_des_to_end(int des, _pipe_end_s * pipe) {
-    /* TODO check if the pipe is good */
-    if (des < 0) {
+    if (des <= 0) {
         return -1;
     }
     *pipe = *(_pipe_end_s *) des;
@@ -73,6 +75,7 @@ int pipe_create(int * in_des, int * out_des) {
     read_end->des = (int) read_end;
     read_end->state = READABLE;
 
+<<<<<<< HEAD
     /* Création du buffer commun */
     write_end->bufsize = read_end->bufsize = bufsize;
     write_end->buffer = read_end->buffer = return malloc_alloc(bufsize * sizeof(_buffer_t));
@@ -86,6 +89,12 @@ int pipe_create(int * in_des, int * out_des) {
     *in_des = (int) read_end;
     *out_des = (int) write_end;
     return 0;
+=======
+    read_end->other_side = write_end;
+    write_end->other = read_end;
+
+    /* TODO créer le pipe buffer commun */
+>>>>>>> 175629b242b325c10d068759eb442d34c8897653
 }
 
 int pipe_close(int des) {
@@ -93,7 +102,18 @@ int pipe_close(int des) {
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
+<<<<<<< HEAD
     malloc_free(pipe_end);
+=======
+    if(pipe_end->other_side == NULL) {
+      malloc_free((void *) pipe_end->buffer);
+    }
+    else {
+      pipe_end->other_side->other_side = NULL;
+    }
+    malloc_free((void *) pipe_end);
+    return 0;
+>>>>>>> 175629b242b325c10d068759eb442d34c8897653
 }
 
 ssize_t pipe_read(int * des, void * buffer, size_t bufsize);
