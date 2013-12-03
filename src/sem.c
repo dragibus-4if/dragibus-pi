@@ -3,7 +3,7 @@
 #include "malloc.h"
 void
 sem_init(struct sem_s *sem, int32_t val){
-    malloc_init(sem);
+    sem = (struct sem_s*) malloc_alloc(sizeof(struct sem_s));
     sem->counter = val;
     sem->pcbSemF = NULL;
     sem->pcbSemL = NULL; 
@@ -22,8 +22,7 @@ sem_up(struct sem_s* sem){
 void sem_down(struct sem_s* sem){
     sem->counter--;
     if(sem->counter<=0){
-        struct pcb_Sem* nPcbSem;
-        malloc_init(nPcbSem);
+        struct pcb_Sem* nPcbSem = (struct pcb_Sem*) malloc_alloc(sizeof(struct pcb_Sem));
         nPcbSem->pcb = current_process;
         if(sem->pcbSemF==NULL){
             sem->pcbSemF=nPcbSem;
