@@ -24,7 +24,7 @@ void malloc_init(void *ptr) {
   uint32 size = 20480;
   malloc_head = ptr;
   malloc_free_list = (struct malloc_heap_t *) malloc_head;
-  malloc_head += sizeof(struct malloc_heap_t) + 
+  malloc_head += sizeof(struct malloc_heap_t) +
     sizeof(struct malloc_entry_t)*size;
   malloc_free_list->size = size;
   malloc_free_list->tail = 0;
@@ -37,9 +37,9 @@ void malloc_free(void *ptr) {
   malloc_free_list->entries[curr] = entry;
   while( curr != 0 ) {
     if ( 
-  	  malloc_free_list->entries[curr]->size < 
-	  malloc_free_list->entries[parent]->size 
-    ) {
+        malloc_free_list->entries[curr]->size <
+        malloc_free_list->entries[parent]->size
+       ) {
       malloc_free_list_swap(parent, curr);
       curr = parent;
     }
@@ -54,17 +54,17 @@ void malloc_free_list_swap(uint32 x, uint32 y) {
   tmp = malloc_free_list->entries[x];
   malloc_free_list->entries[x] = malloc_free_list->entries[y];
   malloc_free_list->entries[y] = tmp;
-};
+}
 
 uint32 malloc_leq(uint32 left, uint32 right) {
-  return malloc_free_list->entries[left]->size <= 
+  return malloc_free_list->entries[left]->size <=
     malloc_free_list->entries[right]->size;
-};
+}
 
 uint32 malloc_le(uint32 left, uint32 right) {
-  return malloc_free_list->entries[left]->size < 
+  return malloc_free_list->entries[left]->size <
     malloc_free_list->entries[right]->size;
-};
+}
 
 void malloc_free_list_remove(uint32 curr) {
   if ( malloc_free_list->tail == 0 ) {
