@@ -6,7 +6,7 @@ static const size_t _buffer_block_size = 512;
 
 /* Block buffer: zone mémoire stockée dans une liste chaînée */
 static struct _buffer_block_s {
-    void * data;
+    char * data;
     struct _buffer_block_s * next;
 };
 
@@ -15,8 +15,8 @@ static struct _buffer_block_s {
 static struct _buffer_s {
     struct _buffer_block_s * head;
     struct _buffer_block_s * tail;
-    void * wr_cursor;
-    void * rd_cursor;
+    char * wr_cursor;
+    char * rd_cursor;
 };
 
 /* Création d'un block de buffer vide */
@@ -29,7 +29,7 @@ static struct _buffer_block_s * _buffer_block_create() {
     }
 
     /* Alloc les données pour le block initial */
-    void * data = malloc_alloc(sizeof(char) * _buffer_block_size);
+    char * data = malloc_alloc(sizeof(void) * _buffer_block_size);
     if (data == NULL) {
         malloc_free(block);
         return NULL;
@@ -72,8 +72,8 @@ static struct _buffer_s * _buffer_create() {
     /* Init des valeurs */
     buffer->head = block;
     buffer->tail = block;
-    buffer->wr_cursor = data;
-    buffer->rd_cursor = data;
+    buffer->wr_cursor = block->data;
+    buffer->rd_cursor = block->data;
 
     return buffer;
 }
@@ -86,7 +86,7 @@ static int _buffer_free(struct _buffer_s * buffer) {
     }
 
     /* Parcours et désallocation */
-    struct _buffer_block_s current = buffer->head;
+    struct _buffer_block_s * current = buffer->head;
     while (current != NULL) {
         _buffer_block_free(current);
         current = current->next;
@@ -100,9 +100,9 @@ static int _buffer_free(struct _buffer_s * buffer) {
 /* Lire *size* octets depuis *buffer* dans *data*, renvoyant le nombre d'octets
  * lus, ou -1 si une erreur a eu lieu. */
 static ssize_t _buffer_read(struct _buffer_s * buffer,
-        void * data, size_t size) {
+        char * data, size_t size) {
     /* Vérification des paramètres */
-    if (buffer == NULL || data == NULL) {
+    if (buffer == NULL || data == NULL) {
         return -1;
     }
 
@@ -112,7 +112,7 @@ static ssize_t _buffer_read(struct _buffer_s * buffer,
     while (size > 0 && buffer->rd_cursor != buffer->wr_cursor) {
         /* Copie des données dans le block courant */
         struct _buffer_block_s * block = buffer->head;
-        void * end = block->data + _buffer_block_size;
+        char * end = (char *)((size_t) block->data + _buffer_block_size);
         while(buffer->rd_cursor != end
                 && buffer->rd_cursor != buffer->wr_cursor && size > 0) {
             *data = *buffer->rd_cursor;
@@ -125,13 +125,12 @@ static ssize_t _buffer_read(struct _buffer_s * buffer,
         /* Suppression du premier block si on ne l'utilise plus */
         if (buffer->rd_cursor == end) {
             /* Déplace la lecture au prochain block */
-            struct _buffer_block_s * old = buffer->head;
-            struct _buffer_block_s * block = old->next;
-            buffer->head = block;
-            buffer->rd_cursor = block->data;
+            struct _buffer_block_s * new = block->next;
+            buffer->head = new;
+            buffer->rd_cursor = new->data;
 
             /* Suppression de l'ancien block */
-            _buffer_block_free(old);
+            _buffer_block_free(block);
         }
     }
 
@@ -140,7 +139,7 @@ static ssize_t _buffer_read(struct _buffer_s * buffer,
 
 /* TODO commentaire */
 static ssize_t _buffer_write(struct _buffer_s * buffer,
-        const void * data, size_t size) {
+        const char * data, size_t size) {
     /* Vérification des paramètres */
     if (buffer == NULL || data == NULL) {
         return -1;
@@ -152,7 +151,7 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
     while (size > 0) {
         /* Copie des données dans le block courant */
         struct _buffer_block_s * block = buffer->tail;
-        void * end = block->data + _buffer_block_size;
+        char * end = block->data + _buffer_block_size;
         while(buffer->wr_cursor != end && size > 0) {
             *buffer->wr_cursor = *data;
             data++;
@@ -163,15 +162,15 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
 
         /* Création d'un nouveau block si on arrive à la fin */
         if (buffer->wr_cursor == end) {
-            struct _buffer_block_s * block = buffer_block_create();
-            if (block == NULL) {
+            struct _buffer_block_s * new = _buffer_block_create();
+            if (new == NULL) {
                 return write_size;
             }
 
             /* Ajout du block créé comme une nouvelle tail */
-            buffer->tail->next = block;
-            buffer->tail = block;
-            buffer->wr_cursor = block->data;
+            buffer->tail->next = new;
+            buffer->tail = new;
+            buffer->wr_cursor = new->data;
         }
     }
 
@@ -208,11 +207,11 @@ static struct _pipe_end_s {
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
  * l'élément de la structure correspondant */
-static int _pipe_des_to_end(int des, _pipe_end_s * pipe) {
+static int _pipe_des_to_end(int des, struct _pipe_end_s * pipe) {
     if (des <= 0) {
         return -1;
     }
-    *pipe = *(_pipe_end_s *) des;
+    *pipe = *(struct _pipe_end_s *) des;
     if (pipe->des != des) {
         return -1;
     }
@@ -247,7 +246,7 @@ int pipe_create(int * in_des, int * out_des) {
 
     /* Passage d'un côté à l'autre du pipe */
     read_end->other_side = write_end;
-    write_end->other = read_end;
+    write_end->other_side = read_end;
 
     /* Création du buffer commun */
     write_end->buffer = read_end->buffer = _buffer_create();
@@ -266,7 +265,7 @@ int pipe_create(int * in_des, int * out_des) {
 }
 
 int pipe_close(int des) {
-    _pipe_end_s * pipe_end = NULL;
+    struct _pipe_end_s * pipe_end = NULL;
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
@@ -280,7 +279,7 @@ int pipe_close(int des) {
 }
 
 ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
-    _pipe_end_s * pipe_end = NULL;
+    struct _pipe_end_s * pipe_end = NULL;
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
@@ -289,14 +288,14 @@ ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
     }
 
     /* TODO bloquer le mutex du buffer */
-    ssize_t return_value = _buffer_read(pipe_end->buffer, buffer, bufsize);
+    ssize_t return_value = _buffer_read(pipe_end->buffer, (char *) buffer, bufsize);
     /* TODO libérer le mutex du buffer */
     return return_value;
 }
 
 ssize_t pipe_write(int des, const void * buffer, size_t bufsize) {
     /* Vérification des paramètres */
-    _pipe_end_s * pipe_end = NULL;
+    struct _pipe_end_s * pipe_end = NULL;
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
