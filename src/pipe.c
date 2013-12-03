@@ -1,6 +1,49 @@
 #include "pipe.h"
 #include "malloc.h"
 
+/* TODO commentaire */
+static const size_t _buffer_block_s = 4096;
+
+/* TODO commentaire */
+static struct _buffer_block_s {
+    void * data;
+    struct _buffer_block_s * next;
+};
+
+/* TODO commentaire */
+static struct _buffer_s {
+    struct _buffer_block_s * head;
+    struct _buffer_block_s * tail;
+    void * wr_cursor;
+    void * rd_cursor;
+};
+
+/* TODO commentaire */
+static _buffer_s * _buffer_create() {
+    /* TODO */
+    return -1;
+}
+
+/* TODO commentaire */
+static int _buffer_destroy(struct _buffer_s * buffer) {
+    /* TODO */
+    return -1;
+}
+
+/* TODO commentaire */
+static ssize_t _buffer_read(struct _buffer_s * buffer,
+        void * data, size_t size) {
+    /* TODO */
+    return -1;
+}
+
+/* TODO commentaire */
+static ssize_t _buffer_write(struct _buffer_s * buffer,
+        const void * data, size_t size) {
+    /* TODO */
+    return -1;
+}
+
 /**
  * Taille max d'un pipe, inspiré des sources de linux.
  */
@@ -100,12 +143,25 @@ int pipe_close(int des) {
     return 0;
 }
 
-ssize_t pipe_read(int * des, void * buffer, size_t bufsize) {
+ssize_t pipe_read(int des, void * buffer, size_t bufsize) {
     _pipe_end_s * pipe_end = NULL;
     if (_pipe_des_to_end(des, pipe_end) == -1) {
         return -1;
     }
-    /* TODO finir la fonction */
+    if (pipe_end->state != READABLE) {
+        return -1;
+    }
+    if (buffer == NULL)
+        return -1;
+
+    /* TODO bloquer le mutex du buffer */
+    /* TODO Finir en utilisant l'interface */
+    /* void * it; */
+    /* void * begin = pipe_end->buffer + pipe_end->read_offset; */
+    /* void * end = pipe_end->buffer + pipe_end->bufsize; */
+    /* for (it = begin ; it != end && *it != 0 ; it++) { */
+    /* } */
+    /* TODO libérer le mutex du buffer */
     return -1;
 }
 
