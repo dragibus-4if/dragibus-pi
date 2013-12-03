@@ -1,35 +1,36 @@
 ARMGNU ?= arm-linux-gnueabi
 
-CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm -mthumb-interwork
+CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles \
+	 -ffreestanding -g -march=armv6z -marm -mthumb-interwork
 ASFLAGS = -g -march=armv6z
 
-C_FILES=kernel.c malloc.c hw.c dispatcher.c sched.c sem.c
-AS_FILES=vectors.s
+C_FILES = kernel.c malloc.c hw.c dispatcher.c sched.c sem.c
+AS_FILES = vectors.s
 
 OBJS = $(patsubst %.s,%.o,$(AS_FILES))
 OBJS += $(patsubst %.c,%.o,$(C_FILES))
 
 .PHONY: gcc clean
 
-gcc : kernel
+gcc: kernel
 
-clean :
-	rm -f *.o
-	rm -f *.bin
-	rm -f *.hex
-	rm -f *.elf
-	rm -f *.list
-	rm -f *.img
-	rm -f *.bc
-	rm -f *.clang.opt.s
+clean:
+	@rm -f *.o
+	@rm -f *.bin
+	@rm -f *.hex
+	@rm -f *.elf
+	@rm -f *.list
+	@rm -f *.img
+	@rm -f *.bc
+	@rm -f *.clang.opt.s
 
-%.o : %.c
+%.o: %.c
 	$(ARMGNU)-gcc $(CFLAGS) -c $< -o $@
 
-%.o : %.s
+%.o: %.s
 	$(ARMGNU)-as $(ASFLAGS) $< -o $@
 
-kernel : memmap $(OBJS)
+kernel: memmap $(OBJS)
 	$(ARMGNU)-ld $(OBJS) -T memmap -o kernel.elf
 	$(ARMGNU)-objdump -D kernel.elf > kernel.list
 	$(ARMGNU)-objcopy kernel.elf -O binary kernel.img
