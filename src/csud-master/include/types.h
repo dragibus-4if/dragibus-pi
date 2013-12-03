@@ -10,6 +10,8 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#include <stdio.h>
+
 /** Unsigned 8 bit type */
 typedef unsigned	char		u8;
 /** Unsigned 16 bit type */

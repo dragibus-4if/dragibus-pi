@@ -123,7 +123,7 @@ void MicroDelay(u32 delay);
 #	error Unrecognised ARM Version
 #	endif // ARM_V6
 #else
-#error Unrecognised Processor Family
+//#error Unrecognised Processor Family
 #endif // ARM
 
 #endif
