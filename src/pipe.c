@@ -1,16 +1,17 @@
 #include "pipe.h"
 #include "malloc.h"
 
-/* TODO commentaire */
+/* Taille (fixée) d'un block buffer */
 static const size_t _buffer_block_size = 512;
 
-/* TODO commentaire */
+/* Block buffer: zone mémoire stockée dans une liste chaînée */
 static struct _buffer_block_s {
     void * data;
     struct _buffer_block_s * next;
 };
 
-/* TODO commentaire */
+/* Buffer: gestion de la liste chaînée de blocks, ainsi que des curseurs de
+ * lecture et d'écriture */
 static struct _buffer_s {
     struct _buffer_block_s * head;
     struct _buffer_block_s * tail;
@@ -19,7 +20,7 @@ static struct _buffer_s {
     void * rd_cursor;
 };
 
-/* TODO commentaire */
+/* Création d'un buffer vide (eg. avec un premier block vide) */
 static struct _buffer_s * _buffer_create() {
     /* Alloc le buffer */
     struct _buffer_s * buffer = (struct _buffer_s *) malloc_alloc(
