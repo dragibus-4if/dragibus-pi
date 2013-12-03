@@ -2,7 +2,7 @@
 #include "malloc.h"
 
 /* TODO commentaire */
-static const size_t _buffer_block_s = 4096;
+static const size_t _buffer_block_size = 512;
 
 /* TODO commentaire */
 static struct _buffer_block_s {
@@ -14,14 +14,46 @@ static struct _buffer_block_s {
 static struct _buffer_s {
     struct _buffer_block_s * head;
     struct _buffer_block_s * tail;
+    size_t size;
     void * wr_cursor;
     void * rd_cursor;
 };
 
 /* TODO commentaire */
-static _buffer_s * _buffer_create() {
-    /* TODO */
-    return -1;
+static struct _buffer_s * _buffer_create() {
+    /* Alloc le buffer */
+    struct _buffer_s * buffer = (struct _buffer_s *) malloc_alloc(
+            sizeof(struct _buffer_s));
+    if (buffer == NULL) {
+        return NULL;
+    }
+
+    /* Alloc le block initial */
+    struct _buffer_block_s * block = (struct _buffer_block_s *) malloc_alloc(
+            sizeof(struct _buffer_block_s));
+    if (block == NULL) {
+        malloc_free(buffer);
+        return NULL;
+    }
+
+    /* Alloc les données pour le block initial */
+    void * data = malloc_alloc(sizeof(char) * _buffer_block_size);
+    if (data == NULL) {
+        malloc_free(buffer);
+        malloc_free(block);
+        return NULL;
+    }
+
+    /* Init des valeurs */
+    block->data = data;
+    block->next = NULL;
+    buffer->head = block;
+    buffer->tail = block;
+    buffer->size = 0;
+    buffer->wr_cursor = data;
+    buffer->rd_cursor = data;
+
+    return buffer;
 }
 
 /* TODO commentaire */
