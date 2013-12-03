@@ -97,11 +97,12 @@ static int _buffer_free(struct _buffer_s * buffer) {
     return 0;
 }
 
-/* TODO commentaire */
+/* Lire *size* octets depuis *buffer* dans *data*, renvoyant le nombre d'octets
+ * lus, ou -1 si une erreur a eu lieu. */
 static ssize_t _buffer_read(struct _buffer_s * buffer,
         void * data, size_t size) {
     /* Vérification des paramètres */
-    if (buffer == NULL || data == NULL) {
+    if (buffer == NULL || data == NULL) {
         return -1;
     }
 
