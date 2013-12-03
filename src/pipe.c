@@ -19,7 +19,7 @@ static struct _buffer_s {
 };
 
 /* TODO commentaire */
-static int buffer_create() {
+static _buffer_s * buffer_create() {
     /* TODO */
     return -1;
 }
