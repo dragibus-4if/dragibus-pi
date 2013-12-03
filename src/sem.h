@@ -15,5 +15,7 @@ struct sem_s {
 };
 
 void sem_init(struct sem_s* sem, int32_t val);
+void sem_up(struct sem_s* sem);
+void sem_down(struct sem_s* sem);
 
 #endif
