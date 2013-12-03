@@ -8,11 +8,11 @@ int mutex_free(intptr_t desc) {
     return 0;
 }
 
-int mutex_acquire(intptr_t desc) {
+void mutex_acquire(intptr_t desc) {
     return 0;
 }
 
-int mutex_release(intptr_t desc) {
+void mutex_release(intptr_t desc) {
     return 0;
 }
 
