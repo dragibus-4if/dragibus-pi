@@ -16,7 +16,7 @@
 }*/
 
 static struct _mutex_s {
-    struct sem_s * sem;
+    struct sem_s sem;
 }
 
 int mutex_create(int * desc) {
@@ -27,11 +27,14 @@ int mutex_create(int * desc) {
     
     /*Création du mutex*/
     struct _mutex_s * mutex = malloc_alloc(sizeof(struct _mutex_s));
+    if (mutex == NULL) {
+        return -1;
+    }
     
     /*Initialisation du mutex*/
     sem_init(&mutex->sem, 1);
     
-    
+    return 0;
 }
 
 int mutex_destroy(int desc) {
