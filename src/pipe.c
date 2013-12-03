@@ -15,10 +15,32 @@ static struct _buffer_block_s {
 static struct _buffer_s {
     struct _buffer_block_s * head;
     struct _buffer_block_s * tail;
-    size_t size;
     void * wr_cursor;
     void * rd_cursor;
 };
+
+/* Création d'un block de buffer vide */
+static struct _buffer_block_s * _buffer_block_create() {
+    /* Alloc le block initial */
+    struct _buffer_block_s * block = (struct _buffer_block_s *) malloc_alloc(
+            sizeof(struct _buffer_block_s));
+    if (block == NULL) {
+        return NULL;
+    }
+
+    /* Alloc les données pour le block initial */
+    void * data = malloc_alloc(sizeof(char) * _buffer_block_size);
+    if (data == NULL) {
+        malloc_free(block);
+        return NULL;
+    }
+
+    /* Initialisation des variables */
+    block->data = data;
+    block->next = NULL;
+
+    return block;
+}
 
 /* Création d'un buffer vide (eg. avec un premier block vide) */
 static struct _buffer_s * _buffer_create() {
@@ -29,28 +51,15 @@ static struct _buffer_s * _buffer_create() {
         return NULL;
     }
 
-    /* Alloc le block initial */
-    struct _buffer_block_s * block = (struct _buffer_block_s *) malloc_alloc(
-            sizeof(struct _buffer_block_s));
-    if (block == NULL) {
+    struct _buffer_block_s * block = _buffer_block_create();
+    if(block == NULL) {
         malloc_free(buffer);
-        return NULL;
-    }
-
-    /* Alloc les données pour le block initial */
-    void * data = malloc_alloc(sizeof(char) * _buffer_block_size);
-    if (data == NULL) {
-        malloc_free(buffer);
-        malloc_free(block);
         return NULL;
     }
 
     /* Init des valeurs */
-    block->data = data;
-    block->next = NULL;
     buffer->head = block;
     buffer->tail = block;
-    buffer->size = 0;
     buffer->wr_cursor = data;
     buffer->rd_cursor = data;
 
@@ -91,8 +100,41 @@ static ssize_t _buffer_read(struct _buffer_s * buffer,
 /* TODO commentaire */
 static ssize_t _buffer_write(struct _buffer_s * buffer,
         const void * data, size_t size) {
-    /* TODO */
-    return -1;
+    /* Vérification des paramètres */
+    if (buffer == NULL || data == NULL) {
+        return -1;
+    }
+
+    ssize_t writed = 0;
+
+    /* Ecriture */
+    while (size > 0) {
+        /* Copie des données dans le block courant */
+        struct _buffer_block_s * block = buffer->tail;
+        void * end = block->data + _buffer_block_size;
+        while(buffer->wr_cursor != end && size > 0) {
+            *buffer->wr_cursor = *data;
+            data++;
+            buffer->wr_cursor++;
+            size--;
+            writed++;
+        }
+
+        /* Création d'un nouveau block si on arrive à la fin */
+        if(buffer->wr_cursor == end) {
+            struct _buffer_block_s * block = buffer_block_create();
+            if (block == NULL) {
+                return writed;
+            }
+
+            /* Ajout du block créé comme une nouvelle tail */
+            buffer->tail->next = block;
+            buffer->tail = block;
+            buffer->wr_cursor = block->data;
+        }
+    }
+
+    return writed;
 }
 
 /**
