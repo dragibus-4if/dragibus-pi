@@ -20,9 +20,18 @@ static struct _mutex_s {
 }
 
 int mutex_create(int * desc) {
-    struct _mutex_s mutex = malloc_init(&mutex);
+    /* Vérification des paramètres */
+    if (desc == NULL) {
+        return -1;
+    }
     
-    sem_init(mutex->sem, desc);
+    /*Création du mutex*/
+    struct _mutex_s * mutex = malloc_alloc(sizeof(struct _mutex_s));
+    
+    /*Initialisation du mutex*/
+    sem_init(&mutex->sem, 1);
+    
+    
 }
 
 int mutex_destroy(int desc) {
