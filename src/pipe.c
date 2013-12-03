@@ -42,6 +42,18 @@ static struct _buffer_block_s * _buffer_block_create() {
     return block;
 }
 
+static int _buffer_block_free(struct _buffer_block_s * buffer) {
+    /* Vérification des paramètres */
+    if (buffer == NULL) {
+        return -1;
+    }
+
+    /* Désalloc les données */
+    malloc_free(buffer->data);
+    malloc_free(buffer);
+    return 0;
+}
+
 /* Création d'un buffer vide (eg. avec un premier block vide) */
 static struct _buffer_s * _buffer_create() {
     /* Alloc le buffer */
@@ -67,7 +79,7 @@ static struct _buffer_s * _buffer_create() {
 }
 
 /* Désallouer un buffer */
-static int _buffer_destroy(struct _buffer_s * buffer) {
+static int _buffer_free(struct _buffer_s * buffer) {
     /* Vérification des paramètres */
     if (buffer == NULL) {
         return -1;
@@ -76,10 +88,8 @@ static int _buffer_destroy(struct _buffer_s * buffer) {
     /* Parcours et désallocation */
     struct _buffer_block_s current = buffer->head;
     while (current != NULL) {
-        struct _buffer_block_s tmp = current;
+        _buffer_block_free(current);
         current = current->next;
-        malloc_free(tmp);
-        malloc_free(tmp->data);
     }
 
     /* Désallocation */
@@ -94,7 +104,37 @@ static ssize_t _buffer_read(struct _buffer_s * buffer,
     if (buffer == NULL || data == NULL) {
         return -1;
     }
-    return -1;
+
+    ssize_t read_size = 0;
+
+    /* Ecriture */
+    while (size > 0 && buffer->rd_cursor != buffer->wr_cursor) {
+        /* Copie des données dans le block courant */
+        struct _buffer_block_s * block = buffer->head;
+        void * end = block->data + _buffer_block_size;
+        while(buffer->rd_cursor != end
+                && buffer->rd_cursor != buffer->wr_cursor && size > 0) {
+            *data = *buffer->rd_cursor;
+            data++;
+            buffer->rd_cursor++;
+            size--;
+            read_size++;
+        }
+
+        /* Suppression du premier block si on ne l'utilise plus */
+        if(buffer->rd_cursor == end) {
+            /* Déplace la lecture au prochain block */
+            struct _buffer_block_s * old = buffer->head;
+            struct _buffer_block_s * block = old->next;
+            buffer->head = block;
+            buffer->rd_cursor = block->data;
+
+            /* Suppression de l'ancien block */
+            _buffer_block_free(old);
+        }
+    }
+
+    return read_size;
 }
 
 /* TODO commentaire */
@@ -105,7 +145,7 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
         return -1;
     }
 
-    ssize_t writed = 0;
+    ssize_t write_size = 0;
 
     /* Ecriture */
     while (size > 0) {
@@ -117,14 +157,14 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
             data++;
             buffer->wr_cursor++;
             size--;
-            writed++;
+            write_size++;
         }
 
         /* Création d'un nouveau block si on arrive à la fin */
         if(buffer->wr_cursor == end) {
             struct _buffer_block_s * block = buffer_block_create();
             if (block == NULL) {
-                return writed;
+                return write_size;
             }
 
             /* Ajout du block créé comme une nouvelle tail */
@@ -134,7 +174,7 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
         }
     }
 
-    return writed;
+    return write_size;
 }
 
 /**
@@ -228,7 +268,7 @@ int pipe_close(int des) {
         return -1;
     }
     if (pipe_end->other_side == NULL) {
-      _buffer_destroy(pipe_end->buffer);
+      _buffer_free(pipe_end->buffer);
     } else {
       pipe_end->other_side->other_side = NULL;
     }
