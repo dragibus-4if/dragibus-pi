@@ -1,32 +1,20 @@
-//
-//  mutex.h
-//  
-//
-//  Created by Peller Patrizia on 03/12/2013.
-//
-//
-
 #ifndef MUTEX_H
 #define MUTEX_H
 
-/**
- * Création du mutex, initialize la sémaphore inclue dans le mutex. Renvoye 0 si la création
- * s'est bien finie, -1 si le desc est NULL ou bien l'allocation de la mémoire a échoué.
- */
+/* Crée un mutex et renvoie son descripteur en modifiant *desc*. Renvoie 0 si
+ * tout s'est bien passé ou -1 si une erreur a eu lieu. */
 int mutex_create(int * desc);
 
-/**
- * Détruire le mutex et libérer la mémoire du mutex. Renvoye -1 si le changement du mutex a été
- * un échec, 0 si tout va bien.
- */
+/* Libère le mutex défini par *desc*. Renvoie 0 si tout s'est bien passé ou -1
+ * si une erreur a eu lieu. */
 int mutex_free(int desc);
 
-/**
- * Bloquer un processus préciser par desc. Renvoye -1 si le mutex n'a pas pu être modifié, 0 si
- * le processus a bien été bloqué.
- */
-int mutex_acquire(int desc);
+/* Vérouille le mutex défini par *desc*. Renvoie 0 si tout s'est bien passé ou
+ * -1 si une erreur a eu lieu. */
+void mutex_acquire(int desc);
 
-int mutex_release(int desc);
+/* Dévérouille le mutex défini par *desc*. Renvoie 0 si tout s'est bien passé
+ * ou -1 si une erreur a eu lieu. */
+void mutex_release(int desc);
 
 #endif
