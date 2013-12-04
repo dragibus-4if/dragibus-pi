@@ -1,4 +1,4 @@
-ARMGNU ?= arm-linux-gnueabi
+ARMGNU ?= arm-none-eabi
 
 CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles \
 	 -ffreestanding -g -march=armv6z -marm -mthumb-interwork
