@@ -1,5 +1,6 @@
 #include "pipe.h"
 #include "malloc.h"
+#include "mutex.h"
 
 /* Taille (fixée) d'un block buffer */
 static const size_t _buffer_block_size = 512;
@@ -201,7 +202,8 @@ static struct _pipe_end_s {
      */
     struct _buffer_s * buffer;
 
-    /* TODO ajouter le mutex commun du pipe */
+    /* Mutex commun du pipe */
+    int mutex;
 };
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
@@ -250,7 +252,15 @@ int pipe_create(intptr_t * in_des, intptr_t * out_des) {
         return -1;
     }
 
-    /* TODO création du mutex du buffer */
+    /* Création du mutex commun */
+    int mutex = 0;
+    if (mutex_create(&mutex) == -1) {
+        _buffer_free(write_end->buffer);
+        malloc_free(read_end);
+        malloc_free(write_end);
+        return -1;
+    }
+    read_end->mutex = write_end->mutex = mutex;
 
     /* Retour par paramètre */
     *in_des = (intptr_t) read_end;
@@ -265,6 +275,7 @@ int pipe_close(intptr_t des) {
     }
     if (pipe_end.other_side == NULL) {
       _buffer_free(pipe_end.buffer);
+        mutex_free(pipe_end.mutex);
     } else {
       pipe_end.other_side->other_side = NULL;
     }
@@ -281,9 +292,9 @@ ssize_t pipe_read(intptr_t des, void * buffer, size_t bufsize) {
         return -1;
     }
 
-    /* TODO bloquer le mutex du buffer */
+    mutex_acquire(pipe_end.mutex);
     ssize_t return_value = _buffer_read(pipe_end.buffer, (char *) buffer, bufsize);
-    /* TODO libérer le mutex du buffer */
+    mutex_release(pipe_end.mutex);
     return return_value;
 }
 
@@ -297,9 +308,9 @@ ssize_t pipe_write(intptr_t des, const void * buffer, size_t bufsize) {
         return -1;
     }
 
-    /* TODO bloquer le mutex associé */
+    mutex_acquire(pipe_end.mutex);
     ssize_t return_value =_buffer_write(pipe_end.buffer, buffer, bufsize);
-    /* TODO libérer le mutex associé */
+    mutex_release(pipe_end.mutex);
 
     return return_value;
 }
