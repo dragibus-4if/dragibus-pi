@@ -1,9 +1,9 @@
 #include "sem.h"
 #include "sched.h"
-
+#include "malloc.h"
 void
-sem_init(struct sem_s *sem, int32_t val){
-    sem = malloc_init(sem);
+sem_init(struct sem_s *sem, int val){
+    sem = (struct sem_s*) malloc_alloc(sizeof(struct sem_s));
     sem->counter = val;
     sem->pcbSemF = NULL;
     sem->pcbSemL = NULL; 
@@ -14,7 +14,7 @@ sem_up(struct sem_s* sem){
     sem->counter++;
     // TODO ecrire process_release
     process_release(sem->pcbSemF->pcb);
-    struct sem_s* temp = sem->pcbSemF;
+    struct pcb_Sem* temp = sem->pcbSemF;
     sem->pcbSemF=sem->pcbSemF->next;  
     malloc_free(temp);  
 }
@@ -22,7 +22,7 @@ sem_up(struct sem_s* sem){
 void sem_down(struct sem_s* sem){
     sem->counter--;
     if(sem->counter<=0){
-        struct pcb_Sem* nPcbSem = malloc_init(nPcbSem);
+        struct pcb_Sem* nPcbSem = (struct pcb_Sem*) malloc_alloc(sizeof(struct pcb_Sem));
         nPcbSem->pcb = current_process;
         if(sem->pcbSemF==NULL){
             sem->pcbSemF=nPcbSem;

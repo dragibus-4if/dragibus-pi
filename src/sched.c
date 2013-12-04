@@ -13,11 +13,37 @@ extern void processus_A();
 #define PRINT(MSG) ;
 #define EXIT(CODE) ;
 
-void
-process_release(pcb_s* toFree){
+process_block(){
+    struct pcb_s* it = current_process;
 
+    while (it->next != current_process){
+        it=it->next;
+    }
+
+    it->next = it->next->next;
+    
+    it= waiting_queue;
+    while(it->next != NULL){
+        it=it->next;
+    }
+
+    it->next = current_process;    
+    current_process->next = NULL;
+    current_process->state = WAITING;
 }
 
+void process_release(struct pcb_s* pcb){
+    struct pcb_s* it = waiting_queue;
+    while(it->next != pcb){
+        it=it->next;
+    }
+    
+    it->next = it->next->next;
+    
+    pcb->next = current_process->next;
+    current_process->next = pcb;
+    pcb->state = READY;
+}
 void
 start_current_process()
 {
