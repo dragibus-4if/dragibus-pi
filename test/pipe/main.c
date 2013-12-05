@@ -6,10 +6,10 @@
 
 int main(void) {
     /* Initialisation de la RAM */
-    char mem[0x30000 - 0x8000];
+    char mem[0x50000];
     malloc_init((void * )&mem);
 
-    intptr_t readable, writable;
+    piped_t readable, writable;
 
     /* Test les cas d'erreurs */
     ASSERT(pipe_create(NULL, NULL) == -1);
@@ -53,8 +53,8 @@ int main(void) {
 
             /* Normalement dans un cas monoproc, l'écriture et la lecture ne
              * pose pas de problème. */
-            ASSERT(nb_write == 10);
-            ASSERT(nb_read == 10);
+            ASSERT(nb_write == 8);
+            ASSERT(nb_read == 8);
 
             /* Vérification de l'égalité des buffers */
             for(i = 0 ; i < nb_read ; i++) {
@@ -69,8 +69,8 @@ int main(void) {
 
             /* Remplissage les buffer (OSEF des valeurs) */
             for(i = 0 ; i < 1024 ; i++) {
-                buffer1[i] = i % 100;
-                buffer2[i] = (i + 3) % 42;
+                buffer1[i] = (char)i % 100;
+                buffer2[i] = (char)(i + 3) % 42;
             }
 
             /* Ecriture dans le pipe petit bout par petit bout */
@@ -104,8 +104,20 @@ int main(void) {
         pipe_close(readable);
         pipe_close(writable);
     }
-    else
-      return -1;
+
+    pipe_create(&readable, &writable);
+
+    /* Essaye de créé trop de pipes (limite à 32767 pipes) */
+    int i;
+    piped_t pipes[32767];
+    for(i = 0 ; i < 32767 ; i += 2) {
+        ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1);
+    }
+
+    /* Création du pipe qui fait déborder le vase */
+    piped_t p1, p2;
+    ASSERT(pipe_create(&p1, &p2) == -1);
+
     return 0;
 }
 
