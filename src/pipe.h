@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-typedef int piped_t;
+typedef int pipe_t;
 
 /**
  * La fonction *pipe_create* créé un pipe anonyme et place les descripteurs de
@@ -14,7 +14,7 @@ typedef int piped_t;
  * - Les pointeurs de descripteurs sont invalides.
  * - Il n'y a plus assez de mémoire dans le système.
  */
-extern int pipe_create(piped_t * in_des, piped_t * out_des);
+extern int pipe_create(pipe_t * in_des, pipe_t * out_des);
 
 /**
  * La fonction *pipe_close* ferme l'extrémité de pipe décrit par *des*. Lorsque
@@ -26,7 +26,7 @@ extern int pipe_create(piped_t * in_des, piped_t * out_des);
  * TODO gérer le cas où la fonction a été interrompu par un signal ?
  * TODO que faire lorsque quelqu'un lit/écrit en meme temps dans le pipe ?
  */
-extern int pipe_close(piped_t des);
+extern int pipe_close(pipe_t des);
 
 /**
  * La fonction *pipe_read* lit jusqu'à *bufsize* bytes depuis le pipe avec le
@@ -46,7 +46,7 @@ extern int pipe_close(piped_t des);
  * - Le pipe n'est ouvert qu'en écriture et pas en lecture
  * TODO gérer le cas où la fonction a été interrompu par un signal ?
  */
-extern ssize_t pipe_read(piped_t des, void * buffer, size_t bufsize);
+extern ssize_t pipe_read(pipe_t des, void * buffer, size_t bufsize);
 
 /**
  * La fonction *pipe_write* écrit jusqu'à *bufsize* bytes de *buffer* dans le
@@ -65,6 +65,6 @@ extern ssize_t pipe_read(piped_t des, void * buffer, size_t bufsize);
  * TODO taille du pipe trop grand ?
  * TODO gérer le cas où la fonction a été interrompu par un signal ?
  */
-extern ssize_t pipe_write(piped_t des, const void * buffer, size_t bufsize);
+extern ssize_t pipe_write(pipe_t des, const void * buffer, size_t bufsize);
 
 #endif

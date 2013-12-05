@@ -207,7 +207,7 @@ struct _pipe_end_s {
 };
 
 /* Index courant et max du dernier pipe créé */
-static piped_t _current_index = -1;
+static pipe_t _current_index = -1;
 #define _max_pipe_index 32767
 
 /* Table des pipes créés */
@@ -215,7 +215,7 @@ static struct _pipe_end_s * _pipe_array[_max_pipe_index] = {NULL};
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
  * l'élément de la structure correspondant */
-static int _pipe_des_to_end(piped_t des, struct _pipe_end_s * pipe) {
+static int _pipe_des_to_end(pipe_t des, struct _pipe_end_s * pipe) {
     if (des < 0 || des >= _max_pipe_index) {
         return -1;
     }
@@ -226,14 +226,14 @@ static int _pipe_des_to_end(piped_t des, struct _pipe_end_s * pipe) {
     return 0;
 }
 
-int pipe_create(piped_t * in_des, piped_t * out_des) {
+int pipe_create(pipe_t * in_des, pipe_t * out_des) {
     /* Vérification des paramètres */
     if (in_des == NULL || out_des == NULL) {
         return -1;
     }
 
     /* Cherche un premier index valide */
-    piped_t p1;
+    pipe_t p1;
     for (p1 = (_current_index + 1) % _max_pipe_index ;
         p1 != _current_index && _pipe_array[p1] != NULL ;
         p1 = (p1 + 1) % _max_pipe_index);
@@ -244,7 +244,7 @@ int pipe_create(piped_t * in_des, piped_t * out_des) {
     }
 
     /* Cherche un deuxième index valide */
-    piped_t p2;
+    pipe_t p2;
     for (p2 = (p1 + 1) % _max_pipe_index ;
         p2 != _current_index && _pipe_array[p2] != NULL ;
         p2 = (p2 + 1) % _max_pipe_index);
@@ -306,7 +306,7 @@ int pipe_create(piped_t * in_des, piped_t * out_des) {
     return 0;
 }
 
-int pipe_close(piped_t des) {
+int pipe_close(pipe_t des) {
     struct _pipe_end_s pipe_end;
     if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
@@ -322,7 +322,7 @@ int pipe_close(piped_t des) {
     return 0;
 }
 
-ssize_t pipe_read(piped_t des, void * buffer, size_t bufsize) {
+ssize_t pipe_read(pipe_t des, void * buffer, size_t bufsize) {
     struct _pipe_end_s pipe_end;
     if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
@@ -337,7 +337,7 @@ ssize_t pipe_read(piped_t des, void * buffer, size_t bufsize) {
     return return_value;
 }
 
-ssize_t pipe_write(piped_t des, const void * buffer, size_t bufsize) {
+ssize_t pipe_write(pipe_t des, const void * buffer, size_t bufsize) {
     /* Vérification des paramètres */
     struct _pipe_end_s pipe_end;
     if (_pipe_des_to_end(des, &pipe_end) == -1) {
