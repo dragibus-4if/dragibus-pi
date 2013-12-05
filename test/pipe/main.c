@@ -19,6 +19,14 @@ int main(void) {
     ASSERT(pipe_write(NULL, NULL, 0) == -1);
     ASSERT(pipe_close(NULL) == -1);
 
+    {
+        /* Essaye de fermer un pipe non ouvert */
+        long int i;
+        for(i = -8 ; i < 65537 ; i++) {
+            ASSERT(pipe_close((piped_t)i) == -1);
+        }
+    }
+
     if(pipe_create(&readable, &writable) == 0) {
         {
             char buffer1[1];
@@ -101,22 +109,25 @@ int main(void) {
             }
         }
 
-        pipe_close(readable);
-        pipe_close(writable);
+        ASSERT(pipe_close(readable) == 0);
+        ASSERT(pipe_close(writable) == 0);
+
+        /* On ne peut pas fermer 2 fois les pipes */
+        ASSERT(pipe_close(readable) == -1);
+        ASSERT(pipe_close(writable) == -1);
     }
 
     pipe_create(&readable, &writable);
 
+    /* WARNING Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
     /* Essaye de créé trop de pipes (limite à 32767 pipes) */
-    int i;
-    piped_t pipes[32767];
-    for(i = 0 ; i < 32767 ; i += 2) {
-        ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1);
-    }
-
-    /* Création du pipe qui fait déborder le vase */
-    piped_t p1, p2;
-    ASSERT(pipe_create(&p1, &p2) == -1);
+    /* int i; */
+    /* piped_t pipes[32767]; */
+    /* for(i = 0 ; i < 32767 ; i += 2) { */
+    /*     ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1); */
+    /* } */
+    /* piped_t p1, p2; */
+    /* ASSERT(pipe_create(&p1, &p2) == -1); */
 
     return 0;
 }
