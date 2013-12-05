@@ -6,7 +6,7 @@
 /* Structure de données privée du mutex */
 struct _mutex_s {
     struct pcb_s * owner;
-    struct sem_s * sem;
+    struct sem_s sem;
 };
 
 /* Index courant et max du dernier mutex créé */
@@ -55,9 +55,7 @@ int mutex_create(mutex_t * desc) {
 
     /* Initialisation */
     /* TODO reorganise pour que l'appel soit plus du genre sem_create ? */
-    struct sem_s s;
-    sem_init(&s, 1);
-    mutex->sem = &s;
+    sem_init(&mutex->sem, 1);
     mutex->owner = NULL;
 
     /* Retour */
@@ -74,7 +72,7 @@ int mutex_free(mutex_t desc) {
         return -1;
     }
 
-    /* TODO sem_free(mutex->sem); */
+    /* TODO sem_destroy(mutex->sem); */
     malloc_free((void *) mutex);
     _mutex_array[desc] = NULL;
     return 0;
@@ -92,7 +90,7 @@ int mutex_acquire(mutex_t desc) {
      * - immédiatement après, on est sûr que le processus courant a
      *   vérouillé le mutex
      */
-    sem_down(mutex->sem);
+    sem_down(&mutex->sem);
     mutex->owner = get_current_process();
     return 0;
 }
