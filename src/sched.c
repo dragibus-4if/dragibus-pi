@@ -8,12 +8,14 @@ struct pcb_s* ready_queue = (struct pcb_s *) 0;
 struct pcb_s* current_process = (struct pcb_s *) NULL;
 struct pcb_s* waiting_queue = (struct pcb_s *) 0;
 
-extern void processus_A();
-
 #define PRINT(MSG) ;
 #define EXIT(CODE) ;
 
-void process_block() {
+struct pcb_s * get_current_process() {
+  return current_process;
+}
+
+void process_block(){
   struct pcb_s* it = current_process;
 
   while (it->next != current_process) {

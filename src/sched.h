@@ -32,5 +32,6 @@ void schedule();
 void start_current_process();
 void process_block();
 void process_release(struct pcb_s* pcb);
+struct pcb_s * get_current_process();
 
 #endif
