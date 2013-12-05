@@ -1,8 +1,7 @@
 #ifndef SCHED_H
 #define SCHED_H
 
-#include <stdint.h>
-#define NULL 0x0
+#include "types.h"
 
 extern struct pcb_s* current_process;
 
