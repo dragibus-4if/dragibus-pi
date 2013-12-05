@@ -3,8 +3,9 @@
 #include "malloc.h"
 void
 sem_init(struct sem_s *sem, int val){
-    sem = (struct sem_s*) malloc_alloc(sizeof(struct sem_s));
-    sem->counter = val;
+    sem = (struct sem_s*) malloc_alloc(1000/*sizeof(struct sem_s)*/);
+    sem->counter = 0;
+    sem->counter += val;
     sem->pcbSemF = NULL;
     sem->pcbSemL = NULL; 
 }
@@ -12,7 +13,6 @@ sem_init(struct sem_s *sem, int val){
 void
 sem_up(struct sem_s* sem){
     sem->counter++;
-    // TODO ecrire process_release
     process_release(sem->pcbSemF->pcb);
     struct pcb_Sem* temp = sem->pcbSemF;
     sem->pcbSemF=sem->pcbSemF->next;  
@@ -21,7 +21,7 @@ sem_up(struct sem_s* sem){
 
 void sem_down(struct sem_s* sem){
     sem->counter--;
-    if(sem->counter<=0){
+    if(sem->counter<0){
         struct pcb_Sem* nPcbSem = (struct pcb_Sem*) malloc_alloc(sizeof(struct pcb_Sem));
         nPcbSem->pcb = current_process;
         if(sem->pcbSemF==NULL){
@@ -32,7 +32,6 @@ void sem_down(struct sem_s* sem){
             sem->pcbSemL->next = nPcbSem;
             sem->pcbSemL = nPcbSem;       
         }   
-        //TODO ecrire process_blocks
         process_block();
     }
 }
