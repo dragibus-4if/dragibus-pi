@@ -203,7 +203,7 @@ struct _pipe_end_s {
     struct _buffer_s * buffer;
 
     /* Mutex commun du pipe */
-    intptr_t mutex;
+    mutex_t mutex;
 };
 
 /* Index courant et max du dernier pipe créé */
@@ -286,7 +286,7 @@ int pipe_create(pipe_t * in_des, pipe_t * out_des) {
     write_end->buffer = buffer;
 
     /* Création du mutex commun */
-    intptr_t mutex = NULL;
+    mutex_t mutex = NULL;
     if (mutex_create(&mutex) == -1) {
         _buffer_free(write_end->buffer);
         malloc_free(read_end);
