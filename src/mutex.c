@@ -11,7 +11,7 @@ struct _mutex_s {
 
 /* Index courant et max du dernier mutex créé */
 static mutex_t _current_index = -1;
-#define _max_mutex_index 32767
+#define _max_mutex_index 1024
 
 /* Table des mutex créés */
 static struct _mutex_s * _mutex_array[_max_mutex_index] = {NULL};

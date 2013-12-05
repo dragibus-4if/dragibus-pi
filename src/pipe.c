@@ -208,7 +208,7 @@ struct _pipe_end_s {
 
 /* Index courant et max du dernier pipe créé */
 static pipe_t _current_index = -1;
-#define _max_pipe_index 32767
+#define _max_pipe_index 1024
 
 /* Table des pipes créés */
 static struct _pipe_end_s * _pipe_array[_max_pipe_index] = {NULL};
