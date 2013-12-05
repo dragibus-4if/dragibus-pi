@@ -6,10 +6,10 @@
 
 int main(void) {
     /* Initialisation de la RAM */
-    char mem[0x30000 - 0x8000];
+    char mem[0x50000];
     malloc_init((void * )&mem);
 
-    intptr_t readable, writable;
+    piped_t readable, writable;
 
     /* Test les cas d'erreurs */
     ASSERT(pipe_create(NULL, NULL) == -1);
@@ -18,6 +18,14 @@ int main(void) {
     ASSERT(pipe_read(NULL, NULL, 0) == -1);
     ASSERT(pipe_write(NULL, NULL, 0) == -1);
     ASSERT(pipe_close(NULL) == -1);
+
+    {
+        /* Essaye de fermer un pipe non ouvert */
+        long int i;
+        for(i = -8 ; i < 65537 ; i++) {
+            ASSERT(pipe_close((piped_t)i) == -1);
+        }
+    }
 
     if(pipe_create(&readable, &writable) == 0) {
         {
@@ -53,8 +61,8 @@ int main(void) {
 
             /* Normalement dans un cas monoproc, l'écriture et la lecture ne
              * pose pas de problème. */
-            ASSERT(nb_write == 10);
-            ASSERT(nb_read == 10);
+            ASSERT(nb_write == 8);
+            ASSERT(nb_read == 8);
 
             /* Vérification de l'égalité des buffers */
             for(i = 0 ; i < nb_read ; i++) {
@@ -69,8 +77,8 @@ int main(void) {
 
             /* Remplissage les buffer (OSEF des valeurs) */
             for(i = 0 ; i < 1024 ; i++) {
-                buffer1[i] = i % 100;
-                buffer2[i] = (i + 3) % 42;
+                buffer1[i] = (char)i % 100;
+                buffer2[i] = (char)(i + 3) % 42;
             }
 
             /* Ecriture dans le pipe petit bout par petit bout */
@@ -101,11 +109,26 @@ int main(void) {
             }
         }
 
-        pipe_close(readable);
-        pipe_close(writable);
+        ASSERT(pipe_close(readable) == 0);
+        ASSERT(pipe_close(writable) == 0);
+
+        /* On ne peut pas fermer 2 fois les pipes */
+        ASSERT(pipe_close(readable) == -1);
+        ASSERT(pipe_close(writable) == -1);
     }
-    else
-      return -1;
+
+    pipe_create(&readable, &writable);
+
+    /* FIXME Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
+    /* Essaye de créé trop de pipes (limite à 32767 pipes) */
+    /* int i; */
+    /* piped_t pipes[32767]; */
+    /* for(i = 0 ; i < 32767 ; i += 2) { */
+    /*     ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1); */
+    /* } */
+    /* piped_t p1, p2; */
+    /* ASSERT(pipe_create(&p1, &p2) == -1); */
+
     return 0;
 }
 

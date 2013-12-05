@@ -4,48 +4,48 @@
 #include "dispatcher.h"
 
 struct pcb_s idle;
-struct pcb_s* ready_queue = (struct pcb_s *)0;
+struct pcb_s* ready_queue = (struct pcb_s *) 0;
 struct pcb_s* current_process = (struct pcb_s *) NULL;
-struct pcb_s* waiting_queue = (struct pcb_s *)0;
+struct pcb_s* waiting_queue = (struct pcb_s *) 0;
 
 extern void processus_A();
 
 #define PRINT(MSG) ;
 #define EXIT(CODE) ;
 
-process_block(){
-    struct pcb_s* it = current_process;
+void process_block() {
+  struct pcb_s* it = current_process;
 
-    while (it->next != current_process){
-        it=it->next;
-    }
+  while (it->next != current_process) {
+    it=it->next;
+  }
 
-    it->next = it->next->next;
-    
-    it= waiting_queue;
-    while(it->next != NULL){
-        it=it->next;
-    }
+  it->next = it->next->next;
 
-    it->next = current_process;    
-    current_process->next = NULL;
-    current_process->state = WAITING;
+  it= waiting_queue;
+  while(it->next != NULL){
+    it=it->next;
+  }
+
+  it->next = current_process;    
+  current_process->next = NULL;
+  current_process->state = WAITING;
 }
 
 void process_release(struct pcb_s* pcb){
-    struct pcb_s* it = waiting_queue;
-    while(it->next != pcb){
-        it=it->next;
-    }
-    
-    it->next = it->next->next;
-    
-    pcb->next = current_process->next;
-    current_process->next = pcb;
-    pcb->state = READY;
+  struct pcb_s* it = waiting_queue;
+  while(it->next != pcb){
+    it=it->next;
+  }
+
+  it->next = it->next->next;
+
+  pcb->next = current_process->next;
+  current_process->next = pcb;
+  pcb->state = READY;
 }
-void
-start_current_process()
+
+void start_current_process()
 {
   current_process->state = READY;
   current_process->entry_point();
@@ -55,8 +55,7 @@ start_current_process()
   yield();
 }
 
-int
-init_process(struct pcb_s *pcb, int stack_size, func_t* f)
+int init_process(struct pcb_s *pcb, size_t stack_size, func_t* f)
 {	
   /* Function and args */
   pcb->entry_point = f;
@@ -75,12 +74,11 @@ init_process(struct pcb_s *pcb, int stack_size, func_t* f)
   *(pcb->sp) = 0x53;
   pcb->sp --;
   *(pcb->sp) = (unsigned int) &start_current_process;
-  
+
   return 1;
 }
 
-int
-create_process(func_t* f, unsigned size)
+int create_process(func_t* f, size_t size)
 {
   struct pcb_s *pcb;
   pcb = (struct pcb_s*) malloc_alloc(sizeof(struct pcb_s));
@@ -93,14 +91,13 @@ create_process(func_t* f, unsigned size)
   } else {
     pcb->next = ready_queue->next;
   }
-  
+
   ready_queue->next = pcb;
   return init_process(pcb,size,f);
 }
 
 
-void
-schedule()
+void schedule()
 {
   struct pcb_s* pcb;
   struct pcb_s* pcb_init;
@@ -118,8 +115,8 @@ schedule()
     } else {
       /* Particular case of the head */
       if (pcb->next == ready_queue)
-	ready_queue = pcb;    
-      
+        ready_queue = pcb;    
+
       /* Remove pcb from the list (FIXME : could be done after the loop) */
       pcb->next = pcb->next->next;
 
@@ -147,18 +144,16 @@ schedule()
     ready_queue = NULL;
     current_process = &idle;
   } else {            /* Sinon -> le processus élu est le suivant */
-      current_process = pcb;
+    current_process = pcb;
   }
 }
 
-void
-yield()
+void yield()
 {
   ctx_switch();
 }
 
-void
-start_sched()
+void start_sched()
 {
   current_process = &idle;
   idle.next = ready_queue;

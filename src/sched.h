@@ -1,8 +1,7 @@
 #ifndef SCHED_H
 #define SCHED_H
 
-#include <stdint.h>
-#define NULL 0x0
+#include "types.h"
 
 extern struct pcb_s* current_process;
 
@@ -13,12 +12,12 @@ enum pcb_state_e {READY, NEW, TERMINATED, WAITING};
 struct pcb_s {
   /* Pointer to stack */
   uint32_t* sp;
-    
+
   /* function and args */
   func_t* entry_point;
   void* args;
-  
-  unsigned int size;
+
+  size_t size;
   char* stack_base;
   enum pcb_state_e state;
 
@@ -26,7 +25,7 @@ struct pcb_s {
 };
 
 
-int create_process(func_t* f, unsigned size);
+int create_process(func_t* f, size_t size);
 void yield();
 void start_sched();
 void schedule();
