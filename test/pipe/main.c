@@ -119,7 +119,7 @@ int main(void) {
 
     pipe_create(&readable, &writable);
 
-    /* WARNING Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
+    /* FIXME Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
     /* Essaye de créé trop de pipes (limite à 32767 pipes) */
     /* int i; */
     /* piped_t pipes[32767]; */
