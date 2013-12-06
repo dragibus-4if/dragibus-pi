@@ -39,9 +39,10 @@ void set_sched_mode(enum sched_mode_e mode);
 int create_process(func_t * f, void * args, size_t size);
 void process_block();
 void process_release(struct pcb_s* pcb);
+int set_process_state(struct pcb_s * pcb, enum pcb_state_e state);
+int set_current_state(enum pcb_state_e state);
 
 /* Gestion du process courant */
-void start_current_process();
 struct pcb_s * get_current_process();
 
 #endif

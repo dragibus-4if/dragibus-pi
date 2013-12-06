@@ -78,50 +78,22 @@ struct pcb_s * get_current_process() {
     return _current_process;
 }
 
-void process_block() {
-    struct pcb_s * it = _current_process;
-    while (it->next != _current_process) {
-        it = it->next;
-    }
-
-    it->next = it->next->next;
-
-    /* TODO Ta waiting queue elle boucle pas sur elle-meme */
-    /* Ca fait du caca de partout */
-    it = _waiting_queue;
-    if (_waiting_queue == 0 )
-    {
-        _waiting_queue = _current_process;
-    } else {
-        while(it->next != _waiting_queue) {
-            it = it->next;
-        }
-    }
-
-
-    it->next = _current_process;
-    _current_process->next = NULL;
-    _current_process->state = WAITING;
+int set_process_state(struct pcb_s * pcb, enum pcb_state_e state) {
+  /* Vérif des valeurs */
+  if (pcb == NULL) {
+      return -1;
+  }
+  pcb->state = state;
+  return 0;
 }
 
-void process_release(struct pcb_s * pcb) {
-    struct pcb_s * it = _waiting_queue;
-    while (it->next != pcb) {
-        it = it->next;
-    }
-
-    it->next = it->next->next;
-
-    pcb->next = _current_process->next;
-    _current_process->next = pcb;
-    pcb->state = READY;
+int set_current_state(enum pcb_state_e state) {
+  _current_process->state = state;
 }
 
-void start_current_process() {
+void _start_current_process() {
     _current_process->state = READY;
     _current_process->entry_point(_current_process->args);
-
-    /* The process is terminated */
     _current_process->state = TERMINATED;
     yield();
 }
@@ -135,7 +107,7 @@ int _init_process(struct pcb_s *pcb, size_t stack_size, func_t * f, void * args)
     pcb->size = stack_size;
     pcb->stack_base = malloc_alloc(stack_size);
     if (pcb->stack_base == NULL) {
-        return 0;
+        return -1;
     }
 
     /* Priority */
@@ -148,7 +120,7 @@ int _init_process(struct pcb_s *pcb, size_t stack_size, func_t * f, void * args)
     /* Fill in the stack with CPSR and PC */
     *(pcb->sp) = 0x53;
     pcb->sp--;
-    *(pcb->sp) = (unsigned int) &start_current_process;
+    *(pcb->sp) = (unsigned int) &_start_current_process;
 
     return 1;
 }
@@ -157,7 +129,7 @@ int create_process(func_t * f, void * args, size_t size) {
     struct pcb_s * pcb;
     pcb = (struct pcb_s *) malloc_alloc(sizeof(struct pcb_s));
     if (pcb == NULL) {
-        return 0;
+        return -1;
     }
 
     /* First process */
@@ -173,59 +145,87 @@ int create_process(func_t * f, void * args, size_t size) {
 
 void schedule() {
     struct pcb_s * pcb;
-    struct pcb_s * pcb_init;
-
-    pcb_init = _current_process;
-    pcb = _current_process;
-
-    /* Start by eliminating all zombies (rhaaaaa !) */
-    while (pcb->next->state == TERMINATED) {
-        /* If no process to be executed -> note that and leave loop */
-        if (pcb->next == pcb) {
-            pcb = NULL;
-            break;
-        } else {
-            /* Particular case of the head */
-            if (pcb->next == _ready_queue) {
-                _ready_queue = pcb;
-            }
-
-            /* Remove pcb from the list (FIXME could be done after the loop) */
-            pcb->next = pcb->next->next;
-
-            /* Free memory */
+    for (pcb = _current_process->next;
+        pcb->next != _current_process &&
+        pcb->state != READY &&
+        pcb->state != NEW;
+        pcb = pcb->next) {
+        /* Suppression des zombies */
+        if (pcb->next->state == TERMINATED) {
+            struct pcb_s * p = pcb->next->next;
             malloc_free((char *) pcb->next->stack_base);
             malloc_free((char *) pcb->next);
-
-            /* Get next process */
-            pcb = pcb->next;
+            pcb->next = p;
         }
     }
 
-    if (pcb != NULL) {
-        /* On parcours la liste jusqu'à trouver un processus non bloqué */
-        pcb = pcb->next;
-        while (pcb->state == WAITING && pcb != pcb_init) {
-            pcb = pcb->next;
+    /* Si il n'y a pas de proc près */
+    if (pcb->state != READY && pcb->state != NEW) {
+        /* On vérifie s'il y a qu'un pcb restant et qu'il est vivant */
+        if(pcb->state == TERMINATED && pcb->next == pcb) {
+            malloc_free((char *) pcb->stack_base);
+            malloc_free((char *) pcb);
         }
-
-        /* Si tous les processus sont bloqués -> on le note */
-        if (pcb->state == WAITING) {
-            pcb = NULL;
-        }
-    }
-
-    /* Application de l'ordonnanceur à priorité */
-    if (_sched_mode == PRIORITY) {
-        pcb = _schedule_priority(pcb);
-    }
-
-    if (pcb == NULL) {  /* Si pas de processus à élire -> _idle */
-        _ready_queue = NULL;
         _current_process = &_idle;
-    } else {            /* Sinon -> le processus élu est le suivant */
+    }
+    else {
+        /* On prend le pcb choisi */
         _current_process = pcb;
     }
+
+    /* struct pcb_s * pcb; */
+    /* struct pcb_s * pcb_init; */
+    /* pcb_init = _current_process; */
+    /* pcb = _current_process; */
+
+    /* #<{(| Start by eliminating all zombies (rhaaaaa !) |)}># */
+    /* while (pcb->next->state == TERMINATED) { */
+    /*     #<{(| If no process to be executed -> note that and leave loop |)}># */
+    /*     if (pcb->next == pcb) { */
+    /*         pcb = NULL; */
+    /*         break; */
+    /*     } else { */
+    /*         #<{(| Particular case of the head |)}># */
+    /*         if (pcb->next == _ready_queue) { */
+    /*             _ready_queue = pcb; */
+    /*         } */
+
+    /*         #<{(| Remove pcb from the list (FIXME could be done after the loop) |)}># */
+    /*         pcb->next = pcb->next->next; */
+
+    /*         #<{(| Free memory |)}># */
+    /*         malloc_free((char *) pcb->next->stack_base); */
+    /*         malloc_free((char *) pcb->next); */
+
+    /*         #<{(| Get next process |)}># */
+    /*         pcb = pcb->next; */
+    /*     } */
+    /* } */
+
+    /* if (pcb != NULL) { */
+    /*     #<{(| On parcours la liste jusqu'à trouver un processus non bloqué |)}># */
+    /*     pcb = pcb->next; */
+    /*     while (pcb->state == WAITING && pcb != pcb_init) { */
+    /*         pcb = pcb->next; */
+    /*     } */
+
+    /*     #<{(| Si tous les processus sont bloqués -> on le note |)}># */
+    /*     if (pcb->state == WAITING) { */
+    /*         pcb = NULL; */
+    /*     } */
+    /* } */
+
+    /* #<{(| Application de l'ordonnanceur à priorité |)}># */
+    /* if (_sched_mode == PRIORITY) { */
+    /*     pcb = _schedule_priority(pcb); */
+    /* } */
+
+    /* if (pcb == NULL) {  #<{(| Si pas de processus à élire -> _idle |)}># */
+    /*     _ready_queue = NULL; */
+    /*     _current_process = &_idle; */
+    /* } else {            #<{(| Sinon -> le processus élu est le suivant |)}># */
+    /*     _current_process = pcb; */
+    /* } */
 }
 
 void start_sched() {

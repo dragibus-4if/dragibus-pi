@@ -3,39 +3,73 @@
 #include "malloc.h"
 #include "hw.h"
 
-void sem_init(struct sem_s * sem, int val) {
-    sem->counter = 0;
-    sem->counter += val;
-    sem->first_pcbs = NULL;
-    sem->last_pcbs = NULL;
-}
-
-void sem_up(struct sem_s * sem) {
-    DISABLE_IRQ();
-    sem->counter++;
-    if (sem->counter <=0){
-        process_release(sem->first_pcbs->pcb);
-        /*struct sem_pcb_s* temp = sem->first_pcbs;*/
-        sem->first_pcbs=sem->first_pcbs->next;
+int sem_init(struct sem_s * sem, int val) {
+    /* Vérification des entrées */
+    if(sem == NULL) {
+        return -1;
     }
-    ENABLE_IRQ();
-    /*malloc_free(temp);*/
+
+    if(val <= 0) {
+        return -1;
+    }
+
+    sem->counter = val;
+    sem->waiting_queue = NULL;
+    return 0;
 }
 
-void sem_down(struct sem_s * sem){
+int sem_up(struct sem_s * sem) {
     DISABLE_IRQ();
+
+    /* Vérification de l'entrée */
+    if (sem == NULL) {
+        ENABLE_IRQ();
+        return -1;
+    }
+
+    sem->counter++;
+    if (sem->counter <= 0) {
+        /* Active une tache dans la file d'attente */
+        set_process_state(sem->waiting_queue->pcb, READY);
+        sem->waiting_queue = sem->waiting_queue->next;
+    }
+
+    ENABLE_IRQ();
+    return 0;
+}
+
+int sem_down(struct sem_s * sem){
+    DISABLE_IRQ();
+
+    /* Vérification de l'entrée */
+    if (sem == NULL) {
+        ENABLE_IRQ();
+        return -1;
+    }
+
     sem->counter--;
     if (sem->counter < 0) {
-        struct sem_pcb_s * npcbs = (struct sem_pcb_s*) malloc_alloc(sizeof(struct sem_pcb_s));
-        npcbs->pcb = get_current_process();
-        if (sem->first_pcbs == NULL ){
-            sem->first_pcbs = npcbs;
-            sem->last_pcbs = npcbs;
+        /* Bloque la tache courante */
+        set_current_state(WAITING);
+
+        /* Création d'un nouvel élément de liste */
+        struct pcb_list * p = (struct pcb_list *) malloc_alloc(
+            sizeof(struct pcb_list));
+        p->next = NULL;
+        p->pcb = get_current_process();
+
+        /* Ajout à la fin de la liste d'attente */
+        if (sem->waiting_queue == NULL) {
+            sem->waiting_queue = p;
         } else {
-            sem->last_pcbs->next = npcbs;
-            sem->last_pcbs = npcbs;
+            struct pcb_list * last;
+            for (last = sem->waiting_queue;
+                last->next != NULL;
+                last = last->next);
+            last->next = p;
         }
-        process_block();
     }
+
     ENABLE_IRQ();
+    return 0;
 }
