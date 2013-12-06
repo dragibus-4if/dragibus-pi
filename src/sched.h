@@ -23,9 +23,11 @@ struct pcb_s {
 };
 
 /* Gestion de l'ordonnancement */
+enum sched_mode_e { BASIC, PRIORITY };
 void yield();
-void start_sched();
 void schedule();
+void start_sched();
+void set_sched_mode(enum sched_mode_e mode);
 
 /* Gestion d'un processus */
 int create_process(func_t * f, size_t size);

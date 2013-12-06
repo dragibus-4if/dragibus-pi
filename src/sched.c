@@ -3,19 +3,24 @@
 #include "hw.h"
 #include "dispatcher.h"
 
-struct pcb_s idle;
-struct pcb_s* ready_queue = (struct pcb_s *) 0;
-struct pcb_s* _current_process = (struct pcb_s *) NULL;
-struct pcb_s* waiting_queue = (struct pcb_s *) 0;
+/* Ordonnanceur basique */
 
-#define PRINT(MSG) ;
-#define EXIT(CODE) ;
+static struct pcb_s _idle;
+static struct pcb_s * _ready_queue = (struct pcb_s *) 0;
+static struct pcb_s * _current_process = (struct pcb_s *) NULL;
+static struct pcb_s * _waiting_queue = (struct pcb_s *) 0;
+
+/* Ordonnanceur à priority */
+void schedule();
+void start_sched();
+
+/* Implémentation publique de l'ordonnanceur */
 
 struct pcb_s * get_current_process() {
     return _current_process;
 }
 
-void process_block(){
+void process_block() {
     struct pcb_s* it = _current_process;
 
     while (it->next != _current_process) {
@@ -24,8 +29,8 @@ void process_block(){
 
     it->next = it->next->next;
 
-    it= waiting_queue;
-    while (it->next != NULL){
+    it= _waiting_queue;
+    while (it->next != NULL) {
         it=it->next;
     }
 
@@ -34,9 +39,9 @@ void process_block(){
     _current_process->state = WAITING;
 }
 
-void process_release(struct pcb_s* pcb){
-    struct pcb_s* it = waiting_queue;
-    while (it->next != pcb){
+void process_release(struct pcb_s * pcb) {
+    struct pcb_s * it = _waiting_queue;
+    while (it->next != pcb) {
         it=it->next;
     }
 
@@ -47,8 +52,7 @@ void process_release(struct pcb_s* pcb){
     pcb->state = READY;
 }
 
-void start_current_process()
-{
+void start_current_process() {
     _current_process->state = READY;
     _current_process->entry_point();
 
@@ -57,8 +61,7 @@ void start_current_process()
     yield();
 }
 
-int init_process(struct pcb_s *pcb, size_t stack_size, func_t* f)
-{
+int init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
     /* Function and args */
     pcb->entry_point = f;
 
@@ -81,29 +84,28 @@ int init_process(struct pcb_s *pcb, size_t stack_size, func_t* f)
     return 1;
 }
 
-int create_process(func_t* f, size_t size)
-{
-    struct pcb_s *pcb;
+int create_process(func_t * f, size_t size) {
+    struct pcb_s * pcb;
     pcb = (struct pcb_s*) malloc_alloc(sizeof(struct pcb_s));
 
-    if (!pcb) {
+    if (pcb == NULL) {
         return 0;
     }
 
-    if (! ready_queue) {/* First process */
-        ready_queue = pcb;
+    /* First process */
+    if (! _ready_queue) {
+        _ready_queue = pcb;
     } else {
-        pcb->next = ready_queue->next;
+        pcb->next = _ready_queue->next;
     }
 
-    ready_queue->next = pcb;
+    _ready_queue->next = pcb;
     return init_process(pcb,size,f);
 }
 
-
 void schedule() {
-    struct pcb_s* pcb;
-    struct pcb_s* pcb_init;
+    struct pcb_s * pcb;
+    struct pcb_s * pcb_init;
 
     pcb_init = _current_process;
     pcb = _current_process;
@@ -116,16 +118,16 @@ void schedule() {
             break;
         } else {
             /* Particular case of the head */
-            if (pcb->next == ready_queue) {
-                ready_queue = pcb;
+            if (pcb->next == _ready_queue) {
+                _ready_queue = pcb;
             }
 
             /* Remove pcb from the list (FIXME : could be done after the loop) */
             pcb->next = pcb->next->next;
 
             /* Free memory */
-            malloc_free((char*) pcb->next->stack_base);
-            malloc_free((char*) pcb->next);
+            malloc_free((char *) pcb->next->stack_base);
+            malloc_free((char *) pcb->next);
 
             /* Get next process */
             pcb = pcb->next;
@@ -135,8 +137,9 @@ void schedule() {
     if (pcb != NULL) {
         /* On parcours la liste jusqu'à trouver un processus non bloqué */
         pcb = pcb->next;
-        while (pcb->state == WAITING && pcb != pcb_init)
+        while (pcb->state == WAITING && pcb != pcb_init) {
             pcb = pcb->next;
+        }
 
         /* Si tous les processus sont bloqués -> on le note */
         if (pcb->state == WAITING) {
@@ -144,25 +147,24 @@ void schedule() {
         }
     }
 
-    if (pcb == NULL) {   /* Si pas de processus à élire -> idle */
-        ready_queue = NULL;
-        _current_process = &idle;
+    if (pcb == NULL) {  /* Si pas de processus à élire -> _idle */
+        _ready_queue = NULL;
+        _current_process = &_idle;
     } else {            /* Sinon -> le processus élu est le suivant */
         _current_process = pcb;
     }
 }
 
-void yield() {
-    ctx_switch();
-}
-
 void start_sched() {
-    _current_process = &idle;
-    idle.next = ready_queue;
+    _current_process = &_idle;
+    _idle.next = _ready_queue;
 
-    //ENABLE_IRQ();
-
+    /*ENABLE_IRQ();*/
     while (1) {
         yield();
     }
+}
+
+void yield() {
+    ctx_switch();
 }
