@@ -155,14 +155,14 @@ int create_process(func_t * f, size_t size) {
     }
 
     /* First process */
-    if (! _ready_queue) {
+    if (_ready_queue == NULL) {
         _ready_queue = pcb;
     } else {
         pcb->next = _ready_queue->next;
     }
 
     _ready_queue->next = pcb;
-    return _init_process(pcb,size,f);
+    return _init_process(pcb, size, f);
 }
 
 void schedule() {
