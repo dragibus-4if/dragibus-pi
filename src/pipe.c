@@ -198,7 +198,7 @@ struct _pipe_end_s {
     struct _buffer_s * buffer;
 
     /* Mutex commun du pipe */
-    mutex_t mutex;
+    mutex_s * mutex;
 };
 
 /* Index courant et max du dernier pipe créé */
@@ -280,9 +280,16 @@ int pipe_create(pipe_t * in_des, pipe_t * out_des) {
     write_end->buffer = buffer;
 
     /* Création du mutex commun */
-    mutex_t mutex = NULL;
-    if (mutex_create(&mutex) == -1) {
+    struct mutex_t * mutex = (struct mutex_t) malloc_alloc(
+        sizeof(struct mutex_t));
+    if (mutex == NULL) {
         _buffer_free(write_end->buffer);
+        malloc_free(read_end);
+        malloc_free(write_end);
+    }
+    if (mutex_create(mutex) == -1) {
+        _buffer_free(write_end->buffer);
+        malloc_free(mutex);
         malloc_free(read_end);
         malloc_free(write_end);
         return -1;
@@ -306,10 +313,9 @@ int pipe_close(pipe_t des) {
         return -1;
     }
     if (pipe_end.other_side == NULL) {
-      _buffer_free(pipe_end.buffer);
-        mutex_free(pipe_end.mutex);
+        _buffer_free(pipe_end.buffer);
     } else {
-      pipe_end.other_side->other_side = NULL;
+        pipe_end.other_side->other_side = NULL;
     }
     malloc_free((void *) &pipe_end);
     _pipe_array[des] = NULL;
