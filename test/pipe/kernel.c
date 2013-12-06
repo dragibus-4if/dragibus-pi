@@ -6,37 +6,6 @@
 /* TODO changer ça un jour (en gardant le 42) */
 #define ASSERT(cond) if(!(cond)) { *((char *)0) = 42; }
 
-void pipe_write_all(pipe_t p, const char * buffer, size_t bufsize) {
-    for(ssize_t ws = 0 ; ws < bufsize ;) {
-        ssize_t w = pipe_write(p, buffer + ws, bufsize - ws);
-        ws += w >= 0 ? w : 0;
-    }
-}
-
-void pipe_read_all(pipe_t p, char * buffer, size_t bufsize) {
-    for(ssize_t rs = 0 ; rs < bufsize ;) {
-        ssize_t r = pipe_write(p, buffer + rs, bufsize - rs);
-        rs += r >= 0 ? r : 0;
-    }
-}
-
-void server(void * writable) {
-    pipe_t output = *(pipe_t *) writable;
-    unsigned long long int data = 42;
-    while(1) {
-        pipe_write_all(output, (char *) &data, sizeof(data));
-        data++;
-    }
-}
-
-void client(void * readable) {
-    pipe_t input = *(pipe_t *) readable;
-    unsigned long long int data;
-    while(1) {
-        pipe_read_all(input, (char *) &data, sizeof(data));
-    }
-}
-
 int start_kernel(void) {
     /* Initialisation de la RAM */
     malloc_init((void *) HEAP_START);
@@ -151,28 +120,18 @@ int start_kernel(void) {
 
     /* Essaye de créé trop de pipes (limite à MAX_PIPE pipes) */
     /* FIXME l'assert de la fermeture ne passe pas */
-    /* { */
-    /* int i; */
-    /*     pipe_t pipes[MAX_PIPE]; */
-    /*     for(i = 0 ; i < MAX_PIPE ; i += 2) { */
-    /*         ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1); */
-    /*     } */
-    /*     pipe_t p1, p2; */
-    /*     ASSERT(pipe_create(&p1, &p2) == -1); */
-
-    /*     #<{(| Libération |)}># */
-    /*     for(i = 0 ; i < MAX_PIPE ; i++) { */
-    /*         ASSERT(pipe_close(pipes[i]) == 0); */
-    /*     } */
-    /* } */
-
     {
-        init_hw();
-        pipe_t input, output;
-        if(pipe_create(&input, &output) != -1) {
-            create_process(&server, (void *) &output, 512);
-            create_process(&client, (void *) &input, 512);
-            start_sched();
+    int i;
+        pipe_t pipes[MAX_PIPE];
+        for(i = 0 ; i < MAX_PIPE ; i += 2) {
+            ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1);
+        }
+        pipe_t p1, p2;
+        ASSERT(pipe_create(&p1, &p2) == -1);
+
+        /* Libération */
+        for(i = 0 ; i < MAX_PIPE ; i++) {
+            ASSERT(pipe_close(pipes[i]) == 0);
         }
     }
 
