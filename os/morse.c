@@ -1,5 +1,5 @@
 #include "morse.h"
-#include "../hw.h"
+#include "hw.h"
 
 /* Code morse représenté par un booléen: 0 si court, 1 si long */
 typedef unsigned short int _morse_code_t;
@@ -24,6 +24,10 @@ static void _morse_blink_for(const _morse_code_t * codes, size_t codes_size) {
 }
 
 void morse_blink_char(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        c = c - 'A' + 'a';
+    }
+
     switch (c) {
 #define PROTECT_P99(...) __VA_ARGS__
 #define DEFINE_MORSE_CHAR(c, c_codes, c_codes_size)     \

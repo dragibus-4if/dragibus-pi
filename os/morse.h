@@ -1,7 +1,7 @@
 #ifndef MORSE_H
 #define MORSE_H
 
-#include "../types.h"
+#include "types.h"
 
 /* Constante définissant le temps d'une pause, à jauger selon les observations
  * sur le programme */
