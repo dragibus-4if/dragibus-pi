@@ -280,16 +280,9 @@ int pipe_create(pipe_t * in_des, pipe_t * out_des) {
     write_end->buffer = buffer;
 
     /* Création du mutex commun */
-    struct mutex_s * mutex = (struct mutex_s *) malloc_alloc(
-        sizeof(struct mutex_s));
+    struct mutex_s * mutex = mutex_create();
     if (mutex == NULL) {
         _buffer_free(write_end->buffer);
-        malloc_free(read_end);
-        malloc_free(write_end);
-    }
-    if (mutex_init(mutex) == -1) {
-        _buffer_free(write_end->buffer);
-        malloc_free(mutex);
         malloc_free(read_end);
         malloc_free(write_end);
         return -1;
@@ -314,6 +307,7 @@ int pipe_close(pipe_t des) {
     }
     if (pipe_end.other_side == NULL) {
         _buffer_free(pipe_end.buffer);
+        mutex_free(pipe_end.mutex);
     } else {
         pipe_end.other_side->other_side = NULL;
     }
