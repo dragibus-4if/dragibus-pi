@@ -89,6 +89,7 @@ int set_process_state(struct pcb_s * pcb, enum pcb_state_e state) {
 
 int set_current_state(enum pcb_state_e state) {
   _current_process->state = state;
+  return 0;
 }
 
 void _start_current_process() {
