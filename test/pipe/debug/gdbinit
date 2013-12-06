@@ -3,5 +3,7 @@ fs cmd
 wh cmd 12
 target remote:1234
 b start_kernel
+b server
+b client
 watch *0x00
 source include.gdb

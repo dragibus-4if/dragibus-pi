@@ -1,6 +1,7 @@
 #include "../../src/pipe.h"
 #include "../../src/malloc.h"
 #include "../../src/hw.h"
+#include "../../src/sched.h"
 
 /* TODO changer ça un jour (en gardant le 42) */
 #define ASSERT(cond) if(!(cond)) { *((char *)0) = 42; }
@@ -20,7 +21,7 @@ void pipe_read_all(pipe_t p, char * buffer, size_t bufsize) {
 }
 
 void server(void * writable) {
-    pipe_t output = (pipe_t) writable;
+    pipe_t output = *(pipe_t *) writable;
     unsigned long long int data = 0;
     while(1) {
         pipe_write_all(output, (char *) &data, sizeof(data));
@@ -29,7 +30,7 @@ void server(void * writable) {
 }
 
 void client(void * readable) {
-    pipe_t input = (pipe_t) readable;
+    pipe_t input = *(pipe_t *) readable;
     unsigned long long int data;
     while(1) {
         pipe_read_all(input, (char *) &data, sizeof(data));
@@ -170,8 +171,8 @@ int start_kernel(void) {
         init_hw();
         pipe_t input, output;
         pipe_create(&input, &output);
-        /* create_process(&server, (void *) output, 512); */
-        /* create_process(&client, (void *) input, 512); */
+        create_process(&server, (void *) &output, 512);
+        create_process(&client, (void *) &input, 512);
         start_sched();
     }
 

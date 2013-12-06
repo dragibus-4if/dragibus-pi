@@ -3,9 +3,8 @@
 #include "malloc.h"
 #include "sem.h"
 
-struct sem_s sema;
-
 void processus_A(void * args) {
+    struct sem_s sema = *(struct sem_s *) args;
     int i = 0;
     while (1) {
         sem_down(&sema);
@@ -17,6 +16,7 @@ void processus_A(void * args) {
 }
 
 void processus_B(void * args) {
+    struct sem_s sema = *(struct sem_s *) args;
     int i = 0;
     while (1) {
         sem_down(&sema);
@@ -32,9 +32,10 @@ void processus_B(void * args) {
 int start_kernel(void) {
     init_hw();
     malloc_init((void *) HEAP_START);
-    sem_init(&sema,1);
-    create_process(&processus_A, (void *) NULL, 512);
-    create_process(&processus_B, (void *) NULL, 512);
+    struct sem_s sema;
+    sem_init(&sema, 1);
+    create_process(&processus_A, (void *) &sema, 512);
+    create_process(&processus_B, (void *) &sema, 512);
     start_sched();
     return 0;
 }
