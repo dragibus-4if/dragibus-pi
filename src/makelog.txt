@@ -1,0 +1,1 @@
+arm-none-eabi-gcc -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm -mthumb-interwork -I./csud-master/include -c keyboard.c -o keyboard.o
