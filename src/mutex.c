@@ -12,18 +12,25 @@ struct mutex_s {
 struct mutex_s * mutex_create() {
     struct mutex_s * mutex = (struct mutex_s *) malloc_alloc(
             sizeof(struct mutex_s));
-
-    /* Attention: peut-être que mutex est NULL (à vérifier dans les cas
-     * d'erreur de mutex_init) */
-    if (mutex_init(mutex) == -1) {
-        mutex_free(mutex);
-        mutex = NULL;
+    if (mutex == NULL) {
+        return NULL;
     }
 
+    if (mutex_init(mutex) == -1) {
+        malloc_free(mutex);
+        return NULL;
+    }
     return mutex;
 }
 
 int mutex_free(struct mutex_s * mutex) {
+    /* Vérification des paramètres */
+    if (mutex == NULL) {
+        return -1;
+    }
+
+    malloc_free(mutex);
+    return 0;
 }
 
 int mutex_init(struct mutex_s * mutex) {
