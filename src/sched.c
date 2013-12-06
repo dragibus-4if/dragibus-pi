@@ -3,28 +3,28 @@
 #include "hw.h"
 #include "dispatcher.h"
 
-static struct pcb_s * sort_pcb_list(struct pcb_s * head) {
+static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
     /* Cas de base */
-    if (head == NULL || head->next == NULL) {
-        return head;
+    if (pcb == NULL || pcb->next == NULL) {
+        return pcb;
     }
 
     /* Choix du point de pivot */
-    static const pivot_choice = 0;
-    struct pcb_s * pivot = head;
+    static const size_t pivot_choice = 0;
+    struct pcb_s * pivot = pcb;
     for (size_t i = 0; i < pivot_choice && pivot->next != NULL; i++) {
         pivot = pivot->next;
     }
 
     /* Enlever le pivot de la liste */
     struct pcb_s * next, * tmp = NULL;
-    while (head != NULL) {
-        next = head->next;
-        if (head->priority != pivot->priority) {
-            head->next = tmp;
-            tmp = head;
+    while (pcb != NULL) {
+        next = pcb->next;
+        if (pcb->priority != pivot->priority) {
+            pcb->next = tmp;
+            tmp = pcb;
         }
-        head = next;
+        pcb = next;
     }
 
     /* Divide & conquer */
@@ -43,8 +43,8 @@ static struct pcb_s * sort_pcb_list(struct pcb_s * head) {
     }
 
     /* Appels récursifs */
-    first = sort_pcb_list(first);
-    second = sort_pcb_list(second);
+    first = _sort_pcb_list(first);
+    second = _sort_pcb_list(second);
 
     /* Merge */
     if (first != NULL) {
@@ -61,16 +61,8 @@ static struct pcb_s * sort_pcb_list(struct pcb_s * head) {
     }
 }
 
-/* Fonction de comparaison des pcb selon la priorité (inversée). Retourne 0 si
- * x est supérieur à y, -1 sinon. */
-static int _compare_pcbs(struct pcb_s * x, struct pcb_s * y) {
-    if (x->priority < y->priority) {
-        return -1;
-    } if (x->priority > y->priority) {
-        return 1;
-    } else {
-        return 0;
-    }
+static struct pcb_s * _schedule_priority(struct pcb_s * pcb) {
+    /* TODO */
 }
 
 static struct pcb_s _idle;
