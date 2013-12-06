@@ -1,6 +1,8 @@
 #include keyboard.h
 
 
+private u16 keyPressed [6] = { 0 , 0 , 0 , 0 , 0, 0 };
+
 private char keysNormal [104];
 private char keysShift [104];
 
@@ -38,7 +40,81 @@ keysShift = {
 	 '8', '9', '0', '.', '|', 0x0, 0x0, '='
 };
 
+private u32 kAddress = 0;
+
 void start_driver(){
+	UsbInitialise();
+	while ( true ){
+		keyBoardUpdate();
+		keyBoardGetChar();
+	}
+	
 
+}
 
+private void writeCharToPipe ( char c ){
+	printf("%c", c);
+}
+
+/*
+* Cette méthode checke si de nouvelles touches ont été entrées et appelle 
+* directement writeCharToPipe pour chacune d'entre elle
+*/
+pivate void keyBoardGetChar(){
+	if ( kAddress == 0 ){
+		return;
+	}
+	for ( u32 i = 0 ; i < 6 ; i ++ ){
+		u16 key = KeyboardGetKeyDown( kAddress, i );
+		if ( key == 0 ){ // appels suivant index croissant ou decroissant ?
+			return ;		
+		}
+		if ( key <= 103 ) {
+			KeyboardModifiers kMods = KeyboardGetModifiers ( kAddress );
+			if ( kMods.LeftShift || kMods.RightShift ){ //on matche la touche trouvée avec la table keysShift
+				char c = keysShift[ key ];	
+			}
+			else{
+				char c = keysNormal[ key ];			
+			}
+			writeCharToPipe( c );
+				
+		}
+	}
+}
+
+private void keyBoardUpdate(){
+	if ( kAddress == 0 ){
+		
+		UsbCheckForChange();
+		u32 kBoardCount = KeyboardCount();
+		if ( kBoardCount == 0 ) {
+			return;
+		}
+		kAddress = KeyboardGetAddress( 0 ) ;
+		if ( kAddress == 0 ){
+			return; // il y a un soucis ...
+		}
+		
+	}
+	for ( u32 i = 0  ; i < 6 ; i ++ ){
+		// pas sur de l'ordre dans lequel appeler 
+                //cette méthode pour restituer l'ordre
+	        // chronologique d'appui des touches ( index croissant ou décroissant)
+
+		keyPressed[i] = KeyboardGetKeyDown( kAddress, i );
+	}
+		Result status = KeyboardPoll ( kAddress );
+		if ( status != 0){
+		    	kAddress = 0;
+		}
+}
+
+private int keyWasDown ( u16 key ){
+	for ( int i = 0 ; i < 6 ; i ++ ){
+		if ( keyPressed[i] == key ){
+			return 1; // la touche était bien déja pressée
+		}
+	}
+	return 0; // la touche est pressée pour la premiere fois
 }
