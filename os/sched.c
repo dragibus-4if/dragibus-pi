@@ -24,6 +24,8 @@ void process_block(){
 
   it->next = it->next->next;
 
+  /* TODO Ta waiting queue elle boucle pas sur elle-meme */
+  /* Ca fait du caca de partout */
   it= waiting_queue;
   if (waiting_queue == 0 )
     {

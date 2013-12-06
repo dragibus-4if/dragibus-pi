@@ -1,7 +1,7 @@
-#include "../../src/pipe.h"
-#include "../../src/malloc.h"
-#include "../../src/hw.h"
-#include "../../src/sched.h"
+#include "../os/pipe.h"
+#include "../os/malloc.h"
+#include "../os/hw.h"
+#include "../os/sched.h"
 
 void pipe_write_all(pipe_t p, const char * buffer, size_t bufsize) {
     for(ssize_t ws = 0 ; ws < bufsize ;) {

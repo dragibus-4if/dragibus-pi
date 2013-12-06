@@ -8,8 +8,9 @@ CFLAGS = -Wall -Wextra -Wfloat-equal -Wwrite-strings \
 		 -ffreestanding -g -march=armv6z -marm -mthumb-interwork
 ASFLAGS = -g -march=armv6z
 
-C_FILES = kernel.c ../../src/dispatcher.c ../../src/hw.c ../../src/malloc.c ../../src/sched.c ../../src/sem.c ../../src/mutex.c ../../src/pipe.c
-AS_FILES = ../../src/vectors.s
+C_FILES = kernel.c ../os/malloc.c ../os/hw.c ../os/dispatcher.c ../os/sched.c ../os/sem.c ../os/mutex.c ../os/pipe.c
+AS_FILES = ../os/vectors.s
+MEMMAP = ../os/memmap
 
 OBJS = $(patsubst %.s,%.o,$(AS_FILES))
 OBJS += $(patsubst %.c,%.o,$(C_FILES))
@@ -34,8 +35,8 @@ clean:
 %.o: %.s
 	$(ARMGNU)-as $(ASFLAGS) $< -o $@
 
-kernel: ../../src/memmap $(OBJS)
-	$(ARMGNU)-ld $(OBJS) -T ../../src/memmap -o kernel.elf
+kernel: $(MEMMAP) $(OBJS)
+	$(ARMGNU)-ld $(OBJS) -T $(MEMMAP) -o kernel.elf
 	$(ARMGNU)-objdump -D kernel.elf > kernel.list
 	$(ARMGNU)-objcopy kernel.elf -O binary kernel.img
 	$(ARMGNU)-objcopy kernel.elf -O ihex kernel.hex

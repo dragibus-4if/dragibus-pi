@@ -1,7 +1,7 @@
-#include "../../src/pipe.h"
-#include "../../src/malloc.h"
-#include "../../src/hw.h"
-#include "../../src/sched.h"
+#include "../os/pipe.h"
+#include "../os/malloc.h"
+#include "../os/hw.h"
+#include "../os/sched.h"
 
 /* TODO changer ça un jour (en gardant le 42) */
 #define ASSERT(cond) if(!(cond)) { *((char *)0) = 42; }
