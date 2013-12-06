@@ -1,4 +1,7 @@
-CFLAGS=-pedantic -Wall -Wextra -Wfloat-equal -Wwrite-strings -Wpointer-arith -Wcast-align -Wconversion -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Winline -W -Wunused-parameter -ansi -Wshadow -std=c99 -g
+CFLAGS=-pedantic -Wall -Wextra -Wfloat-equal -Wwrite-strings -Wpointer-arith \
+	-Wcast-align -Wconversion -Wredundant-decls -Winit-self -Wswitch-default \
+	-Wswitch-enum -Wundef -Winline -W -Wunused-parameter -ansi -Wshadow \
+	-std=gnu99 -g -nostdlib
 
 LDFLAGS=-g
 

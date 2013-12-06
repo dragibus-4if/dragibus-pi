@@ -3,87 +3,53 @@
 #include "sem.h"
 #include "sched.h"
 
-/* Structure de données privée du mutex */
-struct _mutex_s {
+/* Structure de données représentant un mutex */
+struct mutex_s {
     struct pcb_s * owner;
-    struct sem_s * sem;
+    struct sem_s sem;
 };
 
-/* Index courant et max du dernier mutex créé */
-static mutex_t _current_index = -1;
-#define _max_mutex_index 1024
+struct mutex_s * mutex_create() {
+    struct mutex_s * mutex = (struct mutex_s *) malloc_alloc(
+            sizeof(struct mutex_s));
+    if (mutex == NULL) {
+        return NULL;
+    }
 
-/* Table des mutex créés */
-static struct _mutex_s * _mutex_array[_max_mutex_index] = {NULL};
+    if (mutex_init(mutex) == -1) {
+        malloc_free(mutex);
+        return NULL;
+    }
+    return mutex;
+}
 
-/* Permet de convertir le descripteur de mutex en mutex réel. Cas d'erreur :
- * - desc est négatif ou nul : adresse invalide */
-static int _mutex_desc_convert(mutex_t des, struct _mutex_s * mutex) {
-    if (des < 0 || des >= _max_mutex_index) {
+int mutex_free(struct mutex_s * mutex) {
+    /* Vérification des paramètres */
+    if (mutex == NULL) {
         return -1;
     }
-    if (_mutex_array[des] == NULL) {
-        return -1;
-    }
-    *mutex = *_mutex_array[des];
+
+    malloc_free(mutex);
     return 0;
 }
 
-int mutex_create(mutex_t * desc) {
+int mutex_init(struct mutex_s * mutex) {
     /* Vérification des paramètres */
-    if (desc == NULL) {
-        return -1;
-    }
-
-    /* Cherche un index valide */
-    mutex_t mid;
-    for (mid = (_current_index + 1) % _max_mutex_index ;
-        mid != _current_index && _mutex_array[mid] != NULL ;
-        mid = (mid + 1) % _max_mutex_index);
-
-    /* Si on a pas trouvé un seul descripteur valide */
-    if (mid == _current_index) {
-      return -1;
-    }
-
-    /* Création */
-    struct _mutex_s * mutex = (struct _mutex_s *) malloc_alloc(
-        sizeof(struct _mutex_s));
     if (mutex == NULL) {
         return -1;
     }
 
     /* Initialisation */
     /* TODO reorganise pour que l'appel soit plus du genre sem_create ? */
-    struct sem_s s;
-    sem_init(&s, 1);
-    mutex->sem = &s;
+    sem_init(&mutex->sem, 1);
     mutex->owner = NULL;
 
-    /* Retour */
-    _mutex_array[mid] = mutex;
-    _current_index = mid;
-    *desc = mid;
-
     return 0;
 }
 
-int mutex_free(mutex_t desc) {
-    struct _mutex_s * mutex = NULL;
-    if (_mutex_desc_convert(desc, mutex) == -1) {
-        return -1;
-    }
-
-    /* TODO sem_free(mutex->sem); */
-    malloc_free((void *) mutex);
-    _mutex_array[desc] = NULL;
-    return 0;
-}
-
-int mutex_acquire(mutex_t desc) {
-    /* Convertir le descripteur en mutex */
-    struct _mutex_s * mutex = NULL;
-    if (_mutex_desc_convert(desc, mutex) == -1) {
+int mutex_acquire(struct mutex_s * mutex) {
+    /* Vérification des paramètres */
+    if (mutex == NULL) {
         return -1;
     }
 
@@ -92,12 +58,19 @@ int mutex_acquire(mutex_t desc) {
      * - immédiatement après, on est sûr que le processus courant a
      *   vérouillé le mutex
      */
-    sem_down(mutex->sem);
+    sem_down(&mutex->sem);
     mutex->owner = get_current_process();
     return 0;
 }
 
-int mutex_release(mutex_t desc) {
-    /* TODO */
-  return 0;
+int mutex_release(struct mutex_s * mutex) {
+    /* Vérification des paramètres */
+    if (mutex == NULL || mutex->owner != get_current_process()) {
+        return -1;
+    }
+
+    sem_up(&mutex->sem);
+    return 0;
 }
+
+/* vim: set ft=c et sw=2 sts=2 */
