@@ -228,23 +228,23 @@ int pipe_create(pipe_t * in_des, pipe_t * out_des) {
 
     /* Cherche un premier index valide */
     pipe_t p1;
-    for (p1 = (_current_index + 1) % MAX_PIPE ;
-        p1 != _current_index && _pipe_array[p1] != NULL ;
+    for (p1 = (_current_index + 1) % MAX_PIPE;
+        p1 != _current_index && _pipe_array[p1] != NULL;
         p1 = (p1 + 1) % MAX_PIPE);
 
     /* Si on a pas trouvé un seul descripteur valide */
-    if (p1 == _current_index) {
+    if (_pipe_array[p1] != NULL) {
       return -1;
     }
 
     /* Cherche un deuxième index valide */
     pipe_t p2;
-    for (p2 = (p1 + 1) % MAX_PIPE ;
-        p2 != _current_index && _pipe_array[p2] != NULL ;
+    for (p2 = (p1 + 1) % MAX_PIPE;
+        p2 != _current_index && _pipe_array[p2] != NULL;
         p2 = (p2 + 1) % MAX_PIPE);
 
     /* Si on a pas trouvé un deuxième descripteur valide */
-    if (p2 == _current_index) {
+    if (_pipe_array[p2] != NULL) {
       return -1;
     }
 

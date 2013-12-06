@@ -1,6 +1,7 @@
 #include "../../src/pipe.h"
 #include "../../src/malloc.h"
 #include "../../src/hw.h"
+#include "../../src/sched.h"
 
 /* TODO changer ça un jour (en gardant le 42) */
 #define ASSERT(cond) if(!(cond)) { *((char *)0) = 42; }
@@ -117,17 +118,22 @@ int start_kernel(void) {
         ASSERT(pipe_close(writable) == -1);
     }
 
-    pipe_create(&readable, &writable);
-
-    /* FIXME Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
-    /* Essaye de créé trop de pipes (limite à 32767 pipes) */
+    /* Essaye de créé trop de pipes (limite à MAX_PIPE pipes) */
+    /* FIXME l'assert de la fermeture ne passe pas */
+    {
     int i;
-    pipe_t pipes[MAX_PIPE];
-    for(i = 0 ; i < MAX_PIPE ; i += 2) {
-        ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1);
+        pipe_t pipes[MAX_PIPE];
+        for(i = 0 ; i < MAX_PIPE ; i += 2) {
+            ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1);
+        }
+        pipe_t p1, p2;
+        ASSERT(pipe_create(&p1, &p2) == -1);
+
+        /* Libération */
+        for(i = 0 ; i < MAX_PIPE ; i++) {
+            ASSERT(pipe_close(pipes[i]) == 0);
+        }
     }
-    pipe_t p1, p2;
-    ASSERT(pipe_create(&p1, &p2) == -1);
 
     return 0;
 }

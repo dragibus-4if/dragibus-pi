@@ -25,9 +25,14 @@ void process_block(){
   it->next = it->next->next;
 
   it= waiting_queue;
-  while(it->next != NULL){
-    it=it->next;
-  }
+  if (waiting_queue == 0 )
+    {
+        waiting_queue = current_process;
+    } else {
+        while(it->next != waiting_queue){
+        it=it->next;
+        }
+    }
 
   it->next = current_process;    
   current_process->next = NULL;
@@ -50,17 +55,18 @@ void process_release(struct pcb_s* pcb){
 void start_current_process()
 {
   current_process->state = READY;
-  current_process->entry_point();
+  current_process->entry_point(current_process->args);
 
   /* The process is terminated */
   current_process->state = TERMINATED;
   yield();
 }
 
-int init_process(struct pcb_s *pcb, size_t stack_size, func_t* f)
+int init_process(struct pcb_s *pcb, size_t stack_size, func_t * f, void * args)
 {	
   /* Function and args */
   pcb->entry_point = f;
+  pcb->args = args;
 
   /* Stack allocation */
   pcb->size=stack_size;
@@ -80,7 +86,7 @@ int init_process(struct pcb_s *pcb, size_t stack_size, func_t* f)
   return 1;
 }
 
-int create_process(func_t* f, size_t size)
+int create_process(func_t* f, void * args, size_t size)
 {
   struct pcb_s *pcb;
   pcb = (struct pcb_s*) malloc_alloc(sizeof(struct pcb_s));
@@ -95,7 +101,7 @@ int create_process(func_t* f, size_t size)
   }
 
   ready_queue->next = pcb;
-  return init_process(pcb,size,f);
+  return init_process(pcb, size, f, args);
 }
 
 
@@ -159,8 +165,10 @@ void start_sched()
 {
   current_process = &idle;
   idle.next = ready_queue;
+  
+   
 
-  //ENABLE_IRQ();
+  ENABLE_IRQ();
 
   while(1) {
     yield();
