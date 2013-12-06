@@ -141,7 +141,7 @@ static int _init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
 
     /* Fill in the stack with CPSR and PC */
     *(pcb->sp) = 0x53;
-    pcb->sp --;
+    pcb->sp--;
     *(pcb->sp) = (unsigned int) &start_current_process;
 
     return 1;
