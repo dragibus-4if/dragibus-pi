@@ -38,4 +38,14 @@ void process_release(struct pcb_s* pcb);
 void start_current_process();
 struct pcb_s * get_current_process();
 
+/* Gestion de la priorité */
+typedef unsigned short int priority_t;
+#define MAX_PRIORITY 10
+
+/* Renvoie la priorité de pcb_current */
+int get_priority();
+
+/* Renvoie -1 si échec, 0 si changement de la priorité a été mise en place */
+int set_priority();
+
 #endif
