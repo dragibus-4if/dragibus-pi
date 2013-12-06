@@ -1,13 +1,5 @@
 #include "mutex.h"
 #include "malloc.h"
-#include "sem.h"
-#include "sched.h"
-
-/* Structure de données privée du mutex */
-struct mutex_s {
-    struct pcb_s * owner;
-    struct sem_s sem;
-};
 
 int mutex_create(struct mutex_s * mutex) {
     /* Vérification des paramètres */
