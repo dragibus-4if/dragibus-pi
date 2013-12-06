@@ -231,10 +231,8 @@ void schedule() {
 void start_sched() {
     _current_process = &_idle;
     _idle.next = _ready_queue;
-    ENABLE_IRQ();
-    while (1) {
-        yield();
-    }
+    ctx_switch();
+    while (1);
 }
 
 void yield() {

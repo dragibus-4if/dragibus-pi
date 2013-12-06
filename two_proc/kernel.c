@@ -4,26 +4,22 @@
 #include "../os/sem.h"
 
 void processus_A(void * args) {
-    struct sem_s sema = *(struct sem_s *) args;
-    int i = 0;
+    struct sem_s * sema = (struct sem_s *) args;
     while (1) {
-        sem_down(&sema);
-        led_on();
-        sem_up(&sema);
-        while (i++ < 2000000);
-        i = 0;
+        sem_down(sema);
+        yield();
+        sem_up(sema);
+        yield();
     }
 }
 
 void processus_B(void * args) {
-    struct sem_s sema = *(struct sem_s *) args;
-    int i = 0;
+    struct sem_s * sema = (struct sem_s *) args;
     while (1) {
-        sem_down(&sema);
-        led_off();
-        sem_up(&sema);
-        while (i++ < 2000000);
-        i = 0;
+        sem_down(sema);
+        yield();
+        sem_up(sema);
+        yield();
     }
 }
 
