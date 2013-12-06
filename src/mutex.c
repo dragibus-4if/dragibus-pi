@@ -99,8 +99,8 @@ int mutex_acquire(mutex_t desc) {
 
 int mutex_release(mutex_t desc) {
     //verifier si desc correspond au processus courant
-    if ((mutex_desc_convert(desc))->owner != get_current_process) {
-        return 
+    if (mutex_s->owner != get_current_process) {
+        return -1;
     }
     return 0;
 }
