@@ -63,6 +63,7 @@ static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
 
 static struct pcb_s * _schedule_priority(struct pcb_s * pcb) {
     /* TODO */
+    return pcb;
 }
 
 static struct pcb_s _idle;
