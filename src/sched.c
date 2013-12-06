@@ -3,28 +3,70 @@
 #include "hw.h"
 #include "dispatcher.h"
 
-/* Quicksort */
-/*
-function quicksort(array)
-    if length(array) ≤ 1
-        return array  // an array of zero or one elements is already sorted
-    select and remove a pivot element pivot from 'array'  // see '#Choice of pivot' below
-    create empty lists less and greater
-    for each x in array
-        if x ≤ pivot then append x to less'
-        else append x to greater
-    return concatenate(quicksort(less), list(pivot), quicksort(greater)) // two recursive calls
-*/
-/* TODO */
+static struct pcb_s * sort_pcb_list(struct pcb_s * head) {
+    /* Cas de base */
+    if (head == NULL || head->next == NULL) {
+        return head;
+    }
+
+    /* Choix du point de pivot */
+    static const pivot_choice = 0;
+    struct pcb_s * pivot = head;
+    for (size_t i = 0; i < pivot_choice && pivot->next != NULL; i++) {
+        pivot = pivot->next;
+    }
+
+    /* Enlever le pivot de la liste */
+    struct pcb_s * next, * tmp = NULL;
+    while (head != NULL) {
+        next = head->next;
+        if (head->priority != pivot->priority) {
+            head->next = tmp;
+            tmp = head;
+        }
+        head = next;
+    }
+
+    /* Divide & conquer */
+    struct pcb_s * first = NULL, * second = NULL;
+    while (tmp != NULL) {
+        next = tmp->next;
+        /* FIXME selon l'ordre du tri, changer "<" par ">" */
+        if (tmp->priority < pivot->priority) {
+            tmp->next = first;
+            first = tmp;
+        } else {
+            tmp->next = second;
+            second = tmp;
+        }
+        tmp = next;
+    }
+
+    /* Appels récursifs */
+    first = sort_pcb_list(first);
+    second = sort_pcb_list(second);
+
+    /* Merge */
+    if (first != NULL) {
+        struct pcb_s * end = first;
+        while (end->next != NULL) {
+            end = end->next;
+        }
+        pivot->next = second;
+        end->next = pivot;
+        return first;
+    } else {
+        pivot->next = second;
+        return pivot;
+    }
+}
 
 /* Fonction de comparaison des pcb selon la priorité (inversée). Retourne 0 si
  * x est supérieur à y, -1 sinon. */
-static int _compare_pcbs(void * x, void * y) {
-    struct pcb_s * ox = ((struct pcb_s *) x);
-    struct pcb_s * oy = ((struct pcb_s *) y);
-    if (ox->priority < oy->priority) {
+static int _compare_pcbs(struct pcb_s * x, struct pcb_s * y) {
+    if (x->priority < y->priority) {
         return -1;
-    } if (ox->priority > oy->priority) {
+    } if (x->priority > y->priority) {
         return 1;
     } else {
         return 0;
