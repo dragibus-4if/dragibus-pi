@@ -3,8 +3,33 @@
 #include "hw.h"
 #include "dispatcher.h"
 
-/* Ordonnanceur basique */
+/* Quicksort */
+/*
+function quicksort(array)
+    if length(array) ≤ 1
+        return array  // an array of zero or one elements is already sorted
+    select and remove a pivot element pivot from 'array'  // see '#Choice of pivot' below
+    create empty lists less and greater
+    for each x in array
+        if x ≤ pivot then append x to less'
+        else append x to greater
+    return concatenate(quicksort(less), list(pivot), quicksort(greater)) // two recursive calls
+*/
 /* TODO */
+
+/* Fonction de comparaison des pcb selon la priorité (inversée). Retourne 0 si
+ * x est supérieur à y, -1 sinon. */
+static int _compare_pcbs(void * x, void * y) {
+    struct pcb_s * ox = ((struct pcb_s *) x);
+    struct pcb_s * oy = ((struct pcb_s *) y);
+    if (ox->priority < oy->priority) {
+        return -1;
+    } if (ox->priority > oy->priority) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
 
 static struct pcb_s _idle;
 static struct pcb_s * _ready_queue = NULL;
@@ -12,7 +37,7 @@ static struct pcb_s * _current_process = NULL;
 static struct pcb_s * _waiting_queue = NULL;
 
 /* Ordonnanceur à priority */
-/* TODO */
+static enum sched_mode_e _sched_mode = BASIC;
 
 /* Implémentation publique de l'ordonnanceur */
 
