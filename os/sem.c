@@ -2,43 +2,39 @@
 #include "sched.h"
 #include "malloc.h"
 #include "hw.h"
-void
-sem_init(struct sem_s *sem, int val){
-    //sem = (struct sem_s *)malloc_alloc(sizeof(struct sem_s));
+
+void sem_init(struct sem_s * sem, int val) {
     sem->counter = 0;
     sem->counter += val;
-    sem->pcbSemF = NULL;
-    sem->pcbSemL = NULL; 
-	//coucoucocucou
+    sem->first_pcbs = NULL;
+    sem->last_pcbs = NULL;
 }
 
-void
-sem_up(struct sem_s* sem){
+void sem_up(struct sem_s * sem) {
     DISABLE_IRQ();
     sem->counter++;
-    if(sem->counter <=0){
-    process_release(sem->pcbSemF->pcb);
-    //struct pcb_Sem* temp = sem->pcbSemF;
-    sem->pcbSemF=sem->pcbSemF->next;
-    }  
+    if (sem->counter <=0){
+        process_release(sem->first_pcbs->pcb);
+        /*struct sem_pcb_s* temp = sem->first_pcbs;*/
+        sem->first_pcbs=sem->first_pcbs->next;
+    }
     ENABLE_IRQ();
-    //malloc_free(temp);
+    /*malloc_free(temp);*/
 }
 
-void sem_down(struct sem_s* sem){
-    DISABLE_IRQ();    
+void sem_down(struct sem_s * sem){
+    DISABLE_IRQ();
     sem->counter--;
-    if(sem->counter<0){
-        struct pcb_Sem* nPcbSem = (struct pcb_Sem*) malloc_alloc(sizeof(struct pcb_Sem));
-        nPcbSem->pcb = current_process;
-        if(sem->pcbSemF==NULL){
-            sem->pcbSemF=nPcbSem;
-            sem->pcbSemL=nPcbSem;
+    if (sem->counter < 0) {
+        struct sem_pcb_s * npcbs = (struct sem_pcb_s*) malloc_alloc(sizeof(struct sem_pcb_s));
+        npcbs->pcb = get_current_process();
+        if (sem->first_pcbs == NULL ){
+            sem->first_pcbs = npcbs;
+            sem->last_pcbs = npcbs;
+        } else {
+            sem->last_pcbs->next = npcbs;
+            sem->last_pcbs = npcbs;
         }
-        else{       
-            sem->pcbSemL->next = nPcbSem;
-            sem->pcbSemL = nPcbSem;       
-        }   
         process_block();
     }
     ENABLE_IRQ();
