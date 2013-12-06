@@ -5,8 +5,11 @@
 int start_kernel(void) {
     /* Initialisation de la RAM */
     malloc_init((void *) HEAP_START);
+    init_hw();
 
-    morse_blink_buffer("Hello World", 11);
+    while(1) {
+        morse_blink_buffer("sos", 3);
+    }
 
     return 0;
 }
