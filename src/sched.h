@@ -37,3 +37,12 @@ void start_current_process();
 struct pcb_s * get_current_process();
 
 #endif
+
+typedef unsigned short int priority_t;
+#define MAX_PRIORITY
+
+/* Renvoye la priorité de pcb_current */
+int get_priority();
+
+/* Renvoye -1 si échec, 0 si changement de la priorité a été mise en place */
+int set_priority();
