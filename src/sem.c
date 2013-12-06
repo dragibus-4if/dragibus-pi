@@ -9,6 +9,7 @@ sem_init(struct sem_s *sem, int val){
     sem->counter += val;
     sem->pcbSemF = NULL;
     sem->pcbSemL = NULL; 
+	//coucoucocucou
 }
 
 void
