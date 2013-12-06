@@ -2,7 +2,7 @@
 #include "sched.h"
 #include "malloc.h"
 void
-sem_init(struct sem_s *sem, int32_t val){
+sem_init(struct sem_s *sem, int val){
     sem = (struct sem_s*) malloc_alloc(sizeof(struct sem_s));
     sem->counter = val;
     sem->pcbSemF = NULL;

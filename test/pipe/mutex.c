@@ -1,18 +1,28 @@
 #include "mutex.h"
+#include "malloc.h"
 
-int mutex_create(intptr_t * desc) {
+struct mutex_s {
+};
+
+struct mutex_s * mutex_create() {
+    return (struct mutex_s *)
+      malloc_alloc(sizeof(struct mutex_s));
+}
+
+int mutex_free(struct mutex_s * mutex) {
+    malloc_free((void *) mutex);
     return 0;
 }
 
-int mutex_free(intptr_t desc) {
+int mutex_init(struct mutex_s * mutex) {
     return 0;
 }
 
-void mutex_acquire(intptr_t desc) {
+int mutex_acquire(struct mutex_s * mutex) {
     return 0;
 }
 
-void mutex_release(intptr_t desc) {
+int mutex_release(struct mutex_s * mutex) {
     return 0;
 }
 

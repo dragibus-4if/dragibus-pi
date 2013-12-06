@@ -3,20 +3,27 @@
 
 #include "types.h"
 
-/* Crée un mutex et renvoie son descripteur en modifiant *desc*. Renvoie 0 si
- * tout s'est bien passé ou -1 si une erreur a eu lieu. */
-int mutex_create(intptr_t * desc);
+/* Structure de données (privée) du mutex */
+struct mutex_s;
 
-/* Libère le mutex défini par *desc*. Renvoie 0 si tout s'est bien passé ou -1
- * si une erreur a eu lieu. */
-int mutex_free(intptr_t desc);
+/* Crée dynamiquement un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une
+ * erreur a eu lieu. */
+struct mutex_s * mutex_create();
 
-/* Vérouille le mutex défini par *desc*. Renvoie 0 si tout s'est bien passé ou
- * -1 si une erreur a eu lieu. */
-void mutex_acquire(intptr_t desc);
+/* Libère dynamiquement un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une
+ * erreur a eu lieu. */
+int mutex_free(struct mutex_s * mutex);
 
-/* Dévérouille le mutex défini par *desc*. Renvoie 0 si tout s'est bien passé
- * ou -1 si une erreur a eu lieu. */
-void mutex_release(intptr_t desc);
+/* Crée un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une erreur a eu
+ * lieu. */
+int mutex_init(struct mutex_s * mutex);
+
+/* Vérouille le mutex. Renvoie 0 si tout s'est bien passé ou -1 si une erreur a
+ * eu lieu. */
+int mutex_acquire(struct mutex_s * mutex);
+
+/* Dévérouille le mutex. Renvoie 0 si tout s'est bien passé ou -1 si une erreur
+ * a eu lieu. */
+int mutex_release(struct mutex_s * mutex);
 
 #endif

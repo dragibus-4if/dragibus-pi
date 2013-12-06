@@ -6,14 +6,14 @@
 static const size_t _buffer_block_size = 512;
 
 /* Block buffer: zone mémoire stockée dans une liste chaînée */
-static struct _buffer_block_s {
+struct _buffer_block_s {
     char * data;
     struct _buffer_block_s * next;
 };
 
 /* Buffer: gestion de la liste chaînée de blocks, ainsi que des curseurs de
  * lecture et d'écriture */
-static struct _buffer_s {
+struct _buffer_s {
     struct _buffer_block_s * head;
     struct _buffer_block_s * tail;
     char * wr_cursor;
@@ -30,7 +30,7 @@ static struct _buffer_block_s * _buffer_block_create() {
     }
 
     /* Alloc les données pour le block initial */
-    char * data = malloc_alloc(sizeof(void) * _buffer_block_size);
+    char * data = malloc_alloc(sizeof(char) * (uint32_t)_buffer_block_size);
     if (data == NULL) {
         malloc_free(block);
         return NULL;
@@ -179,19 +179,14 @@ static ssize_t _buffer_write(struct _buffer_s * buffer,
 }
 
 /**
- * Taille max d'un pipe, inspiré des sources de linux.
- */
-static const size_t _pipe_max_size = 1048576;
-
-/**
  * État d'un côté d'un pipe (lecture, écriture, fermé).
  */
-static enum _pipe_end_state_t {
+enum _pipe_end_state_t {
     READABLE,
     WRITABLE
 };
 
-static struct _pipe_end_s {
+struct _pipe_end_s {
     enum _pipe_end_state_t state;
 
     struct _pipe_end_s * other_side;
@@ -203,29 +198,58 @@ static struct _pipe_end_s {
     struct _buffer_s * buffer;
 
     /* Mutex commun du pipe */
-    int mutex;
+    struct mutex_s * mutex;
 };
+
+/* Index courant et max du dernier pipe créé */
+static pipe_t _current_index = -1;
+
+/* Table des pipes créés */
+static struct _pipe_end_s * _pipe_array[MAX_PIPE] = {NULL};
 
 /* Permet de faire la liaison entre un descripteur d'extrémité de pipe avec
  * l'élément de la structure correspondant */
-static int _pipe_des_to_end(intptr_t des, struct _pipe_end_s * pipe) {
-    if (des <= 0) {
+static int _pipe_des_to_end(pipe_t des, struct _pipe_end_s * pipe) {
+    if (des < 0 || des >= MAX_PIPE) {
         return -1;
     }
-    *pipe = *(struct _pipe_end_s *) des;
+    if (_pipe_array[des] == NULL) {
+        return -1;
+    }
+    *pipe = *_pipe_array[des];
     return 0;
 }
 
-int pipe_create(intptr_t * in_des, intptr_t * out_des) {
-    struct _pipe_end_s * read_end;
-    struct _pipe_end_s * write_end;
-
+int pipe_create(pipe_t * in_des, pipe_t * out_des) {
     /* Vérification des paramètres */
     if (in_des == NULL || out_des == NULL) {
         return -1;
     }
 
+    /* Cherche un premier index valide */
+    pipe_t p1;
+    for (p1 = (_current_index + 1) % MAX_PIPE ;
+        p1 != _current_index && _pipe_array[p1] != NULL ;
+        p1 = (p1 + 1) % MAX_PIPE);
+
+    /* Si on a pas trouvé un seul descripteur valide */
+    if (p1 == _current_index) {
+      return -1;
+    }
+
+    /* Cherche un deuxième index valide */
+    pipe_t p2;
+    for (p2 = (p1 + 1) % MAX_PIPE ;
+        p2 != _current_index && _pipe_array[p2] != NULL ;
+        p2 = (p2 + 1) % MAX_PIPE);
+
+    /* Si on a pas trouvé un deuxième descripteur valide */
+    if (p2 == _current_index) {
+      return -1;
+    }
+
     /* Création du point d'entrée */
+    struct _pipe_end_s * write_end;
     write_end = (struct _pipe_end_s *) malloc_alloc(sizeof(struct _pipe_end_s));
     if (write_end == NULL) {
         return -1;
@@ -233,6 +257,7 @@ int pipe_create(intptr_t * in_des, intptr_t * out_des) {
     write_end->state = WRITABLE;
 
     /* Création du point de sortie */
+    struct _pipe_end_s * read_end;
     read_end = (struct _pipe_end_s *) malloc_alloc(sizeof(struct _pipe_end_s));
     if (read_end == NULL) {
         malloc_free(write_end);
@@ -245,45 +270,53 @@ int pipe_create(intptr_t * in_des, intptr_t * out_des) {
     write_end->other_side = read_end;
 
     /* Création du buffer commun */
-    write_end->buffer = read_end->buffer = _buffer_create();
-    if (write_end->buffer == NULL) {
+    struct _buffer_s * buffer = _buffer_create();
+    if (buffer == NULL) {
         malloc_free(read_end);
         malloc_free(write_end);
         return -1;
     }
+    read_end->buffer = buffer;
+    write_end->buffer = buffer;
 
     /* Création du mutex commun */
-    int mutex = 0;
-    if (mutex_create(&mutex) == -1) {
+    struct mutex_s * mutex = mutex_create();
+    if (mutex == NULL) {
         _buffer_free(write_end->buffer);
         malloc_free(read_end);
         malloc_free(write_end);
         return -1;
     }
-    read_end->mutex = write_end->mutex = mutex;
+    read_end->mutex = mutex;
+    write_end->mutex = mutex;
 
     /* Retour par paramètre */
-    *in_des = (intptr_t) read_end;
-    *out_des = (intptr_t) write_end;
+    _pipe_array[p1] = read_end;
+    _pipe_array[p2] = write_end;
+    _current_index = p2;
+    *in_des = p1;
+    *out_des = p2;
+
     return 0;
 }
 
-int pipe_close(intptr_t des) {
+int pipe_close(pipe_t des) {
     struct _pipe_end_s pipe_end;
     if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
     }
     if (pipe_end.other_side == NULL) {
-      _buffer_free(pipe_end.buffer);
+        _buffer_free(pipe_end.buffer);
         mutex_free(pipe_end.mutex);
     } else {
-      pipe_end.other_side->other_side = NULL;
+        pipe_end.other_side->other_side = NULL;
     }
     malloc_free((void *) &pipe_end);
+    _pipe_array[des] = NULL;
     return 0;
 }
 
-ssize_t pipe_read(intptr_t des, void * buffer, size_t bufsize) {
+ssize_t pipe_read(pipe_t des, void * buffer, size_t bufsize) {
     struct _pipe_end_s pipe_end;
     if (_pipe_des_to_end(des, &pipe_end) == -1) {
         return -1;
@@ -298,7 +331,7 @@ ssize_t pipe_read(intptr_t des, void * buffer, size_t bufsize) {
     return return_value;
 }
 
-ssize_t pipe_write(intptr_t des, const void * buffer, size_t bufsize) {
+ssize_t pipe_write(pipe_t des, const void * buffer, size_t bufsize) {
     /* Vérification des paramètres */
     struct _pipe_end_s pipe_end;
     if (_pipe_des_to_end(des, &pipe_end) == -1) {
