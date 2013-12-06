@@ -25,37 +25,39 @@ static void _morse_blink_for(const _morse_code_t * codes, size_t codes_size) {
 
 void morse_blink_char(char c) {
     switch (c) {
-#define DEFINE_MORSE_CHAR(c, c_codes, c_codes_size)\
-        case c:                     \
-            _morse_blink_for(c_codes, c_codes_size);  \
+#define PROTECT_P99(...) __VA_ARGS__
+#define DEFINE_MORSE_CHAR(c, c_codes, c_codes_size)     \
+        case c:                                         \
+            _morse_blink_for(c_codes, c_codes_size);    \
             break;
-        DEFINE_MORSE_CHAR('a', { 0, 1       }, 2);
-        DEFINE_MORSE_CHAR('b', { 1, 0, 0, 0 }, 4);
-        DEFINE_MORSE_CHAR('c', { 1, 0, 1, 0 }, 4);
-        DEFINE_MORSE_CHAR('d', { 1, 0, 0    }, 3);
-        DEFINE_MORSE_CHAR('e', { 0          }, 1);
-        DEFINE_MORSE_CHAR('f', { 0, 0, 1, 0 }, 4);
-        DEFINE_MORSE_CHAR('g', { 1, 1, 0    }, 3);
-        DEFINE_MORSE_CHAR('h', { 0, 0, 0, 0 }, 4);
-        DEFINE_MORSE_CHAR('i', { 0, 0       }, 2);
-        DEFINE_MORSE_CHAR('j', { 0, 1, 1, 1 }, 4);
-        DEFINE_MORSE_CHAR('k', { 1, 0, 1    }, 3);
-        DEFINE_MORSE_CHAR('l', { 0, 1, 0, 0 }, 4);
-        DEFINE_MORSE_CHAR('m', { 1, 1       }, 2);
-        DEFINE_MORSE_CHAR('n', { 1, 0       }, 2);
-        DEFINE_MORSE_CHAR('o', { 1, 1, 1    }, 3);
-        DEFINE_MORSE_CHAR('p', { 0, 1, 1, 0 }, 4);
-        DEFINE_MORSE_CHAR('q', { 1, 1, 0, 1 }, 4);
-        DEFINE_MORSE_CHAR('r', { 0, 1, 0    }, 3);
-        DEFINE_MORSE_CHAR('s', { 0, 0, 0    }, 3);
-        DEFINE_MORSE_CHAR('t', { 1          }, 1);
-        DEFINE_MORSE_CHAR('u', { 0, 0, 1    }, 3);
-        DEFINE_MORSE_CHAR('v', { 0, 0, 0, 1 }, 4);
-        DEFINE_MORSE_CHAR('w', { 0, 1, 1    }, 3);
-        DEFINE_MORSE_CHAR('x', { 0, 1, 1, 0 }, 4);
-        DEFINE_MORSE_CHAR('y', { 1, 0, 1, 1 }, 4);
-        DEFINE_MORSE_CHAR('z', { 1, 1, 0, 0 }, 4);
+        DEFINE_MORSE_CHAR('a', PROTECT_P99((_morse_code_t[2]){ 0, 1       }), 2);
+        DEFINE_MORSE_CHAR('b', PROTECT_P99((_morse_code_t[4]){ 1, 0, 0, 0 }), 4);
+        DEFINE_MORSE_CHAR('c', PROTECT_P99((_morse_code_t[4]){ 1, 0, 1, 0 }), 4);
+        DEFINE_MORSE_CHAR('d', PROTECT_P99((_morse_code_t[3]){ 1, 0, 0    }), 3);
+        DEFINE_MORSE_CHAR('e', PROTECT_P99((_morse_code_t[1]){ 0          }), 1);
+        DEFINE_MORSE_CHAR('f', PROTECT_P99((_morse_code_t[4]){ 0, 0, 1, 0 }), 4);
+        DEFINE_MORSE_CHAR('g', PROTECT_P99((_morse_code_t[3]){ 1, 1, 0    }), 3);
+        DEFINE_MORSE_CHAR('h', PROTECT_P99((_morse_code_t[4]){ 0, 0, 0, 0 }), 4);
+        DEFINE_MORSE_CHAR('i', PROTECT_P99((_morse_code_t[2]){ 0, 0       }), 2);
+        DEFINE_MORSE_CHAR('j', PROTECT_P99((_morse_code_t[4]){ 0, 1, 1, 1 }), 4);
+        DEFINE_MORSE_CHAR('k', PROTECT_P99((_morse_code_t[3]){ 1, 0, 1    }), 3);
+        DEFINE_MORSE_CHAR('l', PROTECT_P99((_morse_code_t[4]){ 0, 1, 0, 0 }), 4);
+        DEFINE_MORSE_CHAR('m', PROTECT_P99((_morse_code_t[2]){ 1, 1       }), 2);
+        DEFINE_MORSE_CHAR('n', PROTECT_P99((_morse_code_t[2]){ 1, 0       }), 2);
+        DEFINE_MORSE_CHAR('o', PROTECT_P99((_morse_code_t[3]){ 1, 1, 1    }), 3);
+        DEFINE_MORSE_CHAR('p', PROTECT_P99((_morse_code_t[4]){ 0, 1, 1, 0 }), 4);
+        DEFINE_MORSE_CHAR('q', PROTECT_P99((_morse_code_t[4]){ 1, 1, 0, 1 }), 4);
+        DEFINE_MORSE_CHAR('r', PROTECT_P99((_morse_code_t[3]){ 0, 1, 0    }), 3);
+        DEFINE_MORSE_CHAR('s', PROTECT_P99((_morse_code_t[3]){ 0, 0, 0    }), 3);
+        DEFINE_MORSE_CHAR('t', PROTECT_P99((_morse_code_t[1]){ 1          }), 1);
+        DEFINE_MORSE_CHAR('u', PROTECT_P99((_morse_code_t[3]){ 0, 0, 1    }), 3);
+        DEFINE_MORSE_CHAR('v', PROTECT_P99((_morse_code_t[4]){ 0, 0, 0, 1 }), 4);
+        DEFINE_MORSE_CHAR('w', PROTECT_P99((_morse_code_t[3]){ 0, 1, 1    }), 3);
+        DEFINE_MORSE_CHAR('x', PROTECT_P99((_morse_code_t[4]){ 0, 1, 1, 0 }), 4);
+        DEFINE_MORSE_CHAR('y', PROTECT_P99((_morse_code_t[4]){ 1, 0, 1, 1 }), 4);
+        DEFINE_MORSE_CHAR('z', PROTECT_P99((_morse_code_t[4]){ 1, 1, 0, 0 }), 4);
 #undef DEFINE_MORSE_CHAR
+#undef PROTECT_P99
         default:
             break;
     }
