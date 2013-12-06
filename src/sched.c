@@ -6,9 +6,9 @@
 /* Ordonnanceur basique */
 
 static struct pcb_s _idle;
-static struct pcb_s * _ready_queue = (struct pcb_s *) 0;
-static struct pcb_s * _current_process = (struct pcb_s *) NULL;
-static struct pcb_s * _waiting_queue = (struct pcb_s *) 0;
+static struct pcb_s * _ready_queue = NULL;
+static struct pcb_s * _current_process = NULL;
+static struct pcb_s * _waiting_queue = NULL;
 
 /* Ordonnanceur à priority */
 void schedule();
@@ -24,14 +24,14 @@ void process_block() {
     struct pcb_s* it = _current_process;
 
     while (it->next != _current_process) {
-        it=it->next;
+        it = it->next;
     }
 
     it->next = it->next->next;
 
-    it= _waiting_queue;
+    it = _waiting_queue;
     while (it->next != NULL) {
-        it=it->next;
+        it = it->next;
     }
 
     it->next = _current_process;
@@ -42,7 +42,7 @@ void process_block() {
 void process_release(struct pcb_s * pcb) {
     struct pcb_s * it = _waiting_queue;
     while (it->next != pcb) {
-        it=it->next;
+        it = it->next;
     }
 
     it->next = it->next->next;
@@ -66,9 +66,9 @@ int init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
     pcb->entry_point = f;
 
     /* Stack allocation */
-    pcb->size=stack_size;
+    pcb->size = stack_size;
     pcb->stack_base = malloc_alloc(stack_size);
-    if (!pcb->stack_base) {
+    if (pcb->stack_base == NULL) {
         return 0;
     }
 
