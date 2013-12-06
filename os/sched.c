@@ -235,7 +235,3 @@ void start_sched() {
     ctx_switch();
     while (1);
 }
-
-void yield() {
-    ctx_switch();
-}

@@ -30,7 +30,10 @@ struct pcb_s {
 };
 
 /* Gestion de l'ordonnancement */
-void yield();
+static inline void yield() {
+    ctx_switch();
+}
+
 void schedule();
 void start_sched();
 void set_sched_mode(enum sched_mode_e mode);
