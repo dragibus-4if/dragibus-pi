@@ -5,7 +5,7 @@
 
 extern struct pcb_s* current_process;
 
-typedef void (func_t)( void );
+typedef void (func_t)(void *);
 
 enum pcb_state_e {READY, NEW, TERMINATED, WAITING};
 
@@ -25,7 +25,7 @@ struct pcb_s {
 };
 
 
-int create_process(func_t* f, size_t size);
+int create_process(func_t* f, void * args, size_t size);
 void yield();
 void start_sched();
 void schedule();
