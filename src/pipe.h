@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#define MAX_PIPE 32767
+#define MAX_PIPE 1024
 
 typedef int pipe_t;
 
