@@ -38,7 +38,6 @@ processus_B()
 int
 start_kernel ( void )
 {
-  DISABLE_IRQ();
   init_hw();
   malloc_init((void *) HEAP_START);
   sem_init(&sema,1);

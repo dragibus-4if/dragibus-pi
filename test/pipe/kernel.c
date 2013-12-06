@@ -1,13 +1,13 @@
-#include "pipe.h"
-#include "malloc.h"
+#include "../../src/pipe.h"
+#include "../../src/malloc.h"
+#include "../../src/hw.h"
 
 /* TODO changer ça un jour (en gardant le 42) */
 #define ASSERT(cond) if(!(cond)) { *((char *)0) = 42; }
 
-int main(void) {
+int start_kernel(void) {
     /* Initialisation de la RAM */
-    char mem[0x50000];
-    malloc_init((void *)&mem);
+    malloc_init((void *) HEAP_START);
 
     pipe_t readable, writable;
 
@@ -72,8 +72,8 @@ int main(void) {
 
         {
             int i;
-            char buffer1[1024] = {0};
-            char buffer2[1024] = {0};
+            char buffer1[1024];
+            char buffer2[1024];
 
             /* Remplissage les buffer (OSEF des valeurs) */
             for(i = 0 ; i < 1024 ; i++) {
