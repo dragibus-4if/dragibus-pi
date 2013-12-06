@@ -2,14 +2,17 @@
 #define MUTEX_H
 
 #include "types.h"
-#include "sem.h"
-#include "sched.h"
 
-/* Structure de données représentant un mutex */
-struct mutex_s {
-    struct pcb_s * owner;
-    struct sem_s sem;
-};
+/* Structure de données (privée) du mutex */
+struct mutex_s;
+
+/* Crée dynamiquement un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une
+ * erreur a eu lieu. */
+struct mutex_s * mutex_create();
+
+/* Libère dynamiquement un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une
+ * erreur a eu lieu. */
+int mutex_free(struct mutex_s * mutex);
 
 /* Crée un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une erreur a eu
  * lieu. */
