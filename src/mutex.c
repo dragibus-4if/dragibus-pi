@@ -41,11 +41,11 @@ int mutex_acquire(mutex_s * mutex) {
 
 int mutex_release(mutex_s * desc) {
     /* Vérification des paramètres */
-    if (mutex == NULL) {
+    if (mutex == NULL || mutex->owner != get_current_process()) {
         return -1;
     }
 
-    /* TODO */
+    sem_up(mutex->sem);
     return 0;
 }
 
