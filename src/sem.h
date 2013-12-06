@@ -4,7 +4,17 @@
 #include "types.h"
 
 /* Structure de données représentant une sémapore */
-struct sem_s;
+struct sem_pcb_s;
+struct sem_s {
+    int counter;
+    struct sem_pcb_s * first_pcbs;
+    struct sem_pcb_s * last_pcbs;
+};
+
+struct sem_pcb_s {
+    struct pcb_s * pcb;
+    struct sem_pcb_s * next;
+};
 
 /* Initialize une sémaphore déjà allouée */
 void sem_init(struct sem_s * sem, int val);

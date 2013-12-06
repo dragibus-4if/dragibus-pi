@@ -3,8 +3,6 @@
 
 #include "types.h"
 
-extern struct pcb_s * current_process;
-
 typedef void (func_t)(void);
 
 enum pcb_state_e { READY, NEW, TERMINATED, WAITING };
