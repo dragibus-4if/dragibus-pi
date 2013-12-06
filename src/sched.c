@@ -25,9 +25,14 @@ void process_block(){
   it->next = it->next->next;
 
   it= waiting_queue;
-  while(it->next != NULL){
-    it=it->next;
-  }
+  if (waiting_queue == 0 )
+    {
+        waiting_queue = current_process;
+    } else {
+        while(it->next != waiting_queue){
+        it=it->next;
+        }
+    }
 
   it->next = current_process;    
   current_process->next = NULL;
@@ -159,8 +164,10 @@ void start_sched()
 {
   current_process = &idle;
   idle.next = ready_queue;
+  
+   
 
-  //ENABLE_IRQ();
+  ENABLE_IRQ();
 
   while(1) {
     yield();
