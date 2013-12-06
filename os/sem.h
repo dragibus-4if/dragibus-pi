@@ -5,14 +5,10 @@
 
 /* Structure de données représentant une sémapore */
 struct pcb_list;
+
 struct sem_s {
     int counter;
     struct pcb_list * waiting_queue;
-};
-
-struct pcb_list {
-    struct pcb_s * pcb;
-    struct pcb_list * next;
 };
 
 /* Initialize une sémaphore déjà allouée */

@@ -3,6 +3,11 @@
 #include "malloc.h"
 #include "hw.h"
 
+struct pcb_list {
+    struct pcb_s * pcb;
+    struct pcb_list * next;
+};
+
 int sem_init(struct sem_s * sem, int val) {
     /* Vérification des entrées */
     if(sem == NULL) {

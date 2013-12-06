@@ -26,13 +26,12 @@ struct pcb_s {
     enum pcb_state_e state;
 
     struct pcb_s * next;
+    struct pcb_s * prev;
     priority_t priority;
 };
 
 /* Gestion de l'ordonnancement */
-static inline void yield() {
-    ctx_switch();
-}
+void __attribute__ ((naked)) yield();
 
 void schedule();
 void start_sched();
