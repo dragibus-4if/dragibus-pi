@@ -9,7 +9,7 @@ struct mutex_s {
     struct sem_s sem;
 };
 
-int mutex_create(mutex_s * mutex) {
+int mutex_create(struct mutex_s * mutex) {
     /* Vérification des paramètres */
     if (mutex == NULL) {
         return -1;
@@ -23,7 +23,7 @@ int mutex_create(mutex_s * mutex) {
     return 0;
 }
 
-int mutex_acquire(mutex_s * mutex) {
+int mutex_acquire(struct mutex_s * mutex) {
     /* Vérification des paramètres */
     if (mutex == NULL) {
         return -1;
@@ -39,7 +39,7 @@ int mutex_acquire(mutex_s * mutex) {
     return 0;
 }
 
-int mutex_release(mutex_s * desc) {
+int mutex_release(struct mutex_s * mutex) {
     /* Vérification des paramètres */
     if (mutex == NULL || mutex->owner != get_current_process()) {
         return -1;
