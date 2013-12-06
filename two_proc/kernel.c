@@ -1,7 +1,7 @@
-#include "hw.h"
-#include "sched.h"
-#include "malloc.h"
-#include "sem.h"
+#include "../os/hw.h"
+#include "../os/sched.h"
+#include "../os/malloc.h"
+#include "../os/sem.h"
 
 void processus_A(void * args) {
     struct sem_s sema = *(struct sem_s *) args;
