@@ -4,14 +4,14 @@
 #include "sched.h"
 
 /* Structure de données privée du mutex */
-struct _mutex_s {
+struct mutex_s {
     struct pcb_s * owner;
     struct sem_s sem;
 };
 
-int mutex_init(mutex_s * desc) {
+int mutex_create(mutex_s * mutex) {
     /* Vérification des paramètres */
-    if (desc == NULL) {
+    if (mutex == NULL) {
         return -1;
     }
 
@@ -23,10 +23,9 @@ int mutex_init(mutex_s * desc) {
     return 0;
 }
 
-int mutex_acquire(mutex_s * desc) {
-    /* Convertir le descripteur en mutex */
-    struct _mutex_s * mutex = NULL;
-    if (_mutex_desc_convert(desc, mutex) == -1) {
+int mutex_acquire(mutex_s * mutex) {
+    /* Vérification des paramètres */
+    if (mutex == NULL) {
         return -1;
     }
 
@@ -41,6 +40,13 @@ int mutex_acquire(mutex_s * desc) {
 }
 
 int mutex_release(mutex_s * desc) {
+    /* Vérification des paramètres */
+    if (mutex == NULL) {
+        return -1;
+    }
+
     /* TODO */
-  return 0;
+    return 0;
 }
+
+/* vim: set ft=c et sw=2 sts=2 */
