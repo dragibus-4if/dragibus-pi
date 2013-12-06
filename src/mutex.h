@@ -2,8 +2,14 @@
 #define MUTEX_H
 
 #include "types.h"
+#include "sem.h"
+#include "sched.h"
 
-extern struct mutex_s;
+/* Structure de données représentant un mutex */
+struct mutex_s {
+    struct pcb_s * owner;
+    struct sem_s sem;
+};
 
 /* Crée un mutex. Renvoie 0 si tout s'est bien passé ou -1 si une erreur a eu
  * lieu. */
