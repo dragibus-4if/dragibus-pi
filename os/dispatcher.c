@@ -12,7 +12,7 @@ void __attribute__ ((naked)) ctx_switch ( void )
     __asm volatile("cps #0x13");
 
     /* Save registers on SVC stack */
-    __asm volatile("push {r0-r12}");
+    __asm volatile("push {r0-r12, lr}");
 
     /* Disable interrupts */
     DISABLE_IRQ();
@@ -35,7 +35,7 @@ void __attribute__ ((naked)) ctx_switch ( void )
         __asm("mov lr, #0x0");
     } else {
         /* Restore non banked registers */
-        __asm volatile("pop {r0-r12}");
+        __asm volatile("pop {r0-r12, lr}");
     }
 
     /* Jump to elected task, popping cpsr and pc from SVC stack */
