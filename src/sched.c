@@ -160,7 +160,7 @@ void start_sched()
   current_process = &idle;
   idle.next = ready_queue;
 
-  ENABLE_IRQ();
+  //ENABLE_IRQ();
 
   while(1) {
     yield();
