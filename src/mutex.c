@@ -98,6 +98,9 @@ int mutex_acquire(mutex_t desc) {
 }
 
 int mutex_release(mutex_t desc) {
-    /* TODO */
-  return 0;
+    //verifier si desc correspond au processus courant
+    if ((mutex_desc_convert(desc))->owner != get_current_process) {
+        return 
+    }
+    return 0;
 }
