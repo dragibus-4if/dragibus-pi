@@ -119,7 +119,6 @@ int start_kernel(void) {
 
     pipe_create(&readable, &writable);
 
-    /* FIXME Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
     /* Essaye de créé trop de pipes (limite à 32767 pipes) */
     int i;
     pipe_t pipes[MAX_PIPE];
