@@ -9,7 +9,7 @@ struct mutex_s {
     struct sem_s sem;
 };
 
-int mutex_create(mutex_s * mutex) {
+int mutex_create(struct mutex_s * mutex) {
     /* Vérification des paramètres */
     if (mutex == NULL) {
         return -1;
@@ -20,26 +20,10 @@ int mutex_create(mutex_s * mutex) {
     sem_init(&mutex->sem, 1);
     mutex->owner = NULL;
 
-    /* Retour */
-    _mutex_array[mid] = mutex;
-    _current_index = mid;
-    *desc = mid;
-
     return 0;
 }
 
-int mutex_free(mutex_s * desc) {
-    /* Vérification des paramètres */
-    if (mutex == NULL) {
-        return -1;
-    }
-
-    /* TODO sem_destroy(mutex->sem); ? */
-    _mutex_array[desc] = NULL;
-    return 0;
-}
-
-int mutex_acquire(mutex_s * desc) {
+int mutex_acquire(struct mutex_s * mutex) {
     /* Vérification des paramètres */
     if (mutex == NULL) {
         return -1;
@@ -55,12 +39,14 @@ int mutex_acquire(mutex_s * desc) {
     return 0;
 }
 
-int mutex_release(mutex_s * desc) {
+int mutex_release(struct mutex_s * mutex) {
     /* Vérification des paramètres */
-    if (mutex == NULL) {
+    if (mutex == NULL || mutex->owner != get_current_process()) {
         return -1;
     }
 
-    /* TODO */
-  return 0;
+    sem_up(&mutex->sem);
+    return 0;
 }
+
+/* vim: set ft=c et sw=2 sts=2 */
