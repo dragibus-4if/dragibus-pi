@@ -149,6 +149,11 @@ void schedule() {
         }
     }
 
+    /* Application de l'ordonnanceur à priorité */
+    if (_sched_mode == PRIORITY) {
+        pcb = _schedule_priority(pcb);
+    }
+
     if (pcb == NULL) {  /* Si pas de processus à élire -> _idle */
         _ready_queue = NULL;
         _current_process = &_idle;

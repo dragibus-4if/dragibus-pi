@@ -7,7 +7,8 @@ typedef void (func_t)(void);
 
 enum pcb_state_e { READY, NEW, TERMINATED, WAITING };
 
-/* Type de la priorité, représenté par un entier */
+/* Gestion de la priorité */
+#define MAX_PRIORITY 10
 typedef unsigned short int priority_t;
 
 struct pcb_s {
@@ -41,14 +42,5 @@ void process_release(struct pcb_s* pcb);
 /* Gestion du process courant */
 void start_current_process();
 struct pcb_s * get_current_process();
-
-/* Gestion de la priorité */
-#define MAX_PRIORITY 10
-
-/* Renvoie la priorité de pcb_current */
-int get_priority();
-
-/* Renvoie -1 si échec, 0 si changement de la priorité a été mise en place */
-int set_priority();
 
 #endif
