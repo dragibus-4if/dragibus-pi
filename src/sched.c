@@ -4,6 +4,7 @@
 #include "dispatcher.h"
 
 /* Ordonnanceur basique */
+/* TODO */
 
 static struct pcb_s _idle;
 static struct pcb_s * _ready_queue = NULL;
@@ -11,8 +12,7 @@ static struct pcb_s * _current_process = NULL;
 static struct pcb_s * _waiting_queue = NULL;
 
 /* Ordonnanceur à priority */
-void schedule();
-void start_sched();
+/* TODO */
 
 /* Implémentation publique de l'ordonnanceur */
 
@@ -21,7 +21,7 @@ struct pcb_s * get_current_process() {
 }
 
 void process_block() {
-    struct pcb_s* it = _current_process;
+    struct pcb_s * it = _current_process;
 
     while (it->next != _current_process) {
         it = it->next;
@@ -61,7 +61,7 @@ void start_current_process() {
     yield();
 }
 
-int init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
+static int _init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
     /* Function and args */
     pcb->entry_point = f;
 
@@ -72,9 +72,12 @@ int init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
         return 0;
     }
 
+    /* Priority */
+    pcb->priority = 0;
+
     /* State and context */
     pcb->state = NEW;
-    pcb->sp = ((uint32_t*) (pcb->stack_base + stack_size)) - 1;
+    pcb->sp = ((uint32_t *) (pcb->stack_base + stack_size)) - 1;
 
     /* Fill in the stack with CPSR and PC */
     *(pcb->sp) = 0x53;
@@ -86,8 +89,7 @@ int init_process(struct pcb_s * pcb, size_t stack_size, func_t * f) {
 
 int create_process(func_t * f, size_t size) {
     struct pcb_s * pcb;
-    pcb = (struct pcb_s*) malloc_alloc(sizeof(struct pcb_s));
-
+    pcb = (struct pcb_s *) malloc_alloc(sizeof(struct pcb_s));
     if (pcb == NULL) {
         return 0;
     }
@@ -100,7 +102,7 @@ int create_process(func_t * f, size_t size) {
     }
 
     _ready_queue->next = pcb;
-    return init_process(pcb,size,f);
+    return _init_process(pcb,size,f);
 }
 
 void schedule() {
@@ -122,7 +124,7 @@ void schedule() {
                 _ready_queue = pcb;
             }
 
-            /* Remove pcb from the list (FIXME : could be done after the loop) */
+            /* Remove pcb from the list (FIXME could be done after the loop) */
             pcb->next = pcb->next->next;
 
             /* Free memory */
