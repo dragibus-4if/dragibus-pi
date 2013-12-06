@@ -45,7 +45,7 @@ int mutex_release(struct mutex_s * mutex) {
         return -1;
     }
 
-    sem_up(mutex->sem);
+    sem_up(&mutex->sem);
     return 0;
 }
 
