@@ -7,9 +7,9 @@
 int main(void) {
     /* Initialisation de la RAM */
     char mem[0x50000];
-    malloc_init((void * )&mem);
+    malloc_init((void *)&mem);
 
-    piped_t readable, writable;
+    pipe_t readable, writable;
 
     /* Test les cas d'erreurs */
     ASSERT(pipe_create(NULL, NULL) == -1);
@@ -23,7 +23,7 @@ int main(void) {
         /* Essaye de fermer un pipe non ouvert */
         long int i;
         for(i = -8 ; i < 65537 ; i++) {
-            ASSERT(pipe_close((piped_t)i) == -1);
+            ASSERT(pipe_close((pipe_t)i) == -1);
         }
     }
 
@@ -121,13 +121,13 @@ int main(void) {
 
     /* FIXME Ce code provoque un SIGSEV car le malloc ne doit pas bien faire son boulot*/
     /* Essaye de créé trop de pipes (limite à 32767 pipes) */
-    /* int i; */
-    /* piped_t pipes[32767]; */
-    /* for(i = 0 ; i < 32767 ; i += 2) { */
-    /*     ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1); */
-    /* } */
-    /* piped_t p1, p2; */
-    /* ASSERT(pipe_create(&p1, &p2) == -1); */
+    int i;
+    pipe_t pipes[MAX_PIPE];
+    for(i = 0 ; i < MAX_PIPE ; i += 2) {
+        ASSERT(pipe_create(&pipes[i], &pipes[i + 1]) != -1);
+    }
+    pipe_t p1, p2;
+    ASSERT(pipe_create(&p1, &p2) == -1);
 
     return 0;
 }
