@@ -1,7 +1,7 @@
-#include "../../src/pipe.h"
-#include "../../src/malloc.h"
-#include "../../src/hw.h"
-#include "../../src/sched.h"
+#include "../os/pipe.h"
+#include "../os/malloc.h"
+#include "../os/hw.h"
+#include "../os/sched.h"
 
 void pipe_write_all(pipe_t p, const char * buffer, size_t bufsize) {
     for(ssize_t ws = 0 ; ws < bufsize ;) {
@@ -36,8 +36,9 @@ void client(void * readable) {
 
 int start_kernel(void) {
     /* Initialisation de la RAM */
-    malloc_init((void *) HEAP_START);
+    DISABLE_IRQ();
     init_hw();
+    malloc_init((void *) HEAP_START);
     pipe_t input, output;
     if(pipe_create(&input, &output) != -1) {
         create_process(&server, (void *) &output, 512);

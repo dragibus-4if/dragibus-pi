@@ -4,4 +4,5 @@ wh cmd 12
 target remote:1234
 b start_kernel
 b ctx_switch
+b fork_bomb
 source include.gdb
