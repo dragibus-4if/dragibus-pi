@@ -9,12 +9,13 @@ CFLAGS = -Wall -Wextra -Wfloat-equal -Wwrite-strings \
 ASFLAGS = -g -march=armv6z
 
 C_FILES = kernel.c \
-		  ../os/dispatcher.c \
-		  ../os/hw.c \
 		  ../os/malloc.c \
+		  ../os/hw.c \
 		  ../os/sched.c \
 		  ../os/sem.c \
-		  ../os/mutex.c
+		  ../os/mutex.c \
+		  ../os/pipe.c \
+		  ../os/morse.c
 AS_FILES = ../os/vectors.s
 MEMMAP = ../os/memmap
 
@@ -26,14 +27,14 @@ OBJS += $(patsubst %.c,%.o,$(C_FILES))
 gcc: kernel
 
 clean:
-	@rm -f *.o
-	@rm -f *.bin
-	@rm -f *.hex
-	@rm -f *.elf
-	@rm -f *.list
-	@rm -f *.img
-	@rm -f *.bc
-	@rm -f *.clang.opt.s
+	rm -f $(OBJS)
+	rm -f *.bin
+	rm -f *.hex
+	rm -f *.elf
+	rm -f *.list
+	rm -f *.img
+	rm -f *.bc
+	rm -f *.clang.opt.s
 
 %.o: %.c
 	$(ARMGNU)-gcc $(CFLAGS) -c $< -o $@

@@ -14,7 +14,8 @@ C_FILES = kernel.c \
 		  ../os/sched.c \
 		  ../os/sem.c \
 		  ../os/mutex.c \
-		  ../os/pipe.c
+		  ../os/pipe.c \
+		  ../os/morse.c
 AS_FILES = ../os/vectors.s
 MEMMAP = ../os/memmap
 
