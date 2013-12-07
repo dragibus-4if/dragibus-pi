@@ -191,7 +191,7 @@ int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void 
     task->stack_pointer--;
     *(task->stack_pointer) = (unsigned int) &_start_current_process;
 
-    return 1;
+    return 0;
 }
 
 int create_process(func_t * f, void * args, size_t size) {

@@ -3,15 +3,15 @@
 #include "../os/sched.h"
 #include "../os/sem.h"
 
-#define LITTLE_SLEEP_TIME 50000
+#define LITTLE_SLEEP_TIME 500
 #define SLEEP_TIME 500000
 
 void fork_bomb(void * args) {
     size_t * nbr = (size_t *)((void **)args)[0];
     struct sem_s * sem = (struct sem_s *)((void **)args)[1];
+    (*nbr)++;
     while(1) {
         sem_down(sem);
-        (*nbr)++;
         size_t n = *nbr;
         led_on();
         for(size_t i = 0 ; i < n * LITTLE_SLEEP_TIME ; i++);
