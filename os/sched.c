@@ -83,21 +83,29 @@ int set_process_state(struct pcb_s * pcb, enum pcb_state_e state) {
     if (pcb == NULL) {
         return -1;
     }
-    if (pcb->state == state) {
+    if (state != NEW && pcb->state == state) {
+        return 0;
+    }
+
+    /* Gestion du cas particulier ou on passe de NEW à READY */
+    if (pcb->state == NEW && state == READY) {
+        pcb->state = READY;
         return 0;
     }
 
     /* On retire le pcb de sa liste de state courant (s'il en a une) */
-    if (pcb->next != NULL && pcb->prev != NULL && pcb->next == pcb) {
-        /* Dans le cas de un seul élément, la liste devient vide */
-        if (pcb->state == READY) {
-            _ready_list = NULL;
-        } else if (pcb->state == WAITING) {
-            _waiting_list = NULL;
+    if(pcb->next != NULL && pcb->prev != NULL) {
+        if (pcb->next == pcb) {
+            /* Dans le cas de un seul élément, la liste devient vide */
+            if (pcb->state == READY) {
+                _ready_list = NULL;
+            } else if (pcb->state == WAITING) {
+                _waiting_list = NULL;
+            }
+        } else {
+            pcb->prev->next = pcb->next;
+            pcb->next->prev = pcb->prev;
         }
-    } else {
-        pcb->prev->next = pcb->next;
-        pcb->next->prev = pcb->prev;
     }
 
     /* Dans le cas ou le processus est fini, on le tue */
@@ -125,7 +133,7 @@ int set_process_state(struct pcb_s * pcb, enum pcb_state_e state) {
             _ready_list->prev->next = pcb;
             _ready_list->prev = pcb;
         }
-    } else if (state == READY) {
+    } else if (state == WAITING) {
         if (_waiting_list == NULL) {
             _waiting_list = pcb;
             pcb->prev = pcb;
@@ -214,10 +222,22 @@ void start_sched() {
     _idle_process.prev = NULL;
     _idle_process.next = NULL;
     _current_process = &_idle_process;
-    ctx_switch();
+    yield();
     while (1);
 }
 
-void __attribute__ ((naked)) yield() {
-  ctx_switch();
+void yield() {
+    __asm volatile("push {r0-r12, lr}");
+    DISABLE_IRQ();
+
+    __asm("mov %0, sp" : "=r"(_current_process->sp));
+    schedule();
+    __asm("mov sp, %0" : : "r"(_current_process->sp));
+
+    set_tick_and_enable_timer();
+    if (_current_process->state == NEW) {
+        _start_current_process();
+    } else {
+        __asm volatile("pop {r0-r12, lr}");
+    }
 }

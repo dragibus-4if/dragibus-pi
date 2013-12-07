@@ -31,16 +31,13 @@ struct pcb_s {
 };
 
 /* Gestion de l'ordonnancement */
-void __attribute__ ((naked)) yield();
-
+void yield();
 void schedule();
 void start_sched();
 void set_sched_mode(enum sched_mode_e mode);
 
 /* Gestion d'un processus */
 int create_process(func_t * f, void * args, size_t size);
-void process_block();
-void process_release(struct pcb_s* pcb);
 int set_process_state(struct pcb_s * pcb, enum pcb_state_e state);
 int set_current_state(enum pcb_state_e state);
 

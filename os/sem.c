@@ -54,9 +54,6 @@ int sem_down(struct sem_s * sem){
 
     sem->counter--;
     if (sem->counter < 0) {
-        /* Bloque la tache courante */
-        set_current_state(WAITING);
-
         /* Création d'un nouvel élément de liste */
         struct pcb_list * p = (struct pcb_list *) malloc_alloc(
             sizeof(struct pcb_list));
@@ -73,6 +70,9 @@ int sem_down(struct sem_s * sem){
                 last = last->next);
             last->next = p;
         }
+
+        /* Bloque la tache courante */
+        set_current_state(WAITING);
     }
 
     ENABLE_IRQ();
