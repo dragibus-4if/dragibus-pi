@@ -161,7 +161,9 @@ int set_current_state(enum task_state state) {
 
 void _start_current_process(void) {
     set_current_state(TASK_READY);
+    ENABLE_IRQ();
     _current_process->entry_point(_current_process->args);
+    DISABLE_IRQ();
     set_current_state(TASK_ZOMBIE);
 }
 
@@ -239,6 +241,7 @@ void yield(void) {
     } else {
         __asm volatile("pop {r0-r12, lr}");
     }
+    ENABLE_IRQ();
 }
 
 void __attribute__ ((naked)) ctx_switch(void) {
@@ -259,6 +262,7 @@ void __attribute__ ((naked)) ctx_switch(void) {
     } else {
         __asm volatile("pop {r0-r12, lr}");
     }
+    ENABLE_IRQ();
 
     __asm volatile ("rfefd sp!");
 }

@@ -36,8 +36,9 @@ void client(void * readable) {
 
 int start_kernel(void) {
     /* Initialisation de la RAM */
-    malloc_init((void *) HEAP_START);
+    DISABLE_IRQ();
     init_hw();
+    malloc_init((void *) HEAP_START);
     pipe_t input, output;
     if(pipe_create(&input, &output) != -1) {
         create_process(&server, (void *) &output, 512);
