@@ -9,7 +9,7 @@ typedef unsigned short int priority_t;
 
 enum sched_mode_e { BASIC, PRIORITY };
 
-enum task_state { READY, NEW, TERMINATED, WAITING };
+enum task_state { TASK_NEW, TASK_READY, TASK_WAITING, TASK_ZOMBIE };
 
 struct task_struct {
     /* Fonction et arguments */
@@ -31,15 +31,16 @@ struct task_struct {
 };
 
 /* Gestion de l'ordonnancement */
-void yield();
-void schedule();
-void start_sched();
+void ctx_switch(void);
+void yield(void);
+void schedule(void);
+void start_sched(void);
 void set_sched_mode(enum sched_mode_e mode);
 
 /* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);
 int set_process_state(struct task_struct * task, enum task_state state);
 int set_current_state(enum task_state state);
-struct task_struct * get_current_process();
+struct task_struct * get_current_process(void);
 
 #endif

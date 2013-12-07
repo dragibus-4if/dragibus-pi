@@ -3,9 +3,9 @@
 #include "malloc.h"
 #include "hw.h"
 
-struct pcb_list {
-    struct pcb_s * pcb;
-    struct pcb_list * next;
+struct task_queue {
+    struct task_struct * task;
+    struct task_queue * next;
 };
 
 int sem_init(struct sem_s * sem, int val) {
@@ -35,7 +35,7 @@ int sem_up(struct sem_s * sem) {
     sem->counter++;
     if (sem->counter <= 0) {
         /* Active une tache dans la file d'attente */
-        set_process_state(sem->waiting_queue->pcb, READY);
+        set_process_state(sem->waiting_queue->task, TASK_READY);
         sem->waiting_queue = sem->waiting_queue->next;
     }
 
@@ -55,16 +55,16 @@ int sem_down(struct sem_s * sem){
     sem->counter--;
     if (sem->counter < 0) {
         /* Création d'un nouvel élément de liste */
-        struct pcb_list * p = (struct pcb_list *) malloc_alloc(
-            sizeof(struct pcb_list));
+        struct task_queue * p = (struct task_queue *) malloc_alloc(
+            sizeof(struct task_queue));
         p->next = NULL;
-        p->pcb = get_current_process();
+        p->task = get_current_process();
 
         /* Ajout à la fin de la liste d'attente */
         if (sem->waiting_queue == NULL) {
             sem->waiting_queue = p;
         } else {
-            struct pcb_list * last;
+            struct task_queue * last;
             for (last = sem->waiting_queue;
                 last->next != NULL;
                 last = last->next);
@@ -72,7 +72,7 @@ int sem_down(struct sem_s * sem){
         }
 
         /* Bloque la tache courante */
-        set_current_state(WAITING);
+        set_current_state(TASK_WAITING);
     }
 
     ENABLE_IRQ();

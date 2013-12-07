@@ -3,12 +3,12 @@
 
 #include "types.h"
 
-/* Structure de données représentant une sémapore */
-struct pcb_list;
+struct task_queue;
 
+/* Structure de données représentant une sémapore */
 struct sem_s {
     int counter;
-    struct pcb_list * waiting_queue;
+    struct task_queue * waiting_queue;
 };
 
 /* Initialize une sémaphore déjà allouée */

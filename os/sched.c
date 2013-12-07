@@ -1,30 +1,29 @@
 #include "sched.h"
 #include "malloc.h"
 #include "hw.h"
-#include "dispatcher.h"
 
-static struct task_struct * _sort_pcb_list(struct task_struct * pcb) {
+static struct task_struct * _sort_pcb_list(struct task_struct * task) {
     /* Cas de base */
-    if (pcb == NULL || pcb->next == NULL) {
-        return pcb;
+    if (task == NULL || task->next == NULL) {
+        return task;
     }
 
     /* Choix du point de pivot */
     static const size_t pivot_choice = 0;
-    struct task_struct * pivot = pcb;
+    struct task_struct * pivot = task;
     for (size_t i = 0; i < pivot_choice && pivot->next != NULL; i++) {
         pivot = pivot->next;
     }
 
     /* Enlever le pivot de la liste */
     struct task_struct * next, * tmp = NULL;
-    while (pcb != NULL) {
-        next = pcb->next;
-        if (pcb->priority != pivot->priority) {
-            pcb->next = tmp;
-            tmp = pcb;
+    while (task != NULL) {
+        next = task->next;
+        if (task->priority != pivot->priority) {
+            task->next = tmp;
+            tmp = task;
         }
-        pcb = next;
+        task = next;
     }
 
     /* Divide & conquer */
@@ -61,9 +60,9 @@ static struct task_struct * _sort_pcb_list(struct task_struct * pcb) {
     }
 }
 
-static struct task_struct * _schedule_priority(struct task_struct * pcb) {
+static struct task_struct * _schedule_priority(struct task_struct * task) {
     /* TODO */
-    return pcb;
+    return task;
 }
 
 static struct task_struct _idle_process;
@@ -74,45 +73,45 @@ static struct task_struct * _current_process = NULL;
 /* Ordonnanceur à priority */
 static enum sched_mode_e _sched_mode = BASIC;
 
-struct task_struct * get_current_process() {
+struct task_struct * get_current_process(void) {
     return _current_process;
 }
 
-int set_process_state(struct task_struct * pcb, enum task_state state) {
+int set_process_state(struct task_struct * task, enum task_state state) {
     /* Vérif des valeurs */
-    if (pcb == NULL) {
+    if (task == NULL) {
         return -1;
     }
-    if (state != NEW && pcb->state == state) {
+    if (state != TASK_NEW && task->state == state) {
         return 0;
     }
 
-    /* Gestion du cas particulier ou on passe de NEW à READY */
-    if (pcb->state == NEW && state == READY) {
-        pcb->state = READY;
+    /* Gestion du cas particulier ou on passe de TASK_NEW à TASK_READY */
+    if (task->state == TASK_NEW && state == TASK_READY) {
+        task->state = TASK_READY;
         return 0;
     }
 
-    /* On retire le pcb de sa liste de state courant (s'il en a une) */
-    if(pcb->next != NULL && pcb->prev != NULL) {
-        if (pcb->next == pcb) {
+    /* On retire le task de sa liste de state courant (s'il en a une) */
+    if(task->next != NULL && task->prev != NULL) {
+        if (task->next == task) {
             /* Dans le cas de un seul élément, la liste devient vide */
-            if (pcb->state == READY) {
+            if (task->state == TASK_READY) {
                 _ready_list = NULL;
-            } else if (pcb->state == WAITING) {
+            } else if (task->state == TASK_WAITING) {
                 _waiting_list = NULL;
             }
         } else {
-            pcb->prev->next = pcb->next;
-            pcb->next->prev = pcb->prev;
+            task->prev->next = task->next;
+            task->next->prev = task->prev;
         }
     }
 
     /* Dans le cas ou le processus est fini, on le tue */
-    if (state == TERMINATED) {
-        int y = pcb == _current_process;
-        malloc_free((char *) pcb->stack_base);
-        malloc_free((char *) pcb);
+    if (state == TASK_ZOMBIE) {
+        int y = task == _current_process;
+        malloc_free((char *) task->stack_base);
+        malloc_free((char *) task);
         if(y) {
             yield();
         }
@@ -122,34 +121,34 @@ int set_process_state(struct task_struct * pcb, enum task_state state) {
     /* On l'ajoute à la fin de sa nouvelle liste */
     /* TODO si on utilise la priorité on peut faire une
      * insertion trié ici-meme */
-    if (state == READY || state == NEW) {
+    if (state == TASK_READY || state == TASK_NEW) {
         if (_ready_list == NULL) {
-            _ready_list = pcb;
-            pcb->prev = pcb;
-            pcb->next = pcb;
+            _ready_list = task;
+            task->prev = task;
+            task->next = task;
         } else {
-            pcb->prev = _ready_list->prev;
-            pcb->next = _ready_list;
-            _ready_list->prev->next = pcb;
-            _ready_list->prev = pcb;
+            task->prev = _ready_list->prev;
+            task->next = _ready_list;
+            _ready_list->prev->next = task;
+            _ready_list->prev = task;
         }
-    } else if (state == WAITING) {
+    } else if (state == TASK_WAITING) {
         if (_waiting_list == NULL) {
-            _waiting_list = pcb;
-            pcb->prev = pcb;
-            pcb->next = pcb;
+            _waiting_list = task;
+            task->prev = task;
+            task->next = task;
         } else {
-            pcb->prev = _waiting_list->prev;
-            pcb->next = _waiting_list;
-            _waiting_list->prev->next = pcb;
-            _waiting_list->prev = pcb;
+            task->prev = _waiting_list->prev;
+            task->next = _waiting_list;
+            _waiting_list->prev->next = task;
+            _waiting_list->prev = task;
         }
     }
 
-    pcb->state = state;
+    task->state = state;
 
     /* Dans le cas ou la tache courante est en attente, on change */
-    if(pcb->state == WAITING && pcb == _current_process) {
+    if(task->state == TASK_WAITING && task == _current_process) {
         yield();
     }
 
@@ -160,65 +159,65 @@ int set_current_state(enum task_state state) {
     return set_process_state(_current_process, state);
 }
 
-void _start_current_process() {
-    set_current_state(READY);
+void _start_current_process(void) {
+    set_current_state(TASK_READY);
     _current_process->entry_point(_current_process->args);
-    set_current_state(TERMINATED);
+    set_current_state(TASK_ZOMBIE);
 }
 
-int _init_process(struct task_struct *pcb, size_t stack_size, func_t * f, void * args) {
+int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void * args) {
     /* Function and args */
-    pcb->entry_point = f;
-    pcb->args = args;
+    task->entry_point = f;
+    task->args = args;
 
     /* Stack allocation */
-    pcb->stack_size = stack_size;
-    pcb->stack_base = malloc_alloc(stack_size);
-    if (pcb->stack_base == NULL) {
+    task->stack_size = stack_size;
+    task->stack_base = malloc_alloc(stack_size);
+    if (task->stack_base == NULL) {
         return -1;
     }
 
     /* Priority */
-    pcb->priority = 0;
+    task->priority = 0;
 
     /* State and context */
-    set_process_state(pcb, NEW);
-    pcb->stack_pointer = ((uint32_t *) (pcb->stack_base + stack_size)) - 1;
+    set_process_state(task, TASK_NEW);
+    task->stack_pointer = ((uint32_t *) (task->stack_base + stack_size)) - 1;
 
     /* Fill in the stack with CPSR and PC */
-    *(pcb->stack_pointer) = 0x53;
-    pcb->stack_pointer--;
-    *(pcb->stack_pointer) = (unsigned int) &_start_current_process;
+    *(task->stack_pointer) = 0x53;
+    task->stack_pointer--;
+    *(task->stack_pointer) = (unsigned int) &_start_current_process;
 
     return 1;
 }
 
 int create_process(func_t * f, void * args, size_t size) {
-    struct task_struct * pcb;
-    pcb = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
-    if (pcb == NULL) {
+    struct task_struct * task;
+    task = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
+    if (task == NULL) {
         return -1;
     }
 
-    pcb->next = NULL;
-    pcb->prev = NULL;
+    task->next = NULL;
+    task->prev = NULL;
 
-    return _init_process(pcb, size, f, args);
+    return _init_process(task, size, f, args);
 }
 
-void schedule() {
+void schedule(void) {
     /* Si on a des process prets */
     if (_ready_list != NULL) {
-        /* Rajout de ce pcb à la fin de la liste */
+        /* Rajout de ce task à la fin de la liste */
         _current_process = _ready_list;
         _ready_list = _ready_list->next;
     } else {
-        /* Sinon on utilise le pcb idle */
+        /* Sinon on utilise le task idle */
         _current_process = &_idle_process;
     }
 }
 
-void start_sched() {
+void start_sched(void) {
     _idle_process.prev = NULL;
     _idle_process.next = NULL;
     _current_process = &_idle_process;
@@ -226,7 +225,7 @@ void start_sched() {
     while (1);
 }
 
-void yield() {
+void yield(void) {
     __asm volatile("push {r0-r12, lr}");
     DISABLE_IRQ();
 
@@ -235,9 +234,31 @@ void yield() {
     __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
 
     set_tick_and_enable_timer();
-    if (_current_process->state == NEW) {
+    if (_current_process->state == TASK_NEW) {
         _start_current_process();
     } else {
         __asm volatile("pop {r0-r12, lr}");
     }
+}
+
+void __attribute__ ((naked)) ctx_switch(void) {
+    __asm volatile("sub lr, lr, #4");
+    __asm volatile("srsdb sp!, 0x13");
+    __asm volatile("cps #0x13");
+
+    __asm volatile("push {r0-r12, lr}");
+    DISABLE_IRQ();
+
+    __asm("mov %0, sp" : "=r"(_current_process->stack_pointer));
+    schedule();
+    __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
+
+    set_tick_and_enable_timer();
+    if (_current_process->state == TASK_NEW) {
+        _start_current_process();
+    } else {
+        __asm volatile("pop {r0-r12, lr}");
+    }
+
+    __asm volatile ("rfefd sp!");
 }
