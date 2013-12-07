@@ -5,7 +5,7 @@
 
 /* Structure de données représentant un mutex */
 struct mutex_s {
-    struct pcb_s * owner;
+    struct task_struct * owner;
     struct sem_s sem;
 };
 
@@ -41,8 +41,8 @@ int mutex_init(struct mutex_s * mutex) {
 
     /* Initialisation */
     /* TODO reorganise pour que l'appel soit plus du genre sem_create ? */
-    sem_init(&mutex->sem, 1);
     mutex->owner = NULL;
+    sem_init(&mutex->sem, 1);
 
     return 0;
 }
@@ -58,6 +58,7 @@ int mutex_acquire(struct mutex_s * mutex) {
      * - immédiatement après, on est sûr que le processus courant a
      *   vérouillé le mutex
      */
+    /* FIXME fait planter le kernel */
     sem_down(&mutex->sem);
     mutex->owner = get_current_process();
     return 0;
@@ -69,6 +70,7 @@ int mutex_release(struct mutex_s * mutex) {
         return -1;
     }
 
+    mutex->owner = NULL;
     sem_up(&mutex->sem);
     return 0;
 }

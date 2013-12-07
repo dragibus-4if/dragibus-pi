@@ -3,35 +3,44 @@
 
 #include "types.h"
 
-extern struct pcb_s* current_process;
+/* Gestion de la priorité */
+#define MAX_PRIORITY 10
+typedef unsigned short int priority_t;
 
-typedef void (func_t)(void *);
+enum sched_mode_e { BASIC, PRIORITY };
 
-enum pcb_state_e {READY, NEW, TERMINATED, WAITING};
+enum task_state { TASK_NEW, TASK_READY, TASK_WAITING, TASK_ZOMBIE };
 
-struct pcb_s {
-  /* Pointer to stack */
-  uint32_t* sp;
+struct task_struct {
+    /* Fonction et arguments */
+    func_t * entry_point;
+    void * args;
 
-  /* function and args */
-  func_t* entry_point;
-  void* args;
+    /* State and priority */
+    enum task_state state;
+    priority_t priority;
 
-  size_t size;
-  char* stack_base;
-  enum pcb_state_e state;
+    /* Pointeur de pile */
+    uint32_t * stack_pointer;
+    char * stack_base;
+    size_t stack_size;
 
-  struct pcb_s *next;
+    /* Double linked list */
+    struct task_struct * next;
+    struct task_struct * prev;
 };
 
+/* Gestion de l'ordonnancement */
+void ctx_switch(void);
+void yield(void);
+void schedule(void);
+void start_sched(void);
+void set_sched_mode(enum sched_mode_e mode);
 
-int create_process(func_t* f, void * args, size_t size);
-void yield();
-void start_sched();
-void schedule();
-void start_current_process();
-void process_block();
-void process_release(struct pcb_s* pcb);
-struct pcb_s * get_current_process();
+/* Gestion des taches */
+int create_process(func_t * f, void * args, size_t size);
+int set_process_state(struct task_struct * task, enum task_state state);
+int set_current_state(enum task_state state);
+struct task_struct * get_current_process(void);
 
 #endif

@@ -1,16 +1,17 @@
 #include "morse.h"
-#include "../hw.h"
+#include "hw.h"
 
 /* Code morse représenté par un booléen: 0 si court, 1 si long */
 typedef unsigned short int _morse_code_t;
 
 static void _morse_pause(_morse_code_t code) {
-    time_t speed = (code) ? 1 : MORSE_LONG_SHORT_RATIO;
-    for (time_t i = 0; i < MORSE_PAUSE_TIME; i += speed);
+    time_t time = (code) ? MORSE_LONG_SHORT_RATIO : 1;
+    for (time_t i = 0; i < MORSE_PAUSE_TIME * time; i++);
 }
 
 /* TODO rendre ça atomique */
 static void _morse_blink(_morse_code_t code) {
+    _morse_pause(0);
     led_on();
     _morse_pause(code);
     led_off();
@@ -19,11 +20,14 @@ static void _morse_blink(_morse_code_t code) {
 static void _morse_blink_for(const _morse_code_t * codes, size_t codes_size) {
     for (size_t i = 0; i < codes_size; i++) {
         _morse_blink(codes[i]);
-        _morse_pause(0);
     }
 }
 
 void morse_blink_char(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        c = c - 'A' + 'a';
+    }
+
     switch (c) {
 #define PROTECT_P99(...) __VA_ARGS__
 #define DEFINE_MORSE_CHAR(c, c_codes, c_codes_size)     \
@@ -66,6 +70,6 @@ void morse_blink_char(char c) {
 void morse_blink_buffer(const char * buffer, size_t size) {
     for (size_t i = 0; i < size; i++) {
         morse_blink_char(buffer[i]);
-        _morse_pause(1);
+        /* _morse_pause(1); */
     }
 }

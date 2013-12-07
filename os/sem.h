@@ -3,19 +3,23 @@
 
 #include "types.h"
 
-struct pcb_Sem {
-    struct pcb_s* pcb;
-    struct pcb_Sem* next;
-};
+struct task_queue;
 
+/* Structure de données représentant une sémapore */
 struct sem_s {
     int counter;
-    struct pcb_Sem* pcbSemF;
-    struct pcb_Sem* pcbSemL;
+    struct task_queue * waiting_queue;
 };
 
-void sem_init(struct sem_s* sem, int val);
-void sem_up(struct sem_s* sem);
-void sem_down(struct sem_s* sem);
+/* Initialize une sémaphore déjà allouée */
+int sem_init(struct sem_s * sem, int val);
+
+/* Incrémente la valeur d'une sémaphore, plaçant le processus en attente quand
+ * la valeur max a été atteinte */
+int sem_up(struct sem_s * sem);
+
+/* Décrémente la valeur d'une sémaphore, plaçant le processus en attente quand
+ * la valeur min a été atteinte */
+int sem_down(struct sem_s * sem);
 
 #endif

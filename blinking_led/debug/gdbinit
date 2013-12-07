@@ -5,11 +5,5 @@ target remote:1234
 b start_kernel
 b ctx_switch
 b kernel.c:9
-b kernel.c:10
-b kernel.c:11
-b kernel.c:12
-b kernel.c:19
-b kernel.c:20
-b kernel.c:21
-b kernel.c:22
+b kernel.c:17
 source include.gdb
