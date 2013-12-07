@@ -9,7 +9,6 @@ sem_init(struct sem_s *sem, int val){
     sem->counter += val;
     sem->pcbSemF = NULL;
     sem->pcbSemL = NULL; 
-	//coucoucocucou
 }
 
 void
@@ -40,6 +39,9 @@ void sem_down(struct sem_s* sem){
             sem->pcbSemL = nPcbSem;       
         }   
         process_block();
-    }
+				
+    }		
     ENABLE_IRQ();
+		//Avant on bloquait pas les process : on les test maintenant (fait un fiq, voir pk)
+		//process_test(sem->counter);
 }

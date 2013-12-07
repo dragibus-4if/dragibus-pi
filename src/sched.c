@@ -18,38 +18,56 @@ struct pcb_s * get_current_process() {
 void process_block(){
   struct pcb_s* it = current_process;
 
+	//On cherche le process précédent
   while (it->next != current_process) {
     it=it->next;
   }
-
+	//On enlève le process courant de la ready_queue
   it->next = it->next->next;
 
   it= waiting_queue;
+	//On teste si la waiting queue est initialisée
   if (waiting_queue == 0 )
     {
-        waiting_queue = current_process;
+        waiting_queue->next = current_process;
     } else {
+				//Si elle l'est on cherche le dernier élément 
         while(it->next != waiting_queue){
         it=it->next;
         }
     }
 
+	//On met le process courant dans la waiting queue (en fin)
   it->next = current_process;    
-  current_process->next = NULL;
+  current_process->next = waiting_queue;
   current_process->state = WAITING;
 }
 
 void process_release(struct pcb_s* pcb){
   struct pcb_s* it = waiting_queue;
-  while(it->next != pcb){
+	//Recherche de l'elt de la waiting qui pointe sur le pcb voulu  
+	while(it->next != pcb){
     it=it->next;
   }
 
+	//On retire pcb de la waiting
   it->next = it->next->next;
 
+	//On remet en l'état pour execution normale
   pcb->next = current_process->next;
   current_process->next = pcb;
   pcb->state = READY;
+}
+
+
+/**
+ *	Il faudrait implem cette fonction
+ *  	Pour le moment elle fait un fiq (je ne sais même pas pourquoi !)
+**/
+void process_test(int val){
+	while (current_process->state != READY || val >= 0){
+		;	
+	};
 }
 
 void start_current_process()
