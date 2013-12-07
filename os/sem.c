@@ -55,20 +55,20 @@ int sem_down(struct sem_s * sem){
     sem->counter--;
     if (sem->counter < 0) {
         /* Création d'un nouvel élément de liste */
-        struct task_queue * p = (struct task_queue *) malloc_alloc(
+        struct task_queue * t = (struct task_queue *) malloc_alloc(
             sizeof(struct task_queue));
-        p->next = NULL;
-        p->task = get_current_process();
+        t->next = NULL;
+        t->task = get_current_process();
 
         /* Ajout à la fin de la liste d'attente */
         if (sem->waiting_queue == NULL) {
-            sem->waiting_queue = p;
+            sem->waiting_queue = t;
         } else {
             struct task_queue * last;
             for (last = sem->waiting_queue;
                 last->next != NULL;
                 last = last->next);
-            last->next = p;
+            last->next = t;
         }
 
         /* Bloque la tache courante */

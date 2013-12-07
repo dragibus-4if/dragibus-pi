@@ -2,7 +2,7 @@
 #include "malloc.h"
 #include "hw.h"
 
-static struct task_struct * _sort_pcb_list(struct task_struct * task) {
+static struct task_struct * _sort_task_list(struct task_struct * task) {
     /* Cas de base */
     if (task == NULL || task->next == NULL) {
         return task;
@@ -42,8 +42,8 @@ static struct task_struct * _sort_pcb_list(struct task_struct * task) {
     }
 
     /* Appels récursifs */
-    first = _sort_pcb_list(first);
-    second = _sort_pcb_list(second);
+    first = _sort_task_list(first);
+    second = _sort_task_list(second);
 
     /* Merge */
     if (first != NULL) {
