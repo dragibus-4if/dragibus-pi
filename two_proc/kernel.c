@@ -3,11 +3,21 @@
 #include "../os/malloc.h"
 #include "../os/sem.h"
 
+#define SLEEP_TIME_A 1000000
+#define SLEEP_TIME_B 3000000
+
 void processus_A(void * args) {
     struct sem_s * sema = (struct sem_s *) args;
     while (1) {
         sem_down(sema);
-        yield();
+        for (int j = 0 ; j < 10 ; j++) {
+            yield();
+            led_on();
+            for(int i = 0 ; i < SLEEP_TIME_A ; i++);
+            yield();
+            led_off();
+            for(int i = 0 ; i < SLEEP_TIME_A ; i++);
+        }
         sem_up(sema);
         yield();
     }
@@ -17,7 +27,14 @@ void processus_B(void * args) {
     struct sem_s * sema = (struct sem_s *) args;
     while (1) {
         sem_down(sema);
-        yield();
+        for (int j = 0 ; j < 10 ; j++) {
+            yield();
+            led_on();
+            for(int i = 0 ; i < SLEEP_TIME_B ; i++);
+            yield();
+            led_off();
+            for(int i = 0 ; i < SLEEP_TIME_B ; i++);
+        }
         sem_up(sema);
         yield();
     }
