@@ -3,7 +3,7 @@
 #include "hw.h"
 #include "dispatcher.h"
 
-static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
+static struct task_struct * _sort_pcb_list(struct task_struct * pcb) {
     /* Cas de base */
     if (pcb == NULL || pcb->next == NULL) {
         return pcb;
@@ -11,13 +11,13 @@ static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
 
     /* Choix du point de pivot */
     static const size_t pivot_choice = 0;
-    struct pcb_s * pivot = pcb;
+    struct task_struct * pivot = pcb;
     for (size_t i = 0; i < pivot_choice && pivot->next != NULL; i++) {
         pivot = pivot->next;
     }
 
     /* Enlever le pivot de la liste */
-    struct pcb_s * next, * tmp = NULL;
+    struct task_struct * next, * tmp = NULL;
     while (pcb != NULL) {
         next = pcb->next;
         if (pcb->priority != pivot->priority) {
@@ -28,7 +28,7 @@ static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
     }
 
     /* Divide & conquer */
-    struct pcb_s * first = NULL, * second = NULL;
+    struct task_struct * first = NULL, * second = NULL;
     while (tmp != NULL) {
         next = tmp->next;
         /* FIXME selon l'ordre du tri, changer "<" par ">" */
@@ -48,7 +48,7 @@ static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
 
     /* Merge */
     if (first != NULL) {
-        struct pcb_s * end = first;
+        struct task_struct * end = first;
         while (end->next != NULL) {
             end = end->next;
         }
@@ -61,24 +61,24 @@ static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
     }
 }
 
-static struct pcb_s * _schedule_priority(struct pcb_s * pcb) {
+static struct task_struct * _schedule_priority(struct task_struct * pcb) {
     /* TODO */
     return pcb;
 }
 
-static struct pcb_s _idle_process;
-static struct pcb_s * _ready_list = NULL;
-static struct pcb_s * _waiting_list = NULL;
-static struct pcb_s * _current_process = NULL;
+static struct task_struct _idle_process;
+static struct task_struct * _ready_list = NULL;
+static struct task_struct * _waiting_list = NULL;
+static struct task_struct * _current_process = NULL;
 
 /* Ordonnanceur à priority */
 static enum sched_mode_e _sched_mode = BASIC;
 
-struct pcb_s * get_current_process() {
+struct task_struct * get_current_process() {
     return _current_process;
 }
 
-int set_process_state(struct pcb_s * pcb, enum pcb_state_e state) {
+int set_process_state(struct task_struct * pcb, enum task_state state) {
     /* Vérif des valeurs */
     if (pcb == NULL) {
         return -1;
@@ -156,7 +156,7 @@ int set_process_state(struct pcb_s * pcb, enum pcb_state_e state) {
     return 0;
 }
 
-int set_current_state(enum pcb_state_e state) {
+int set_current_state(enum task_state state) {
     return set_process_state(_current_process, state);
 }
 
@@ -166,13 +166,13 @@ void _start_current_process() {
     set_current_state(TERMINATED);
 }
 
-int _init_process(struct pcb_s *pcb, size_t stack_size, func_t * f, void * args) {
+int _init_process(struct task_struct *pcb, size_t stack_size, func_t * f, void * args) {
     /* Function and args */
     pcb->entry_point = f;
     pcb->args = args;
 
     /* Stack allocation */
-    pcb->size = stack_size;
+    pcb->stack_size = stack_size;
     pcb->stack_base = malloc_alloc(stack_size);
     if (pcb->stack_base == NULL) {
         return -1;
@@ -183,19 +183,19 @@ int _init_process(struct pcb_s *pcb, size_t stack_size, func_t * f, void * args)
 
     /* State and context */
     set_process_state(pcb, NEW);
-    pcb->sp = ((uint32_t *) (pcb->stack_base + stack_size)) - 1;
+    pcb->stack_pointer = ((uint32_t *) (pcb->stack_base + stack_size)) - 1;
 
     /* Fill in the stack with CPSR and PC */
-    *(pcb->sp) = 0x53;
-    pcb->sp--;
-    *(pcb->sp) = (unsigned int) &_start_current_process;
+    *(pcb->stack_pointer) = 0x53;
+    pcb->stack_pointer--;
+    *(pcb->stack_pointer) = (unsigned int) &_start_current_process;
 
     return 1;
 }
 
 int create_process(func_t * f, void * args, size_t size) {
-    struct pcb_s * pcb;
-    pcb = (struct pcb_s *) malloc_alloc(sizeof(struct pcb_s));
+    struct task_struct * pcb;
+    pcb = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
     if (pcb == NULL) {
         return -1;
     }
@@ -230,9 +230,9 @@ void yield() {
     __asm volatile("push {r0-r12, lr}");
     DISABLE_IRQ();
 
-    __asm("mov %0, sp" : "=r"(_current_process->sp));
+    __asm("mov %0, sp" : "=r"(_current_process->stack_pointer));
     schedule();
-    __asm("mov sp, %0" : : "r"(_current_process->sp));
+    __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
 
     set_tick_and_enable_timer();
     if (_current_process->state == NEW) {

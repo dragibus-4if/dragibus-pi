@@ -3,31 +3,31 @@
 
 #include "types.h"
 
-typedef void (func_t)(void *);
-
-enum pcb_state_e { READY, NEW, TERMINATED, WAITING };
-
 /* Gestion de la priorité */
 #define MAX_PRIORITY 10
 typedef unsigned short int priority_t;
 
 enum sched_mode_e { BASIC, PRIORITY };
 
-struct pcb_s {
-    /* Pointeur de pile */
-    uint32_t * sp;
+enum task_state { READY, NEW, TERMINATED, WAITING };
 
+struct task_struct {
     /* Fonction et arguments */
     func_t * entry_point;
     void * args;
 
-    size_t size;
-    char * stack_base;
-    enum pcb_state_e state;
-
-    struct pcb_s * next;
-    struct pcb_s * prev;
+    /* State and priority */
+    enum task_state state;
     priority_t priority;
+
+    /* Pointeur de pile */
+    uint32_t * stack_pointer;
+    char * stack_base;
+    size_t stack_size;
+
+    /* Double linked list */
+    struct task_struct * next;
+    struct task_struct * prev;
 };
 
 /* Gestion de l'ordonnancement */
@@ -36,12 +36,10 @@ void schedule();
 void start_sched();
 void set_sched_mode(enum sched_mode_e mode);
 
-/* Gestion d'un processus */
+/* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);
-int set_process_state(struct pcb_s * pcb, enum pcb_state_e state);
-int set_current_state(enum pcb_state_e state);
-
-/* Gestion du process courant */
-struct pcb_s * get_current_process();
+int set_process_state(struct task_struct * task, enum task_state state);
+int set_current_state(enum task_state state);
+struct task_struct * get_current_process();
 
 #endif
