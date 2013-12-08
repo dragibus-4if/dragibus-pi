@@ -3,22 +3,27 @@
 
 #include "types.h"
 
-/* Gestion de la priorité */
-#define MAX_PRIORITY 10
-typedef unsigned short int priority_t;
-
-enum sched_mode_e { BASIC, PRIORITY };
-
 enum task_state { TASK_NEW, TASK_READY, TASK_WAITING, TASK_ZOMBIE };
+enum sched_policy { SCHED_FIFO, SCHED_RR, SCHED_OTHER, SCHED_YIELD };
 
 struct task_struct {
     /* Fonction et arguments */
     func_t * entry_point;
     void * args;
 
-    /* State and priority */
+    /* State */
     enum task_state state;
-    priority_t priority;
+
+    /* Schedule policy */
+    int policy;
+
+    /* Time informations */
+    time_t epoch;
+    time_t counter;
+
+    /* Priority */
+    int priority;
+    int rt_priority;
 
     /* Pointeur de pile */
     uint32_t * stack_pointer;
@@ -35,7 +40,6 @@ void ctx_switch(void);
 void yield(void);
 void schedule(void);
 void start_sched(void);
-void set_sched_mode(enum sched_mode_e mode);
 
 /* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);

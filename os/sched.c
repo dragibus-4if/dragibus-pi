@@ -2,79 +2,54 @@
 #include "malloc.h"
 #include "hw.h"
 
-static struct task_struct * _sort_task_list(struct task_struct * task) {
-    /* Cas de base */
-    if (task == NULL || task->next == NULL) {
-        return task;
-    }
-
-    /* Choix du point de pivot */
-    static const size_t pivot_choice = 0;
-    struct task_struct * pivot = task;
-    for (size_t i = 0; i < pivot_choice && pivot->next != NULL; i++) {
-        pivot = pivot->next;
-    }
-
-    /* Enlever le pivot de la liste */
-    struct task_struct * next, * tmp = NULL;
-    while (task != NULL) {
-        next = task->next;
-        if (task->priority != pivot->priority) {
-            task->next = tmp;
-            tmp = task;
-        }
-        task = next;
-    }
-
-    /* Divide & conquer */
-    struct task_struct * first = NULL, * second = NULL;
-    while (tmp != NULL) {
-        next = tmp->next;
-        /* FIXME selon l'ordre du tri, changer "<" par ">" */
-        if (tmp->priority < pivot->priority) {
-            tmp->next = first;
-            first = tmp;
-        } else {
-            tmp->next = second;
-            second = tmp;
-        }
-        tmp = next;
-    }
-
-    /* Appels récursifs */
-    first = _sort_task_list(first);
-    second = _sort_task_list(second);
-
-    /* Merge */
-    if (first != NULL) {
-        struct task_struct * end = first;
-        while (end->next != NULL) {
-            end = end->next;
-        }
-        pivot->next = second;
-        end->next = pivot;
-        return first;
-    } else {
-        pivot->next = second;
-        return pivot;
-    }
-}
-
-static struct task_struct * _schedule_priority(struct task_struct * task) {
-    /* TODO */
-    return task;
-}
-
+static time_t _epoch = 1;
 static struct task_struct _idle_process;
 static struct task_struct * _ready_list = NULL;
 static struct task_struct * _waiting_list = NULL;
 static struct task_struct * _current_process = NULL;
 
-/* Ordonnanceur à priority */
-static enum sched_mode_e _sched_mode = BASIC;
+int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void * args) {
+    /* Function and args */
+    task->entry_point = f;
+    task->args = args;
+
+    /* Stack allocation */
+    task->stack_size = stack_size;
+    task->stack_base = malloc_alloc(stack_size);
+    if (task->stack_base == NULL) {
+        return -1;
+    }
+
+    /* Priority and time */
+    task->priority = 0;
+    task->rt_priority = 0;
+    task->counter = 0;
+    task->epoch = 0;
+
+    /* State and context */
+    set_process_state(task, TASK_NEW);
+    task->stack_pointer = ((uint32_t *) (task->stack_base + stack_size)) - 1;
+
+    /* Fill in the stack with CPSR and PC */
+    *(task->stack_pointer) = 0x53;
+    task->stack_pointer--;
+    *(task->stack_pointer) = (unsigned int) &_start_current_process;
+
+    return 0;
+}
+
+void _start_current_process(void) {
+    set_current_state(TASK_READY);
+    _current_process->entry_point(_current_process->args);
+    set_current_state(TASK_ZOMBIE);
+}
 
 struct task_struct * get_current_process(void) {
     return _current_process;
+}
+
+int set_current_state(enum task_state state) {
+    return set_process_state(_current_process, state);
 }
 
 int set_process_state(struct task_struct * task, enum task_state state) {
@@ -156,43 +131,6 @@ int set_process_state(struct task_struct * task, enum task_state state) {
     if(task->state == TASK_WAITING && task == _current_process) {
         yield();
     }
-
-    return 0;
-}
-
-int set_current_state(enum task_state state) {
-    return set_process_state(_current_process, state);
-}
-
-void _start_current_process(void) {
-    set_current_state(TASK_READY);
-    _current_process->entry_point(_current_process->args);
-    set_current_state(TASK_ZOMBIE);
-}
-
-int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void * args) {
-    /* Function and args */
-    task->entry_point = f;
-    task->args = args;
-
-    /* Stack allocation */
-    task->stack_size = stack_size;
-    task->stack_base = malloc_alloc(stack_size);
-    if (task->stack_base == NULL) {
-        return -1;
-    }
-
-    /* Priority */
-    task->priority = 0;
-
-    /* State and context */
-    set_process_state(task, TASK_NEW);
-    task->stack_pointer = ((uint32_t *) (task->stack_base + stack_size)) - 1;
-
-    /* Fill in the stack with CPSR and PC */
-    *(task->stack_pointer) = 0x53;
-    task->stack_pointer--;
-    *(task->stack_pointer) = (unsigned int) &_start_current_process;
 
     return 0;
 }
