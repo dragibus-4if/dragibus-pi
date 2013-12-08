@@ -148,6 +148,21 @@ void schedule() {
         ready_queue = NULL;
         _current_process = &idle;
     } else {            /* Sinon -> le processus élu est le suivant */
+        /* diviser la liste de pcb en deux parties pour trier la première partie */
+        struct pcb_s * slow = pcb, * fast = pcb;
+        int done = 0;
+        
+        while (fast != NULL && done == 0) {
+            slow = slow->next;
+            for (size_t i = 0; i < speed; i++) { /* TODO: définir speed */
+                fast = fast->next;
+                if (fast == NULL) {
+                    done = 1;
+                    break;
+                }
+            }
+        }
+
         _current_process = pcb;
     }
 }
