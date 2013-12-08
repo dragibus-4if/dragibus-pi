@@ -8,6 +8,24 @@ static struct task_struct * _ready_list = NULL;
 static struct task_struct * _waiting_list = NULL;
 static struct task_struct * _current_process = NULL;
 
+/* Mesure le poids en priorité d'une tache *p* */
+int _goodness(struct task_struct * p) {
+    /* On ne doit pas choisir le IDLE */
+    if (p == &_idle_process)
+        return -1000;
+
+    /* Si c'est une tache en real time */
+    if (p->policy != SCHED_OTHER)
+        return 1000 + p->rt_priority;
+
+    /* Quand le quantum de la tache est fini */
+    if (p->counter == 0)
+        return 0;
+
+    /* Cas normal */
+    return p->counter + p->priority;
+}
+
 int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void * args) {
     /* Function and args */
     task->entry_point = f;
