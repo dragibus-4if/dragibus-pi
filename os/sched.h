@@ -3,8 +3,10 @@
 
 #include "types.h"
 
+#define MAX_PRIO 50
+
 enum task_state { TASK_NEW, TASK_READY, TASK_WAITING, TASK_ZOMBIE };
-enum sched_policy { SCHED_FIFO, SCHED_RR, SCHED_OTHER, SCHED_YIELD };
+enum sched_policy { SCHED_RT = 1, SCHED_OTHER = 2, SCHED_YIELD = 4 };
 
 struct task_struct {
     /* Fonction et arguments */
@@ -32,6 +34,7 @@ struct task_struct {
     size_t stack_size;
 
     /* Double linked list */
+    struct task_struct * head;
     struct task_struct * next;
     struct task_struct * prev;
 };
@@ -42,6 +45,9 @@ void sched_start(void);
 /* La tache courante se place à la fin de la file d'exécution et une nouvelle
  * tache est activé au prochain epoch */
 void sched_yield(void);
+
+/* Force le scheduler à changer directement de tache */
+void sched_forced_yield(void);
 
 /* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);
