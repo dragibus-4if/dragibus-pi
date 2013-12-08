@@ -8,6 +8,31 @@ static struct task_struct * _ready_list = NULL;
 static struct task_struct * _waiting_list = NULL;
 static struct task_struct * _current_process = NULL;
 
+/* Déplace la tache à la fin de la liste */
+int _move_last(struct task_struct ** list_head, struct task_struct * last) {
+    /* Cas d'erreurs de base */
+    /* TODO faut il gérer les cas ou l'utilisateur est vraiment un crétin ? */
+    if (list_head == NULL || *list_head == NULL || last == NULL)
+        return -1;
+
+    /* Cas particulier ou il faut déplacer la tete */
+    if (last == *list_head) {
+        *list_head = last->next;
+        return 0;
+    }
+
+    /* Suppression de l'élément de la liste */
+    last->prev->next = last->next;
+    last->next->prev = last->prev;
+
+    /* Ajout à la fin de la liste */
+    last->prev = (*list_head)->prev;
+    last->next = (*list_head);
+    (*list_head)->prev->next = last;
+    (*list_head)->prev = last;
+    return 0;
+}
+
 /* Change le contexte d'exécution de *prev* à celui de *next* */
 void _switch_to(struct task_struct * prev, struct task_struct * next) {
     __asm volatile("push {r0-r12, lr}");
@@ -34,6 +59,12 @@ int _goodness(struct task_struct * p) {
 
     /* Cas normal */
     return p->counter + p->priority;
+}
+
+void _start_current_process(void) {
+    set_current_state(TASK_READY);
+    _current_process->entry_point(_current_process->args);
+    set_current_state(TASK_ZOMBIE);
 }
 
 int _init_process(struct task_struct *task,
@@ -73,12 +104,6 @@ int _init_process(struct task_struct *task,
     return 0;
 }
 
-void _start_current_process(void) {
-    set_current_state(TASK_READY);
-    _current_process->entry_point(_current_process->args);
-    set_current_state(TASK_ZOMBIE);
-}
-
 void _schedule(void) {
     struct task_struct * prev = _current_process;
     struct task_struct * next = NULL;
@@ -88,7 +113,7 @@ void _schedule(void) {
     if (prev->counter == 0 && prev->policy == SCHED_RR) {
         prev->counter = prev->priority;
         _move_last(&_ready_list, prev);
-    } else if (prev->state == TASK_RUNNING) {
+    } else if (prev->state == TASK_READY) {
         next = prev;
 
         /* Si la tache à demandé à changer, on lui donne une priorité très
@@ -139,7 +164,7 @@ void _schedule(void) {
 /* } */
 
 /* Called when there is a time interruption */
-void __attribute__ ((naked)) __time_interruption(void) {
+void __attribute__ ((naked)) __time_interrupt(void) {
     __asm volatile("sub lr, lr, #4");
     __asm volatile("srsdb sp!, 0x13");
     __asm volatile("cps #0x13");
