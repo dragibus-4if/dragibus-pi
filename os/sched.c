@@ -104,6 +104,11 @@ int set_process_state(struct task_struct * task, enum task_state state) {
         } else {
             task->prev->next = task->next;
             task->next->prev = task->prev;
+            if (task == _ready_list) {
+                _ready_list = task->next;
+            } else if (task == _waiting_list) {
+                _waiting_list = task->next;
+            }
         }
     }
 
@@ -161,9 +166,7 @@ int set_current_state(enum task_state state) {
 
 void _start_current_process(void) {
     set_current_state(TASK_READY);
-    ENABLE_IRQ();
     _current_process->entry_point(_current_process->args);
-    DISABLE_IRQ();
     set_current_state(TASK_ZOMBIE);
 }
 
@@ -228,6 +231,10 @@ void start_sched(void) {
 }
 
 void yield(void) {
+    __asm volatile("sub lr, lr, #4");
+    __asm volatile("srsdb sp!, 0x13");
+    __asm volatile("cps #0x13");
+
     __asm volatile("push {r0-r12, lr}");
     DISABLE_IRQ();
 
@@ -237,11 +244,12 @@ void yield(void) {
 
     set_tick_and_enable_timer();
     if (_current_process->state == TASK_NEW) {
+        ENABLE_IRQ();
         _start_current_process();
     } else {
         __asm volatile("pop {r0-r12, lr}");
     }
-    ENABLE_IRQ();
+    __asm volatile ("rfefd sp!");
 }
 
 void __attribute__ ((naked)) ctx_switch(void) {
@@ -258,11 +266,10 @@ void __attribute__ ((naked)) ctx_switch(void) {
 
     set_tick_and_enable_timer();
     if (_current_process->state == TASK_NEW) {
+        ENABLE_IRQ();
         _start_current_process();
     } else {
         __asm volatile("pop {r0-r12, lr}");
     }
-    ENABLE_IRQ();
-
     __asm volatile ("rfefd sp!");
 }
