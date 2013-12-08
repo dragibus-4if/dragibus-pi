@@ -3,6 +3,8 @@
 #include "hw.h"
 #include "dispatcher.h"
 
+static double _ORDERED_LIST_PART = 1/3;
+
 static struct pcb_s * _sort_pcb_list(struct pcb_s * pcb) {
     /* Cas de base */
     if (pcb == NULL || pcb->next == NULL) {
@@ -224,7 +226,7 @@ void schedule() {
         
         while (fast != NULL && done == 0) {
             slow = slow->next;
-            for (size_t i = 0; i < speed; i++) { /* TODO: définir speed */
+            for (size_t i = 0; i < 1/_ORDERED_LIST_PART; i++) {
                 fast = fast->next;
                 if (fast == NULL) {
                     done = 1;
@@ -232,6 +234,19 @@ void schedule() {
                 }
             }
         }
+
+        // maintenant slow pointe sur le pcb qui représente le dernier élément de liste à trier
+        // découper la liste, trier et rejoindre les deux parties
+        // on va travailler sur slow pour l'algorithme de tri
+        
+        struct pcb_s * tmp = slow->next;
+        slow->next = NULL;
+
+        // TODO lancer quicksort sur slow
+
+        // rejoindre les deux listes
+        slow->next = tmp;
+        pcb = slow;
 
         _current_process = pcb;
     }
