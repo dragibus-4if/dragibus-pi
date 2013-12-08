@@ -46,10 +46,10 @@ void processus_B(void * args) {
 int start_kernel(void) {
     init_hw();
     malloc_init((void *) HEAP_START);
-    struct mutex_s* mutexa = mutex_create();
-    mutex_init(mutexa);
-    create_process(&processus_A, (void *) mutexa, 512);
-    create_process(&processus_B, (void *) mutexa, 512);
+    struct mutex_s mutexa;
+    mutex_init(&mutexa);
+    create_process(&processus_A, (void *) &mutexa, 512);
+    create_process(&processus_B, (void *) &mutexa, 512);
     start_sched();
     return 0;
 }
