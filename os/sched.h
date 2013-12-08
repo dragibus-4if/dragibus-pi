@@ -16,6 +16,7 @@ struct task_struct {
 
     /* Schedule policy */
     int policy;
+    int need_resched;
 
     /* Time informations */
     time_t epoch;
@@ -35,11 +36,12 @@ struct task_struct {
     struct task_struct * prev;
 };
 
-/* Gestion de l'ordonnancement */
-void ctx_switch(void);
-void yield(void);
-void schedule(void);
-void start_sched(void);
+/* Commence à exécuter l'ordonnancement */
+void sched_start(void);
+
+/* La tache courante se place à la fin de la file d'exécution et une nouvelle
+ * tache est activé au prochain epoch */
+void sched_yield(void);
 
 /* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);

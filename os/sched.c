@@ -2,16 +2,26 @@
 #include "malloc.h"
 #include "hw.h"
 
-static time_t _epoch = 1;
-static struct task_struct _idle_process;
+static time_t _uptime = 1;
+static struct task_struct _idle_task;
 static struct task_struct * _ready_list = NULL;
 static struct task_struct * _waiting_list = NULL;
 static struct task_struct * _current_process = NULL;
 
+/* Change le contexte d'exécution de *prev* à celui de *next* */
+void _switch_to(struct task_struct * prev, struct task_struct * next) {
+    __asm volatile("push {r0-r12, lr}");
+    DISABLE_IRQ();
+    __asm("mov %0, sp" : "=r"(prev->stack_pointer));
+    __asm("mov sp, %0" : : "r"(next->stack_pointer));
+    set_tick_and_enable_timer();
+    __asm volatile("pop {r0-r12, lr}");
+}
+
 /* Mesure le poids en priorité d'une tache *p* */
 int _goodness(struct task_struct * p) {
     /* On ne doit pas choisir le IDLE */
-    if (p == &_idle_process)
+    if (p == &_idle_task)
         return -1000;
 
     /* Si c'est une tache en real time */
@@ -26,7 +36,10 @@ int _goodness(struct task_struct * p) {
     return p->counter + p->priority;
 }
 
-int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void * args) {
+int _init_process(struct task_struct *task,
+        size_t stack_size,
+        func_t * f,
+        void * args) {
     /* Function and args */
     task->entry_point = f;
     task->args = args;
@@ -37,6 +50,10 @@ int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void 
     if (task->stack_base == NULL) {
         return -1;
     }
+
+    /* Policy */
+    task->policy = SCHED_OTHER;
+    task->need_resched = 0;
 
     /* Priority and time */
     task->priority = 0;
@@ -60,6 +77,112 @@ void _start_current_process(void) {
     set_current_state(TASK_READY);
     _current_process->entry_point(_current_process->args);
     set_current_state(TASK_ZOMBIE);
+}
+
+void _schedule(void) {
+    struct task_struct * prev = _current_process;
+    struct task_struct * next = NULL;
+    int c = 0;
+
+    /* Tache en RoundRobin temps réel qui est épuisée */
+    if (prev->counter == 0 && prev->policy == SCHED_RR) {
+        prev->counter = prev->priority;
+        _move_last(&_ready_list, prev);
+    } else if (prev->state == TASK_RUNNING) {
+        next = prev;
+
+        /* Si la tache à demandé à changer, on lui donne une priorité très
+         * faible */
+        if (prev->policy & SCHED_YIELD) {
+            prev->policy &= ~SCHED_YIELD;
+            c = 0;
+        } else
+          c = _goodness(prev);
+    } else {
+        next = &_idle_task;
+        c = -1000;
+    }
+
+    /* TODO parcourt sur les runnable tasks et choix du meilleur */
+
+    /* Si on a des process prets */
+    if (_ready_list != NULL) {
+        /* Rajout de ce task à la fin de la liste */
+        _current_process = _ready_list;
+        _ready_list = _ready_list->next;
+    } else {
+        /* Sinon on utilise le task idle */
+        _current_process = &_idle_task;
+    }
+}
+
+/* void yield(void) { */
+/*     __asm volatile("sub lr, lr, #4"); */
+/*     __asm volatile("srsdb sp!, 0x13"); */
+/*     __asm volatile("cps #0x13"); */
+/*  */
+/*     __asm volatile("push {r0-r12, lr}"); */
+/*     DISABLE_IRQ(); */
+/*  */
+/*     __asm("mov %0, sp" : "=r"(_current_process->stack_pointer)); */
+/*     schedule(); */
+/*     __asm("mov sp, %0" : : "r"(_current_process->stack_pointer)); */
+/*  */
+/*     set_tick_and_enable_timer(); */
+/*     if (_current_process->state == TASK_NEW) { */
+/*         ENABLE_IRQ(); */
+/*         _start_current_process(); */
+/*     } else { */
+/*         __asm volatile("pop {r0-r12, lr}"); */
+/*     } */
+/*     __asm volatile ("rfefd sp!"); */
+/* } */
+
+/* Called when there is a time interruption */
+void __attribute__ ((naked)) __time_interruption(void) {
+    __asm volatile("sub lr, lr, #4");
+    __asm volatile("srsdb sp!, 0x13");
+    __asm volatile("cps #0x13");
+
+    /* Met à jour l'epoch système */
+    _uptime++;
+
+    /* Enlève un tick au quantum de la tache courante */
+    _current_process->counter--;
+
+    /* Vérifie si il faut faire un changement de tache */
+    if (_current_process->need_resched || _current_process->counter == 0) {
+        _schedule();
+    }
+
+    __asm volatile ("rfefd sp!");
+}
+
+void sched_start(void) {
+    _idle_task.prev = NULL;
+    _idle_task.next = NULL;
+    _current_process = &_idle_task;
+    sched_yield();
+    while (1);
+}
+
+void sched_yield(void) {
+    _current_process->need_resched = 1;
+    _current_process->policy |= SCHED_YIELD;
+    _move_last(&_ready_list, _current_process);
+}
+
+int create_process(func_t * f, void * args, size_t size) {
+    struct task_struct * task;
+    task = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
+    if (task == NULL) {
+        return -1;
+    }
+
+    task->next = NULL;
+    task->prev = NULL;
+
+    return _init_process(task, size, f, args);
 }
 
 struct task_struct * get_current_process(void) {
@@ -151,81 +274,4 @@ int set_process_state(struct task_struct * task, enum task_state state) {
     }
 
     return 0;
-}
-
-int create_process(func_t * f, void * args, size_t size) {
-    struct task_struct * task;
-    task = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
-    if (task == NULL) {
-        return -1;
-    }
-
-    task->next = NULL;
-    task->prev = NULL;
-
-    return _init_process(task, size, f, args);
-}
-
-void schedule(void) {
-    /* Si on a des process prets */
-    if (_ready_list != NULL) {
-        /* Rajout de ce task à la fin de la liste */
-        _current_process = _ready_list;
-        _ready_list = _ready_list->next;
-    } else {
-        /* Sinon on utilise le task idle */
-        _current_process = &_idle_process;
-    }
-}
-
-void start_sched(void) {
-    _idle_process.prev = NULL;
-    _idle_process.next = NULL;
-    _current_process = &_idle_process;
-    yield();
-    while (1);
-}
-
-void yield(void) {
-    __asm volatile("sub lr, lr, #4");
-    __asm volatile("srsdb sp!, 0x13");
-    __asm volatile("cps #0x13");
-
-    __asm volatile("push {r0-r12, lr}");
-    DISABLE_IRQ();
-
-    __asm("mov %0, sp" : "=r"(_current_process->stack_pointer));
-    schedule();
-    __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
-
-    set_tick_and_enable_timer();
-    if (_current_process->state == TASK_NEW) {
-        ENABLE_IRQ();
-        _start_current_process();
-    } else {
-        __asm volatile("pop {r0-r12, lr}");
-    }
-    __asm volatile ("rfefd sp!");
-}
-
-void __attribute__ ((naked)) ctx_switch(void) {
-    __asm volatile("sub lr, lr, #4");
-    __asm volatile("srsdb sp!, 0x13");
-    __asm volatile("cps #0x13");
-
-    __asm volatile("push {r0-r12, lr}");
-    DISABLE_IRQ();
-
-    __asm("mov %0, sp" : "=r"(_current_process->stack_pointer));
-    schedule();
-    __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
-
-    set_tick_and_enable_timer();
-    if (_current_process->state == TASK_NEW) {
-        ENABLE_IRQ();
-        _start_current_process();
-    } else {
-        __asm volatile("pop {r0-r12, lr}");
-    }
-    __asm volatile ("rfefd sp!");
 }
