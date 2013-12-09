@@ -1,0 +1,9 @@
+layout split
+fs cmd
+wh cmd 12
+target remote:1234
+b notmain
+b timer_irq_handler
+b music.c:71
+b music.c:56
+source include.gdb

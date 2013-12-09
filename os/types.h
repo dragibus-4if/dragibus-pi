@@ -13,5 +13,6 @@ typedef signed long int         ssize_t;
 typedef signed long long int    intptr_t;
 typedef unsigned long long int  uintptr_t;
 typedef unsigned long int       time_t;
-
+typedef unsigned long int uint64_t;
+typedef unsigned int useconds_t;
 #endif

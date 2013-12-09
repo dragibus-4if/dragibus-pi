@@ -3,20 +3,14 @@
 #include "../os/malloc.h"
 #include "../os/sem.h"
 #include "../os/mutex.h"
-
-
-void processus_A(void * args) {
-
-    }
-}
-
-
+#include "music/music.h"
 
 //------------------------------------------------------------------------
 int start_kernel(void) {
     init_hw();
+    music_init();
     malloc_init((void *) HEAP_START);
-    create_process(&processus_A, (void *) 0, 512);
+    create_process(play_music, NULL, 2048);
     start_sched();
     return 0;
 }
