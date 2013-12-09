@@ -327,6 +327,7 @@ int set_process_state(struct task_struct * task, enum task_state state) {
         active->nb_tasks++;
         active->list[task->counter] =
           _add_last(active->list[task->counter], task);
+        task->current_prio = task->counter;
     }
 
     /* Si on passe en attente on l'ajoute dans la waiting list */
