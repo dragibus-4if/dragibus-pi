@@ -27,6 +27,7 @@ struct task_struct {
     /* Priority */
     time_t priority;
     time_t rt_priority;
+    time_t current_prio;
 
     /* Pointeur de pile */
     uint32_t * stack_pointer;

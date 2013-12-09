@@ -72,7 +72,7 @@ void _switch_to(void) {
     __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
     _current_task = _next_task;
     __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
-    /* ENABLE_IRQ(); */
+    ENABLE_IRQ();
     set_tick_and_enable_timer();
     if (_current_task->state == TASK_NEW) {
         _current_task->state = TASK_READY;
@@ -112,6 +112,7 @@ int _init_process(struct task_struct *task,
     task->priority = 20;
     task->rt_priority = 0;
     task->counter = _get_base_counter(task);
+    task->current_prio = task->counter;
     task->epoch = 0;
 
     /* State and context */
@@ -134,9 +135,7 @@ time_t _get_base_counter(struct task_struct * task) {
 
 /* Change le counter de la tache et la place dans le bonne file d'attente */
 void _set_counter(struct task_struct * task, time_t counter) {
-    time_t current_counter = task->counter;
-    /* Si on a rien à faire */
-    if (current_counter == counter) {
+    if (task->counter == counter && task->current_prio == counter) {
         return;
     }
 
@@ -158,8 +157,8 @@ void _set_counter(struct task_struct * task, time_t counter) {
     }
 
     /* Suppression dans l'ancienne queue d'exécution */
-    active->list[current_counter] =
-      _del_from(active->list[current_counter], task);
+    active->list[task->current_prio] =
+      _del_from(active->list[task->current_prio], task);
     active->nb_tasks--;
 
     /* Avec un counter nul, on place la tache dans les expirées et on lui donne
@@ -170,7 +169,8 @@ void _set_counter(struct task_struct * task, time_t counter) {
         expired->list[new_counter] =
             _add_last(expired->list[new_counter], task);
         expired->nb_tasks++;
-        task->counter = _get_base_counter(task);
+        task->counter = new_counter;
+        task->current_prio = new_counter;
         return;
     }
 
@@ -179,21 +179,24 @@ void _set_counter(struct task_struct * task, time_t counter) {
       _add_last(active->list[counter], task);
     active->nb_tasks++;
     task->counter = counter;
+    task->current_prio = counter;
 }
 
 void _schedule(void) {
+    DISABLE_IRQ();
     struct task_struct * prev = _current_task;
 
     /* Si la tache à demandé un yield on la met en moins prio */
     if (prev != &_idle_task
         && prev->state == TASK_READY
         && prev->policy & SCHED_YIELD) {
-        _active->list[prev->counter] =
-          _del_from(_active->list[prev->counter], prev);
+        _active->list[prev->current_prio] =
+          _del_from(_active->list[prev->current_prio], prev);
         _active->list[0] =
           _add_last(_active->list[0], prev);
         prev->policy &= ~SCHED_YIELD;
         prev->need_resched = 0;
+        prev->current_prio = 0;
     }
 
     /* Si toute les taches sont épuisées on switch les deux tableaux */
@@ -250,6 +253,7 @@ void __attribute__ ((naked)) __time_interrupt(void) {
 }
 
 void sched_start(void) {
+    DISABLE_IRQ();
     _idle_task.prev = NULL;
     _idle_task.next = NULL;
     _current_task = &_idle_task;
@@ -309,8 +313,8 @@ int set_process_state(struct task_struct * task, enum task_state state) {
     /* Si la tache n'est plus en exécution on l'enlève des files */
     if (task->state == TASK_READY) {
         active->nb_tasks--;
-        active->list[task->counter] =
-          _del_from(active->list[task->counter], task);
+        active->list[task->current_prio] =
+          _del_from(active->list[task->current_prio], task);
     }
 
     /* Si la tache était en attente, on l'enlève de la waiting queue */
