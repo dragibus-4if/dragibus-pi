@@ -25,8 +25,8 @@ struct task_struct {
     time_t counter;
 
     /* Priority */
-    int priority;
-    int rt_priority;
+    time_t priority;
+    time_t rt_priority;
 
     /* Pointeur de pile */
     uint32_t * stack_pointer;
@@ -34,7 +34,6 @@ struct task_struct {
     size_t stack_size;
 
     /* Double linked list */
-    struct task_struct * head;
     struct task_struct * next;
     struct task_struct * prev;
 };

@@ -74,7 +74,6 @@ int sem_down(struct sem_s * sem){
         /* Bloque la tache courante */
         while (sem->counter < 0) {
             set_current_state(TASK_WAITING);
-            sched_forced_yield();
         }
     }
 
