@@ -27,7 +27,7 @@
     breakatwhitespace=true,
     basicstyle=\fontsize{7}{11}\ttfamily,
     keywordstyle=\bfseries\color{red!40!black},
-    commentstyle=\itshape\color{gray!40!black},
+    commentstyle=\itshape\color{gray},
     stringstyle=\color{orange},
 }
 
@@ -51,6 +51,8 @@
     \tableofcontents
 \end{frame}
 
+\section{Synchronisation}
+
 \begin{frame}
     \frametitle{Synchronisation des processus}
 
@@ -67,8 +69,93 @@
     \end{enumerate}
 \end{frame}
 
+\begin{frame}[fragile]
+    \frametitle{Bloquage d'un processus}
+    \begin{lstlisting}[caption=Représentation structurelle d'un processus]
+        struct task {
+            /* Etat de la tache */
+            int state, needs_reschedule;
+
+            /* Politique d'ordonnancement */
+            int policy;
+
+            /* Priorite */
+            time_t priority, realtime_priority,
+                current_priority;
+
+            /* Processus suivant/precedent */
+            struct task * next, * prev;
+
+            /* contexte, informations temporelles, etc... */
+        };
+    \end{lstlisting}
+\end{frame}
+
 \begin{frame}
-    \frametitle{Démonstration d'un problème résolu}
+    \frametitle{Bloquage d'un processus}
+\end{frame}
+
+\section{Ordonnancement}
+
+\begin{frame}
+    \frametitle{Les problématiques d'ordonnancement}
+    \begin{center}
+        \huge Objectifs
+    \end{center}
+    \begin{itemize}
+        \item<2-> rapide
+        \item<3-> automatique
+        \item<4-> équitable
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Ordonnancements mis en place}
+    \begin{itemize}
+        \item<2-> préemptif
+        \item<3-> collaboratif
+        \item<4-> prioritaire
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Critique des différents ordonnancements}
+    \begin{itemize}
+        \item préemptif: aucune distinction entre les différents processus
+        \item collaboratif: manque d'automatisme (\textbf{yield()} nécessaire)
+        \item prioritaire: problématique du \emph{bon} ordre
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Politique d'ordonnancement choisie}
+    \begin{center}
+        \huge prioritaire
+    \end{center}
+\end{frame}
+
+\section{Algorithmes et problématiques}
+
+\begin{frame}[fragile]
+    \frametitle{Analyse des algorithmes}
+
+    \begin{lstlisting}[caption=Choix de la prochaine tâche à exécuter]
+        struct task * choose_next_task() {
+            struct task * next = NULL;
+            for (unsigned int i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
+                if (realtime_active_tasks[i]) {
+                    return realtime_active_tasks[i];
+                } else if (!next && active_tasks[i]) {
+                    next = active_tasks[i];
+                }
+            }
+            return next;
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problèmes rencontrés}
 
     \uncover<1->{
         \begin{block}{Problème}
@@ -85,59 +172,7 @@
     }
 \end{frame}
 
-\begin{frame}
-    \frametitle{Les problématiques d'ordonnancement}
-    \begin{center}
-        \huge Objectifs
-    \end{center}
-    \begin{itemize}
-        \item<2-> rapide
-        \item<3-> automatique
-        \item<4-> équitable
-    \end{itemize}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Types d'ordonnancement mis en place}
-    \begin{itemize}
-        \item<2-> préemptif
-        \item<3-> collaboratif
-        \item<4-> prioritaire
-    \end{itemize}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Critique des différents types d'ordonnancement}
-    \begin{itemize}
-        \item préemptif: aucune distinction entre les différents processus
-        \item collaboratif: manque d'automatisme (\textbf{yield()} nécessaire)
-        \item prioritaire: problématique du \emph{bon} ordre
-    \end{itemize}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Politique d'ordonnancement choisie}
-    \begin{center}
-        \huge prioritaire
-    \end{center}
-\end{frame}
-
-\begin{frame}[fragile]
-    \frametitle{Analyse des algorithmes}
-    \begin{lstlisting}[caption=Choix de la prochaine tâche à exécuter]
-        struct task * choose_next_task() {
-            struct task * next = NULL;
-            for (unsigned int i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
-                if (realtime_active_tasks[i]) {
-                    return realtime_active_tasks[i];
-                } else if (!next && active_tasks[i]) {
-                    next = active_tasks[i];
-                }
-            }
-            return next;
-        }
-    \end{lstlisting}
-\end{frame}
+\section{Remarques et suggestions}
 
 \begin{frame}
     \frametitle{Performances de l'OS}
