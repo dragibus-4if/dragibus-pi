@@ -1,5 +1,7 @@
 #ifndef HW_H
 #define HW_H
+#include "types.h"
+
 
 /*
  * Address of memory bottom
@@ -38,5 +40,7 @@ void led_off();
 void led_on();
 
 void init_hw();
-
+uint32_t get_timer_ms();
+uint32_t reset_timer_ms();
+int usleep(useconds_t __useconds);
 #endif

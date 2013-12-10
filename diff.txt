@@ -1,0 +1,98 @@
+0a1,3
+> #include <stdint.h>
+> #include <malloc.h>
+---
+> #include <sys/types.h>
+
+---
+> #define INTERVAL 0x00020000
+15c13,14
+< #define INTERVAL 0x00080000
+---
+< /* Start_hw */
+< void init_hw() {
+---
+> /*
+>  * Start_hw
+>  */
+> void
+> hw_init()
+> {
+49,56c73,85
+<     /* Make gpio pin tied to the led an output */
+<     ra = GET32(GPFSEL1);
+<     ra &= ~(7 << 18);
+<     ra |= 1 << 18;
+<     PUT32(GPFSEL1, ra);
+< 
+<     /* led off */
+<     PUT32(GPSET0, 1 << 16);
+---
+>     for(unsigned int i=bss_start;i<bss_end;i+=4)
+>       PUT32(i,0);
+>     uart_init();
+>     
+>     /* Init audio interface */
+>     /* music_init(); */
+> 
+>     /* /\* Make gpio pin tied to the led an output *\/ */
+>     /* ra=GET32(GPFSEL1); */
+>     /* ra&=~(7<<18); */
+>     /* ra|=1<<18; */
+>     /* PUT32(GPFSEL1,ra); */
+>     /* PUT32(GPSET0,1<<16); //led off */
+57a87
+>     
+59c89
+<     rx=GET32(CLO);
+---
+>     rx=GET32(SYSTIMERCLO);
+61,66c91,96
+<     PUT32(C1, rx);
+< 
+<     /* Enable irq triggering by the *system timer* peripheral
+<      * - we use the compare module CM1 */
+<     ENABLE_TIMER_IRQ();
+< 
+---
+>     PUT32(C1,rx);
+>     
+>     /* Enable irq triggering by the *system timer* peripheral */
+>     /*   - we use the compare module CM1 */
+>     enable_timer_irq();
+>     
+69d98
+<     DISABLE_IRQ();
+70a100,131
+> 
+> static uint32_t timer_ms_base; // 'zero' time
+> 
+> uint32_t
+> get_timer_ms()
+> {
+>     // Return ms elapsed since timer_ms_base. This is currently approximate - should do the math properly.
+>     return ((((uint64_t)GET32(SYSTIMERCHI) << 32) | (uint64_t)GET32(SYSTIMERCLO)) >> 10) - timer_ms_base;
+> }
+> 
+> 
+> uint32_t
+> reset_timer_ms()
+> {
+>     timer_ms_base = 0;
+>     timer_ms_base = get_timer_ms();
+>     return timer_ms_base;
+> }
+> 
+> extern int dummy(int);
+> 
+> int usleep(useconds_t __useconds) {
+>     // Pause for about t ms
+>     int i;
+>     unsigned int t = __useconds;
+>     for (;t>0;t--) {
+>         for (i=5000;i>0;i--)
+> 	  dummy(i);
+>     }
+>     return __useconds;
+> }
+> 

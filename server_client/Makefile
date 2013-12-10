@@ -1,4 +1,4 @@
-ARMGNU ?= arm-none-eabi
+ARMGNU ?= arm-linux-gnueabi
 
 CFLAGS = -Wall -Wextra -Wfloat-equal -Wwrite-strings \
 		 -Wpointer-arith -Wconversion -Wredundant-decls -Winit-self \
