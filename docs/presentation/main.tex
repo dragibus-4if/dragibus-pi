@@ -127,7 +127,7 @@
     \begin{lstlisting}[caption=Choix de la prochaine tâche à exécuter]
         struct task * choose_next_task() {
             struct task * next = NULL;
-            for (ssize_t i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
+            for (unsigned int i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
                 if (realtime_active_tasks[i]) {
                     return realtime_active_tasks[i];
                 } else if (!next && active_tasks[i]) {
