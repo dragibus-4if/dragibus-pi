@@ -67,15 +67,16 @@ struct task_struct * _del_from(struct task_struct * list_head,
 
 /* Change le contexte d'exécution de *prev* à celui de *next* */
 void _switch_to(void) {
-    __asm volatile("push {r0-r12, lr}");
-    DISABLE_IRQ();
-    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+    if (!_current_task->interrupted) {
+        __asm volatile("push {r0-r12, lr}");
+        __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+    }
     _current_task = _next_task;
     __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
-    ENABLE_IRQ();
-    set_tick_and_enable_timer();
     if (_current_task->state == TASK_NEW) {
         _current_task->state = TASK_READY;
+        set_tick_and_enable_timer();
+        ENABLE_IRQ();
         _current_task->entry_point(_current_task->args);
         set_current_state(TASK_ZOMBIE);
     } else {
@@ -98,6 +99,7 @@ int _init_process(struct task_struct *task,
     task->args = args;
 
     /* Stack allocation */
+    task->interrupted = 0;
     task->stack_size = stack_size;
     task->stack_base = malloc_alloc(stack_size);
     if (task->stack_base == NULL) {
@@ -109,7 +111,7 @@ int _init_process(struct task_struct *task,
     task->need_resched = 0;
 
     /* Priority and time */
-    task->priority = 20;
+    task->priority = 10;
     task->rt_priority = 0;
     task->counter = _get_base_counter(task);
     task->current_prio = task->counter;
@@ -183,7 +185,6 @@ void _set_counter(struct task_struct * task, time_t counter) {
 }
 
 void _schedule(void) {
-    DISABLE_IRQ();
     struct task_struct * prev = _current_task;
 
     /* Si la tache à demandé un yield on la met en moins prio */
@@ -227,9 +228,7 @@ void _schedule(void) {
         next = &_idle_task;
 
     _next_task = next;
-
-    if (next != prev)
-      _switch_to();
+    _switch_to();
 }
 
 /* Called when there is a time interruption */
@@ -237,6 +236,13 @@ void __attribute__ ((naked)) __time_interrupt(void) {
     __asm volatile("sub lr, lr, #4");
     __asm volatile("srsdb sp!, 0x13");
     __asm volatile("cps #0x13");
+
+    DISABLE_IRQ();
+    __asm volatile("push {r0-r12, lr}");
+    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+    _current_task->interrupted = 1;
+
+    set_tick_and_enable_timer();
 
     /* Met à jour l'epoch système */
     _uptime++;
@@ -247,8 +253,16 @@ void __attribute__ ((naked)) __time_interrupt(void) {
     /* Vérifie si il faut faire un changement de tache */
     if (_current_task->need_resched || _current_task->counter == 0) {
         _schedule();
+        _current_task->interrupted = 0;
+    }
+    else {
+        /* Sinon on récupère le contexte */
+        _current_task->interrupted = 0;
+        __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+        __asm volatile("pop {r0-r12, lr}");
     }
 
+    ENABLE_IRQ();
     __asm volatile ("rfefd sp!");
 }
 
@@ -271,6 +285,27 @@ void sched_forced_yield(void) {
     _current_task->need_resched = 1;
     _current_task->policy |= SCHED_YIELD;
     _schedule();
+    /* sched_switch_task(); */
+}
+
+void sched_switch_task(void) {
+    __asm volatile("push {r0-r12, lr}");
+    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+
+    if (_current_task->need_resched || _current_task->counter == 0)
+        _schedule();
+    _current_task = _next_task;
+
+    __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
+    if (_current_task->state == TASK_NEW) {
+        _current_task->state = TASK_READY;
+        set_tick_and_enable_timer();
+        ENABLE_IRQ();
+        _current_task->entry_point(_current_task->args);
+        set_current_state(TASK_ZOMBIE);
+    } else {
+        __asm volatile("pop {r0-r12, lr}");
+    }
 }
 
 int create_process(func_t * f, void * args, size_t size) {
