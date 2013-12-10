@@ -1,0 +1,154 @@
+\documentclass{beamer}
+
+\mode<presentation> {
+    \usetheme{Warsaw}
+    %\usecolortheme{beaver}
+    \setbeamertemplate{navigation symbols}{}
+    %\setbeamercolor{item}{fg=darkred}
+}
+
+\usepackage[french]{babel}
+\usepackage[utf8x]{inputenc}
+
+\usepackage{listings}
+
+\lstset{
+    language=C,
+    %numbers=left,
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{white},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=true,
+    basicstyle=\fontsize{7}{11}\ttfamily,
+    keywordstyle=\bfseries\color{red!40!black},
+    commentstyle=\itshape\color{gray!40!black},
+    stringstyle=\color{orange},
+}
+
+\title[Presentation SEA]{Projet 4IF : Raspberry PI}
+\author{H4104 - équipe Dragibus}
+\institute{INSA de Lyon}
+\date{Vendredi 13 décembre 2013}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \frametitle{Introduction}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Sommaire}
+    \tableofcontents
+\end{frame}
+
+\begin{frame}
+    \frametitle{Synchronisation des processus}
+
+    \begin{center}
+        \huge conception en couches
+    \end{center}
+
+    \begin{enumerate}
+        \item<2-> \textbf{sémaphore}: compteur à intervalle bloquant le
+            processus appelant (opération +1/-1) s'il cause un dépassement
+        \item<3-> \textbf{mutex}: sémaphore de 0 à 1, permettant un
+            acquire/release, uniquement par un processus à la fois
+        \item<4-> \textbf{pipe}: FIFO avec mutex associé
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Démonstration d'un problème résolu}
+
+    \uncover<1->{
+        \begin{block}{Problème}
+            Aucune sortie visible n'est disponible pour déboguer les
+            fonctionnalités du kernel.
+        \end{block}
+    }
+
+    \uncover<2->{
+        \begin{block}{Solution}
+            Nous traduisons les messages par un clignotement de la LED disponible,
+            suivant un \textbf{code morse}.
+        \end{block}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Les problématiques d'ordonnancement}
+    \begin{center}
+        \huge Objectifs
+    \end{center}
+    \begin{itemize}
+        \item<2-> rapide
+        \item<3-> automatique
+        \item<4-> équitable
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Types d'ordonnancement mis en place}
+    \begin{itemize}
+        \item<2-> préemptif
+        \item<3-> collaboratif
+        \item<4-> prioritaire
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Critique des différents types d'ordonnancement}
+    \begin{itemize}
+        \item préemptif: aucune distinction entre les différents processus
+        \item collaboratif: manque d'automatisme (\textbf{yield()} nécessaire)
+        \item prioritaire: problématique du \emph{bon} ordre
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Politique d'ordonnancement choisie}
+    \begin{center}
+        \huge prioritaire
+    \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Analyse des algorithmes}
+    \begin{lstlisting}[caption=Choix de la prochaine tâche à exécuter]
+        struct task * choose_next_task() {
+            struct task * next = NULL;
+            for (ssize_t i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
+                if (realtime_active_tasks[i]) {
+                    return realtime_active_tasks[i];
+                } else if (!next && active_tasks[i]) {
+                    next = active_tasks[i];
+                }
+            }
+            return next;
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Performances de l'OS}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problématiques d'ordonnancement sous Linux}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Compromis CPU / Requêtes IO}
+\end{frame}
+
+\end{document}
