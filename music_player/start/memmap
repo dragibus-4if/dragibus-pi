@@ -1,0 +1,18 @@
+
+MEMORY
+{
+    ram : ORIGIN = 0x8000, LENGTH = 0x1c000
+}
+
+SECTIONS
+{
+    .text : { *(.text*) } > ram
+/*    .bss : { *(.bss*) } > ram */
+    .bss  : {
+   _bss_start = .;
+   *(.bss*)
+   } > ram
+   _bss_end = .;
+   _bss_size = _bss_end - _bss_start;
+}
+
