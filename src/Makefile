@@ -1,12 +1,12 @@
 ARMGNU ?= arm-none-eabi
 
-CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm -mthumb-interwork -I./csud-master/include
+CFLAGS = -Wall -nostdlib -fomit-frame-pointer -mno-apcs-frame -nostartfiles -ffreestanding -g -march=armv6z -marm -mthumb-interwork -I./csud-master/include -std=gnu99
 ASFLAGS = -g -march=armv6z
 
 C_FILES=kernel.c malloc.c hw.c dispatcher.c sched.c keyboard.c
 AS_FILES=vectors.s
 
-LIBS=-llibcsud.a
+LIBS=./csud-master/libcsud.a
 
 OBJS = $(patsubst %.s,%.o,$(AS_FILES))
 OBJS += $(patsubst %.c,%.o,$(C_FILES))
@@ -33,7 +33,7 @@ clean :
 	$(ARMGNU)-as $(ASFLAGS) $< -o $@
 
 kernel : memmap $(OBJS)
-	$(ARMGNU)-ld $(LIBS) $(OBJS) -T memmap -o kernel.elf
+	$(ARMGNU)-ld $(OBJS) $(LIBS) -T memmap -o kernel.elf
 	$(ARMGNU)-objdump -D kernel.elf > kernel.list
 	$(ARMGNU)-objcopy kernel.elf -O binary kernel.img
 	$(ARMGNU)-objcopy kernel.elf -O ihex kernel.hex
