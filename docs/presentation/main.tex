@@ -143,13 +143,31 @@
         struct task * choose_next_task() {
             struct task * next = NULL;
             for (unsigned int i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
-                if (realtime_active_tasks[i]) {
-                    return realtime_active_tasks[i];
-                } else if (!next && active_tasks[i]) {
-                    next = active_tasks[i];
+                if (realtime_active_tasks->queue[i]) {
+                    return realtime_active_tasks->queue[i];
+                } else if (!next && active_tasks->queue[i]) {
+                    next = active_tasks->queue[i];
                 }
             }
             return next;
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Analyse des algorithmes}
+
+    \begin{lstlisting}[caption=Détection de l'activité d'une tâche (IO/CPU)]
+        void detect_task_activity() {
+            struct task_struct * prev = current_task;
+            if (prev != &idle_task && prev->state == TASK_READY && prev->policy & SCHED_YIELD) {
+                size_t k = prev->current_priority;
+                active_tasks->queue[k] = queue_del(active_tasks->queue[k], prev);
+                active_tasks->queue[0] = queue_push(active_tasks->queue[0], prev);
+                prev->policy &= ~SCHED_YIELD;
+                prev->need_reschedule = 0;
+                prev->current_priority = 0;
+            }
         }
     \end{lstlisting}
 \end{frame}
