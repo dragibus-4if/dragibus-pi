@@ -19,7 +19,6 @@ void fork_bomb(void * args) {
         for(size_t i = 0 ; i < SLEEP_TIME ; i++);
         sem_up(sem);
         create_process(&fork_bomb, args, 128);
-        yield();
     }
 }
 
@@ -33,7 +32,7 @@ int start_kernel(void) {
     args[0] = (void *) &n;
     args[1] = (void *) &sem;
     create_process(&fork_bomb, args, 128);
-    start_sched();
+    sched_start();
     return 0;
 }
 

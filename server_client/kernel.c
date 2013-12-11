@@ -52,7 +52,7 @@ int start_kernel(void) {
     if(pipe_create(&input, &output) != -1) {
         create_process(&server, (void *) &output, 1024);
         create_process(&client, (void *) &input, 1024);
-        start_sched();
+        sched_start();
     }
 
     return 0;

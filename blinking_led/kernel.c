@@ -8,7 +8,7 @@ void turn_on(void * a) {
     while(1) {
         led_on();
         for(int i = 0 ; i < SLEEP_TIME ; i++);
-        yield();
+        sched_forced_yield();
     }
 }
 
@@ -16,7 +16,7 @@ void turn_off(void * a) {
     while(1) {
         led_off();
         for(int i = 0 ; i < SLEEP_TIME ; i++);
-        yield();
+        sched_forced_yield();
     }
 }
 
@@ -25,7 +25,7 @@ int start_kernel(void) {
     init_hw();
     create_process(&turn_on, (void *) NULL, 128);
     create_process(&turn_off, (void *) NULL, 128);
-    start_sched();
+    sched_start();
     return 0;
 }
 
