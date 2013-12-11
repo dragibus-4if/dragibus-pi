@@ -3,26 +3,35 @@
 #include "../os/hw.h"
 #include "../os/sched.h"
 
-void pipe_write_all(pipe_t p, const char * buffer, size_t bufsize) {
+int pipe_write_all(pipe_t p, const char * buffer, size_t bufsize) {
     for(ssize_t ws = 0 ; ws < bufsize ;) {
         ssize_t w = pipe_write(p, buffer + ws, bufsize - ws);
-        ws += w >= 0 ? w : 0;
+        if (w == -1) {
+            return -1;
+        }
+        ws += w;
     }
+    return 0;
 }
 
-void pipe_read_all(pipe_t p, char * buffer, size_t bufsize) {
+int pipe_read_all(pipe_t p, char * buffer, size_t bufsize) {
     for(ssize_t rs = 0 ; rs < bufsize ;) {
         ssize_t r = pipe_read(p, buffer + rs, bufsize - rs);
-        rs += r >= 0 ? r : 0;
+        if (r == -1) {
+            return -1;
+        }
+        rs += r;
     }
+    return 0;
 }
 
 void server(void * writable) {
     pipe_t output = *(pipe_t *) writable;
     unsigned long long int data = 42;
     while(1) {
-        pipe_write_all(output, (char *) &data, sizeof(data));
-        data++;
+        if(pipe_write_all(output, (char *) &data, sizeof(data)) != -1) {
+            data++;
+        }
     }
 }
 
@@ -41,9 +50,9 @@ int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     pipe_t input, output;
     if(pipe_create(&input, &output) != -1) {
-        create_process(&server, (void *) &output, 512);
-        create_process(&client, (void *) &input, 512);
-        start_sched();
+        create_process(&server, (void *) &output, 1024);
+        create_process(&client, (void *) &input, 1024);
+        sched_start();
     }
 
     return 0;

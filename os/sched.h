@@ -3,39 +3,52 @@
 
 #include "types.h"
 
-/* Gestion de la priorité */
-#define MAX_PRIORITY 10
-typedef unsigned short int priority_t;
-
-enum sched_mode_e { BASIC, PRIORITY };
+#define MAX_PRIO 20
 
 enum task_state { TASK_NEW, TASK_READY, TASK_WAITING, TASK_ZOMBIE };
+enum sched_policy { SCHED_RT = 1, SCHED_OTHER = 2, SCHED_YIELD = 4 };
 
 struct task_struct {
     /* Fonction et arguments */
     func_t * entry_point;
     void * args;
 
-    /* State and priority */
+    /* State */
     enum task_state state;
-    priority_t priority;
+
+    /* Schedule policy */
+    int policy;
+    int need_resched;
+
+    /* Time informations */
+    time_t epoch;
+    time_t counter;
+
+    /* Priority */
+    time_t priority;
+    time_t rt_priority;
+    time_t current_prio;
 
     /* Pointeur de pile */
     uint32_t * stack_pointer;
     char * stack_base;
     size_t stack_size;
+    int interrupted;
 
     /* Double linked list */
     struct task_struct * next;
     struct task_struct * prev;
 };
 
-/* Gestion de l'ordonnancement */
-void ctx_switch(void);
-void yield(void);
-void schedule(void);
-void start_sched(void);
-void set_sched_mode(enum sched_mode_e mode);
+/* Commence à exécuter l'ordonnancement */
+void sched_start(void);
+
+/* La tache courante se place à la fin de la file d'exécution et une nouvelle
+ * tache est activé au prochain epoch */
+void sched_yield(void);
+
+/* Force le scheduler à changer directement de tache */
+void sched_forced_yield(void);
 
 /* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);

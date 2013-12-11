@@ -3,12 +3,15 @@ fs cmd
 wh cmd 12
 target remote:1234
 b start_kernel
-b kernel.c:12
+b ctx_switch
+b kernel.c:13
 b kernel.c:15
 b kernel.c:18
-b kernel.c:21
-b kernel.c:29
+b kernel.c:22
+b kernel.c:23
+b kernel.c:30
 b kernel.c:32
 b kernel.c:35
-b kernel.c:38
+b kernel.c:39
+b kernel.c:40
 source include.gdb

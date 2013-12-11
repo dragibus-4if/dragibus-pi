@@ -19,6 +19,8 @@
       :                     \
       :                     \
       : "r0");
+// #undef ENABLE_IRQ
+// #define ENABLE_IRQ() ;
 
 #define DISABLE_IRQ()       \
   asm("\tpush {r0}\n\t"     \
