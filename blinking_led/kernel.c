@@ -23,8 +23,8 @@ void turn_off(void * a) {
 int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     init_hw();
-    create_process(&turn_on, (void *) NULL, 128);
-    create_process(&turn_off, (void *) NULL, 128);
+    create_process(&turn_on, (void *) NULL, 128, SCHED_OTHER, 20);
+    create_process(&turn_off, (void *) NULL, 128, SCHED_OTHER, 20);
     sched_start();
     return 0;
 }

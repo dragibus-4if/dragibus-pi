@@ -18,7 +18,7 @@ void fork_bomb(void * args) {
         led_off();
         for(size_t i = 0 ; i < SLEEP_TIME ; i++);
         sem_up(sem);
-        create_process(&fork_bomb, args, 128);
+        create_process(&fork_bomb, args, 128, SCHED_OTHER, 20);
     }
 }
 
@@ -31,7 +31,7 @@ int start_kernel(void) {
     void * args[2];
     args[0] = (void *) &n;
     args[1] = (void *) &sem;
-    create_process(&fork_bomb, args, 128);
+    create_process(&fork_bomb, args, 128, SCHED_OTHER, 20);
     sched_start();
     return 0;
 }

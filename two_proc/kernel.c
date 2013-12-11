@@ -47,8 +47,8 @@ int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     struct sem_s sema;
     sem_init(&sema, 1);
-    create_process(&processus_A, (void *) &sema, 512);
-    create_process(&processus_B, (void *) &sema, 512);
+    create_process(&processus_A, (void *) &sema, 512, SCHED_OTHER, 20);
+    create_process(&processus_B, (void *) &sema, 512, SCHED_OTHER, 20);
     sched_start();
     return 0;
 }

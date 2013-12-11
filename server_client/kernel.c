@@ -50,8 +50,8 @@ int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     pipe_t input, output;
     if(pipe_create(&input, &output) != -1) {
-        create_process(&server, (void *) &output, 1024);
-        create_process(&client, (void *) &input, 1024);
+        create_process(&server, (void *) &output, 1024, SCHED_OTHER, 20);
+        create_process(&client, (void *) &input, 1024, SCHED_OTHER, 20);
         sched_start();
     }
 
