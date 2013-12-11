@@ -67,11 +67,16 @@ struct task_struct * _del_from(struct task_struct * list_head,
 
 /* Change le contexte d'exécution de *prev* à celui de *next* */
 void _switch_to(void) {
-    if (!_current_task->interrupted) {
-        __asm volatile("push {r0-r12, lr}");
-        __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
-    }
+    /* Sauvegarde du contexte courant */
+    DISABLE_IRQ();
+    __asm volatile("push {r0-r12, lr}");
+    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+
+    /* Détermination du prochain élément */
+    _schedule();
     _current_task = _next_task;
+
+    /* Passage au nouveau contexte */
     __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
     if (_current_task->state == TASK_NEW) {
         _current_task->state = TASK_READY;
@@ -80,6 +85,7 @@ void _switch_to(void) {
         _current_task->entry_point(_current_task->args);
         set_current_state(TASK_ZOMBIE);
     } else {
+        ENABLE_IRQ();
         __asm volatile("pop {r0-r12, lr}");
     }
 }
@@ -111,7 +117,7 @@ int _init_process(struct task_struct *task,
     task->need_resched = 0;
 
     /* Priority and time */
-    task->priority = 10;
+    task->priority = 2;
     task->rt_priority = 0;
     task->counter = _get_base_counter(task);
     task->current_prio = task->counter;
@@ -228,7 +234,6 @@ void _schedule(void) {
         next = &_idle_task;
 
     _next_task = next;
-    _switch_to();
 }
 
 /* Called when there is a time interruption */
@@ -237,32 +242,33 @@ void __attribute__ ((naked)) __time_interrupt(void) {
     __asm volatile("srsdb sp!, 0x13");
     __asm volatile("cps #0x13");
 
+    /* Sauvegarde le contexte courant */
     DISABLE_IRQ();
     __asm volatile("push {r0-r12, lr}");
     __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
-    _current_task->interrupted = 1;
 
-    set_tick_and_enable_timer();
-
-    /* Met à jour l'epoch système */
+    /* Met à jour le temps système */
     _uptime++;
 
     /* Enlève un tick au quantum de la tache courante */
     _set_counter(_current_task, _current_task->counter - 1);
 
-    /* Vérifie si il faut faire un changement de tache */
-    if (_current_task->need_resched || _current_task->counter == 0) {
-        _schedule();
-        _current_task->interrupted = 0;
-    }
-    else {
-        /* Sinon on récupère le contexte */
-        _current_task->interrupted = 0;
-        __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+    _schedule();
+    _current_task = _next_task;
+
+    /* On récupère le nouveau contexte */
+    __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
+    set_tick_and_enable_timer();
+    if (_current_task->state == TASK_NEW) {
+        _current_task->state = TASK_READY;
+        ENABLE_IRQ();
+        _current_task->entry_point(_current_task->args);
+        set_current_state(TASK_ZOMBIE);
+    } else {
+        ENABLE_IRQ();
         __asm volatile("pop {r0-r12, lr}");
     }
 
-    ENABLE_IRQ();
     __asm volatile ("rfefd sp!");
 }
 
@@ -274,6 +280,8 @@ void sched_start(void) {
     /* for(int i = 0 ; i < 4 ; i++) */
     /*     _prio_array[i].nb_tasks = 0; */
     _schedule();
+    _current_task = _next_task;
+    _switch_to();
 }
 
 void sched_yield(void) {
@@ -284,28 +292,8 @@ void sched_yield(void) {
 void sched_forced_yield(void) {
     _current_task->need_resched = 1;
     _current_task->policy |= SCHED_YIELD;
-    _schedule();
+    _switch_to();
     /* sched_switch_task(); */
-}
-
-void sched_switch_task(void) {
-    __asm volatile("push {r0-r12, lr}");
-    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
-
-    if (_current_task->need_resched || _current_task->counter == 0)
-        _schedule();
-    _current_task = _next_task;
-
-    __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
-    if (_current_task->state == TASK_NEW) {
-        _current_task->state = TASK_READY;
-        set_tick_and_enable_timer();
-        ENABLE_IRQ();
-        _current_task->entry_point(_current_task->args);
-        set_current_state(TASK_ZOMBIE);
-    } else {
-        __asm volatile("pop {r0-r12, lr}");
-    }
 }
 
 int create_process(func_t * f, void * args, size_t size) {
@@ -375,13 +363,13 @@ int set_process_state(struct task_struct * task, enum task_state state) {
     if (state == TASK_ZOMBIE) {
         malloc_free((char *) task->stack_base);
         malloc_free((char *) task);
-        _schedule();
+        _switch_to();
         return 0;
     }
 
     task->state = state;
     if (task->state == TASK_WAITING)
-        _schedule();
+        _switch_to();
 
     return 0;
 }

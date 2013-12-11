@@ -50,8 +50,6 @@ void sched_yield(void);
 /* Force le scheduler à changer directement de tache */
 void sched_forced_yield(void);
 
-void sched_switch_task(void);
-
 /* Gestion des taches */
 int create_process(func_t * f, void * args, size_t size);
 int set_process_state(struct task_struct * task, enum task_state state);
