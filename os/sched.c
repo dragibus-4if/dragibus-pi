@@ -13,10 +13,8 @@ struct task_struct * _del_from(struct task_struct * list_head, struct task_struc
 /* Change le contexte d'exécution de *_current_task* à celui de *_next_task* */
 void _switch_to(void);
 
-int _init_process(struct task_struct *task,
-        size_t stack_size,
-        func_t * f,
-        void * args);
+int _init_process(struct task_struct *task, size_t stack_size,
+    func_t * f, void * args, int policy, int prio);
 void _schedule(void);
 
 /* Retourne le counter d'exécution de base d'une tache */
@@ -96,16 +94,17 @@ void _start_current_process(void) {
     set_current_state(TASK_ZOMBIE);
 }
 
-int _init_process(struct task_struct *task,
-        size_t stack_size,
-        func_t * f,
-        void * args) {
+int _init_process(struct task_struct *task, size_t stack_size,
+    func_t * f, void * args, int policy, int prio) {
+    if (prio < 0 || prio >= MAX_PRIO) {
+        return -1;
+    }
+
     /* Function and args */
     task->entry_point = f;
     task->args = args;
 
     /* Stack allocation */
-    task->interrupted = 0;
     task->stack_size = stack_size;
     task->stack_base = malloc_alloc(stack_size);
     if (task->stack_base == NULL) {
@@ -113,11 +112,11 @@ int _init_process(struct task_struct *task,
     }
 
     /* Policy */
-    task->policy = SCHED_OTHER;
+    task->policy = policy;
     task->need_resched = 0;
 
     /* Priority and time */
-    task->priority = 2;
+    task->priority = prio;
     task->rt_priority = 0;
     task->counter = _get_base_counter(task);
     task->current_prio = task->counter;
@@ -296,7 +295,8 @@ void sched_forced_yield(void) {
     /* sched_switch_task(); */
 }
 
-int create_process(func_t * f, void * args, size_t size) {
+int create_process(func_t * f, void * args, size_t size, int
+    policy, int prio) {
     struct task_struct * task;
     task = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
     if (task == NULL) {
@@ -306,7 +306,7 @@ int create_process(func_t * f, void * args, size_t size) {
     task->next = NULL;
     task->prev = NULL;
 
-    return _init_process(task, size, f, args);
+    return _init_process(task, size, f, args, policy, prio);
 }
 
 struct task_struct * get_current_process(void) {
