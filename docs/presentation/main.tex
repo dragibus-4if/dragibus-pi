@@ -9,6 +9,7 @@
 
 \usepackage[french]{babel}
 \usepackage[utf8x]{inputenc}
+\usepackage{graphicx}
 
 \usepackage{listings}
 
@@ -152,18 +153,100 @@
     % TODO
 \end{frame}
 
-\section{Ordonnancement sur Linux}
-
 \begin{frame}
     \frametitle{Performances du mini-OS}
 
     % TODO
 \end{frame}
 
+\section{Ordonnancement sur Linux}
+
 \begin{frame}
     \frametitle{Problématiques d'ordonnancement sous Linux}
 
     % TODO
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \huge
+        Concurrence entre deux processus ayant des politiques d'ordonnancement
+        différentes
+    \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Exemple: short vs long}
+
+    \begin{lstlisting}[caption=processus long]
+        void run_long_process {
+            sched_process(NORMAL, LONG_PRIORITY);
+            for (size_t i = 0; i < LONG_NB_COMPUTATIONS; i++) {
+                printf_safe("LONG\n");
+                /* calcul long */
+            }
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Exemple: short vs long}
+
+    \begin{lstlisting}[caption=processus court]
+        void run_short_process {
+            sched_process(REAL_TIME, SHORT_PRIORITY);
+            for (;;) {
+                printf_safe("SHORT\n");
+                /* calcul court */
+            }
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \begin{figure}
+            \includegraphics[scale=0.3]{../../short_vs_long/figures/1-0-SCHED_RR.png}
+            \caption{Court bas, long normal}
+        \end{figure}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \begin{figure}
+            \includegraphics[scale=0.3]{../../short_vs_long/figures/1--10-SCHED_RR}
+            \caption{Court bas, long haut}
+        \end{figure}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \begin{figure}
+            \includegraphics[scale=0.3]{../../short_vs_long/figures/50-19-SCHED_RR.png}
+            \caption{Court moyen, long bas}
+        \end{figure}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \begin{figure}
+            \includegraphics[scale=0.3]{../../short_vs_long/figures/99-0-SCHED_RR.png}
+            \caption{Court haut, long moyen}
+        \end{figure}
+    \end{center}
 \end{frame}
 
 \begin{frame}
