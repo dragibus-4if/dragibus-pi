@@ -5,27 +5,15 @@
 
 #define LITTLE_SLEEP_TIME 500
 #define SLEEP_TIME 500000
-#define NBPHILO = 5;
+#define NBPHILO 5
 
 typedef enum {PENSE, AFAIM, MANGE} ETAT_PHILO;
 ETAT_PHILO etat_philo[NBPHILO];
-sem_s sem_philo[NBPHILO];
-sem_s sem_tab;
+struct sem_s sem_philo[NBPHILO];
+struct sem_s sem_tab;
 int ids[NBPHILO];
 
-void start_philo() {
-    sem_init(&sem_tab,1);
-    for(int i =0; i< NBPHILO;i++){           
-        ids[i]=i;  
-        etat_philo[i] = PENSE;
-        sem_init(&sem_philo[i],1);
-    }
-    for(int i =0;i<NBPHILO;i++){
-         void * args[1];
-         args[0] = (void *) &ids[i];
-         create_process(&doPhilosophe,args, 
-   }
-}
+
 
 void doPhilosophe(int id){
     sem_down(&sem_tab);
@@ -55,6 +43,21 @@ void doPhilosophe(int id){
         while(i++<3000000);
     }
 }
+void start_philo() {
+
+    sem_init(&sem_tab,1);
+    for(int i =0; i< NBPHILO;i++){           
+        ids[i]=i;  
+        etat_philo[i] = PENSE;
+        sem_init(&sem_philo[i],1);
+    }
+
+    for(int i =0;i<NBPHILO;i++){
+         /*void * args[1];
+         args[0] = (void *) &ids[i];*/
+         create_process(&doPhilosophe,(void*) &ids[i],1024);
+   }
+}
 /*
 void test_mange(int i){
     if(etat_philo[i] == A_FAIM && etat_philo[(i+1)%NBPHILO] != MANGE && etat_philo[(i-1)%NBPHILO] != MANGE) {
@@ -78,6 +81,7 @@ void poser_fourchette(int i){
 
 }*/
 int start_kernel(void) {
+    DISABLE_IRQ();
     malloc_init((void *) HEAP_START);
     init_hw();
     start_philo();
