@@ -55,19 +55,38 @@ int main(void) {
     /* clonage du processus courant */
     pid_t cpid = fork();
 
-    /* mise en place de la priorité */
-    struct sched_param csched_param;
-    csched_param.sched_priority = SHORT_PRIORITY;
-    if (sched_setscheduler(cpid, SHORT_POLICY, &csched_param) == -1) {
-        perror("sched_setscheduler");
-        exit(EXIT_FAILURE);
-    }
-
     /* gestion des processus */
     if (cpid == -1) { /* erreur */
         perror("fork initial");
         exit(EXIT_FAILURE);
-    } else if (cpid == 0) { /* parent: processus "long" */
+    } else if (cpid == 0) { /* fils: processus "court" */
+        /* mise en place de la priorité */
+        struct sched_param csched_param;
+        csched_param.sched_priority = SHORT_PRIORITY;
+        if (sched_setscheduler(cpid, SHORT_POLICY, &csched_param) == -1) {
+            perror("sched_setscheduler");
+            exit(EXIT_FAILURE);
+        }
+
+        /* synchronisation de fin */
+        struct sigaction new_action, old_action;
+        new_action.sa_handler = _die_silently;
+        sigemptyset (&new_action.sa_mask);
+        new_action.sa_flags = 0;
+        sigaction (SHORT_KILL_SIGNAL, NULL, &old_action);
+        if (old_action.sa_handler != SIG_IGN) {
+            sigaction (SHORT_KILL_SIGNAL, &new_action, NULL);
+        }
+
+        /* calculs */
+        for (long long unsigned int i = 0; /* true */; i++) {
+            sem_wait(&stdout_lock);
+            printf("%i\n", 0);
+            fflush(stdout);
+            sem_post(&stdout_lock);
+            for (size_t j = 0; j < SHORT_COMPUTATION_TIME; j++);
+        }
+    } else { /* parent: processus "long" */
         /* mise en place de la priorité */
         if (setpriority(PRIO_PROCESS, 0, LONG_PRIORITY) == -1) {
             perror("setpriority");
@@ -90,25 +109,6 @@ int main(void) {
         if (kill(cpid, SHORT_KILL_SIGNAL) == -1) {
             perror("kill du processus fils");
             exit(EXIT_SUCCESS);
-        }
-    } else { /* fils: processus "court" */
-        /* synchronisation de fin */
-        struct sigaction new_action, old_action;
-        new_action.sa_handler = _die_silently;
-        sigemptyset (&new_action.sa_mask);
-        new_action.sa_flags = 0;
-        sigaction (SHORT_KILL_SIGNAL, NULL, &old_action);
-        if (old_action.sa_handler != SIG_IGN) {
-            sigaction (SHORT_KILL_SIGNAL, &new_action, NULL);
-        }
-
-        /* calculs */
-        for (long long unsigned int i = 0; /* true */; i++) {
-            sem_wait(&stdout_lock);
-            printf("%i\n", 0);
-            fflush(stdout);
-            sem_post(&stdout_lock);
-            for (size_t j = 0; j < SHORT_COMPUTATION_TIME; j++);
         }
     }
 }
