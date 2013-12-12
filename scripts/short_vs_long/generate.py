@@ -9,9 +9,9 @@ import multiprocessing
 import argparse
 
 # configuration
-this_dir = os.path.dirname(os.path.realpath(__file__))
-src_file = os.path.join(this_dir, 'main.c')
-exe_dir = os.path.join(this_dir, 'tmp')
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+src_file = 'main.c'
+exe_dir = 'tmp'
 min_short_priority = 1
 max_short_priority = 99
 min_long_priority = -20
@@ -78,8 +78,9 @@ def get_sample_args():
 
 def run_generate(args, **extra_options):
     values = list(args)
-    exe_name = os.tempnam(exe_dir)
-    short_priority, long_priority, policy = values
+    short_priority, long_priority, short_policy = values
+    base_name = '%s-%s-%s' % (short_priority, long_priority, short_policy)
+    exe_name = os.path.join(exe_dir, base_name)
     values.insert(0, exe_name)
     keys = ('exe_name', 'short_priority', 'long_priority', 'short_policy')
     kwargs = dict(zip(keys, values))
@@ -87,29 +88,38 @@ def run_generate(args, **extra_options):
     print 'make %s' % kwargs
     make(**kwargs)
     print 'run %s' % exe_name
-    output = subprocess.check_output(['sudo', exe_name])
-    fname = os.path.join(this_dir, 'datasets', '%s-%s-%s.csv' % \
-            (short_priority, long_priority, short_policy))
-    print 'save to %s' % fname
-    with open(fname, 'w') as fp:
-        fp.write(output)
+    try:
+        output = subprocess.check_output(['sudo', exe_name])
+    except subprocess.CalledProcessError as e:
+        print 'run failed with exit code %s' % e.returncode
+    else:
+        fname = os.path.join('datasets', base_name + '.csv')
+        print 'save to %s' % fname
+        with open(fname, 'w') as fp:
+            fp.write(output)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', default=False, action='store_true')
+parser.add_argument('--no-parallel', default=False, action='store_true')
 
 if __name__ == '__main__':
     try:
-        if os.getuid() != 0:
-            raise RuntimeError('doit être lancé en tant que sudo')
+        #if os.getuid() != 0:
+            #raise RuntimeError('doit être lancé en tant que sudo')
         if not os.path.exists(exe_dir):
             os.mkdir(exe_dir)
         elif not os.path.isdir(exe_dir):
             raise RuntimeError('%s sera écrasé par le répertoire temporaire' \
                     % os.path.basename(exe_dir))
         parsed_args = parser.parse_args()
-        pool = multiprocessing.Pool()
         generate = functools.partial(run_generate, debug=parsed_args.debug)
-        pool.map(generate, list(get_sample_args()))
+        sample_args = list(get_sample_args())
+        if not parsed_args.no_parallel:
+            pool = multiprocessing.Pool()
+            pool.map(generate, sample_args)
+        else:
+            for args in sample_args:
+                generate(args)
     except RuntimeError as e:
         sys.stderr.write("Erreur d'exécution: %s\n" % e)
         sys.exit(1)

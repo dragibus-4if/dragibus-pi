@@ -83,13 +83,20 @@ int main(void) {
         /* fin du long: mort du court */
         sem_wait(&stdout_lock);
         sem_post(&stdout_lock);
-        if (kill(cpid, SIGTERM) == -1) {
+        if (kill(cpid, SIGINT) == -1) {
             perror("kill du processus fils");
             exit(EXIT_SUCCESS);
         }
     } else { /* fils: processus "court" */
         /* synchronisation de fin */
-        signal(SIGTERM, _die_silently);
+        struct sigaction new_action, old_action;
+        new_action.sa_handler = _die_silently;
+        sigemptyset (&new_action.sa_mask);
+        new_action.sa_flags = 0;
+        sigaction (SIGINT, NULL, &old_action);
+        if (old_action.sa_handler != SIG_IGN) {
+            sigaction (SIGINT, &new_action, NULL);
+        }
 
         /* calculs */
         for (long long unsigned int i = 0; /* true */; i++) {
