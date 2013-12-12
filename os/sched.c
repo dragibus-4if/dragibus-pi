@@ -2,172 +2,104 @@
 #include "malloc.h"
 #include "hw.h"
 
-static struct task_struct * _sort_task_list(struct task_struct * task) {
-    /* Cas de base */
-    if (task == NULL || task->next == NULL) {
-        return task;
-    }
+struct _prio_array {
+    int nb_tasks;
+    struct task_struct * list[MAX_PRIO << 1];
+};
 
-    /* Choix du point de pivot */
-    static const size_t pivot_choice = 0;
-    struct task_struct * pivot = task;
-    for (size_t i = 0; i < pivot_choice && pivot->next != NULL; i++) {
-        pivot = pivot->next;
-    }
+struct task_struct * _add_last(struct task_struct * list_head, struct task_struct * last);
+struct task_struct * _del_from(struct task_struct * list_head, struct task_struct * task);
 
-    /* Enlever le pivot de la liste */
-    struct task_struct * next, * tmp = NULL;
-    while (task != NULL) {
-        next = task->next;
-        if (task->priority != pivot->priority) {
-            task->next = tmp;
-            tmp = task;
-        }
-        task = next;
-    }
+/* Change le contexte d'exécution de *_current_task* à celui de *_next_task* */
+void _switch_to(void);
 
-    /* Divide & conquer */
-    struct task_struct * first = NULL, * second = NULL;
-    while (tmp != NULL) {
-        next = tmp->next;
-        /* FIXME selon l'ordre du tri, changer "<" par ">" */
-        if (tmp->priority < pivot->priority) {
-            tmp->next = first;
-            first = tmp;
-        } else {
-            tmp->next = second;
-            second = tmp;
-        }
-        tmp = next;
-    }
+int _init_process(struct task_struct *task, size_t stack_size,
+    func_t * f, void * args, int policy, int prio);
+void _schedule(void);
 
-    /* Appels récursifs */
-    first = _sort_task_list(first);
-    second = _sort_task_list(second);
+/* Retourne le counter d'exécution de base d'une tache */
+time_t _get_base_counter(struct task_struct * task);
 
-    /* Merge */
-    if (first != NULL) {
-        struct task_struct * end = first;
-        while (end->next != NULL) {
-            end = end->next;
-        }
-        pivot->next = second;
-        end->next = pivot;
-        return first;
-    } else {
-        pivot->next = second;
-        return pivot;
-    }
-}
-
-static struct task_struct * _schedule_priority(struct task_struct * task) {
-    /* TODO */
-    return task;
-}
-
-static struct task_struct _idle_process;
-static struct task_struct * _ready_list = NULL;
+static time_t _uptime = 1;
+static struct task_struct _idle_task;
 static struct task_struct * _waiting_list = NULL;
-static struct task_struct * _current_process = NULL;
+static struct task_struct * _current_task = NULL;
+static struct task_struct * _next_task = NULL;
+static struct _prio_array _prio_array[4];
+static struct _prio_array * _active = &_prio_array[0];
+static struct _prio_array * _expired = &_prio_array[1];
+static struct _prio_array * _rt_active = &_prio_array[2];
+static struct _prio_array * _rt_expired = &_prio_array[3];
 
-/* Ordonnanceur à priority */
-static enum sched_mode_e _sched_mode = BASIC;
-
-struct task_struct * get_current_process(void) {
-    return _current_process;
+struct task_struct * _add_last(struct task_struct * list_head,
+    struct task_struct * last) {
+    /* Cas d'une liste vide */
+    if (list_head == NULL) {
+        list_head = last;
+        last->next = last;
+        last->prev = last;
+    } else {
+        last->prev = list_head->prev;
+        last->next = list_head;
+        list_head->prev->next = last;
+        list_head->prev = last;
+    }
+    return list_head;
 }
 
-int set_process_state(struct task_struct * task, enum task_state state) {
-    /* Vérif des valeurs */
-    if (task == NULL) {
-        return -1;
+struct task_struct * _del_from(struct task_struct * list_head,
+    struct task_struct * task) {
+    /* Cas d'un singleton */
+    if (task == task->next) {
+        list_head = NULL;
+    } else {
+        task->prev->next = task->next;
+        task->next->prev = task->prev;
+        if(task == list_head)
+            list_head = task->next;
     }
-    if (state != TASK_NEW && task->state == state) {
-        return 0;
-    }
-
-    /* Gestion du cas particulier ou on passe de TASK_NEW à TASK_READY */
-    if (task->state == TASK_NEW && state == TASK_READY) {
-        task->state = TASK_READY;
-        return 0;
-    }
-
-    /* On retire le task de sa liste de state courant (s'il en a une) */
-    if(task->next != NULL && task->prev != NULL) {
-        if (task->next == task) {
-            /* Dans le cas de un seul élément, la liste devient vide */
-            if (task->state == TASK_READY) {
-                _ready_list = NULL;
-            } else if (task->state == TASK_WAITING) {
-                _waiting_list = NULL;
-            }
-        } else {
-            task->prev->next = task->next;
-            task->next->prev = task->prev;
-        }
-    }
-
-    /* Dans le cas ou le processus est fini, on le tue */
-    if (state == TASK_ZOMBIE) {
-        int y = task == _current_process;
-        malloc_free((char *) task->stack_base);
-        malloc_free((char *) task);
-        if(y) {
-            yield();
-        }
-        return 0;
-    }
-
-    /* On l'ajoute à la fin de sa nouvelle liste */
-    /* TODO si on utilise la priorité on peut faire une
-     * insertion trié ici-meme */
-    if (state == TASK_READY || state == TASK_NEW) {
-        if (_ready_list == NULL) {
-            _ready_list = task;
-            task->prev = task;
-            task->next = task;
-        } else {
-            task->prev = _ready_list->prev;
-            task->next = _ready_list;
-            _ready_list->prev->next = task;
-            _ready_list->prev = task;
-        }
-    } else if (state == TASK_WAITING) {
-        if (_waiting_list == NULL) {
-            _waiting_list = task;
-            task->prev = task;
-            task->next = task;
-        } else {
-            task->prev = _waiting_list->prev;
-            task->next = _waiting_list;
-            _waiting_list->prev->next = task;
-            _waiting_list->prev = task;
-        }
-    }
-
-    task->state = state;
-
-    /* Dans le cas ou la tache courante est en attente, on change */
-    if(task->state == TASK_WAITING && task == _current_process) {
-        yield();
-    }
-
-    return 0;
+    task->prev = NULL;
+    task->next = NULL;
+    return list_head;
 }
 
-int set_current_state(enum task_state state) {
-    return set_process_state(_current_process, state);
+/* Change le contexte d'exécution de *prev* à celui de *next* */
+void _switch_to(void) {
+    /* Sauvegarde du contexte courant */
+    DISABLE_IRQ();
+    __asm volatile("push {r0-r12, lr}");
+    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+
+    /* Détermination du prochain élément */
+    _schedule();
+    _current_task = _next_task;
+
+    /* Passage au nouveau contexte */
+    __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
+    if (_current_task->state == TASK_NEW) {
+        _current_task->state = TASK_READY;
+        set_tick_and_enable_timer();
+        ENABLE_IRQ();
+        _current_task->entry_point(_current_task->args);
+        set_current_state(TASK_ZOMBIE);
+    } else {
+        ENABLE_IRQ();
+        __asm volatile("pop {r0-r12, lr}");
+    }
 }
 
 void _start_current_process(void) {
     set_current_state(TASK_READY);
-    ENABLE_IRQ();
-    _current_process->entry_point(_current_process->args);
-    DISABLE_IRQ();
+    _current_task->entry_point(_current_task->args);
     set_current_state(TASK_ZOMBIE);
 }
 
-int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void * args) {
+int _init_process(struct task_struct *task, size_t stack_size,
+    func_t * f, void * args, int policy, int prio) {
+    if (prio < 0 || prio >= MAX_PRIO) {
+        return -1;
+    }
+
     /* Function and args */
     task->entry_point = f;
     task->args = args;
@@ -179,8 +111,16 @@ int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void 
         return -1;
     }
 
-    /* Priority */
-    task->priority = 0;
+    /* Policy */
+    task->policy = policy;
+    task->need_resched = 0;
+
+    /* Priority and time */
+    task->priority = prio;
+    task->rt_priority = 0;
+    task->counter = _get_base_counter(task);
+    task->current_prio = task->counter;
+    task->epoch = 0;
 
     /* State and context */
     set_process_state(task, TASK_NEW);
@@ -191,10 +131,172 @@ int _init_process(struct task_struct *task, size_t stack_size, func_t * f, void 
     task->stack_pointer--;
     *(task->stack_pointer) = (unsigned int) &_start_current_process;
 
-    return 1;
+    return 0;
 }
 
-int create_process(func_t * f, void * args, size_t size) {
+time_t _get_base_counter(struct task_struct * task) {
+    if (task->policy == SCHED_RT)
+        return task->rt_priority;
+    return task->priority << 1;
+}
+
+/* Change le counter de la tache et la place dans le bonne file d'attente */
+void _set_counter(struct task_struct * task, time_t counter) {
+    if (task->counter == counter && task->current_prio == counter) {
+        return;
+    }
+
+    /* Quand la tache n'est pas en cours d'exécution, seule son counter change
+     * mais elle reste dans la file d'attente */
+    if (task->state != TASK_READY) {
+        if (counter == 0)
+            task->counter = _get_base_counter(task);
+        else
+            task->counter = counter;
+        return;
+    }
+
+    struct _prio_array * active = _active;
+    struct _prio_array * expired = _expired;
+    if (task->policy == SCHED_RT) {
+        active = _rt_active;
+        expired = _rt_expired;
+    }
+
+    /* Suppression dans l'ancienne queue d'exécution */
+    active->list[task->current_prio] =
+      _del_from(active->list[task->current_prio], task);
+    active->nb_tasks--;
+
+    /* Avec un counter nul, on place la tache dans les expirées et on lui donne
+     * un nouveau counter */
+    if (counter == 0) {
+        time_t new_counter = _get_base_counter(task);
+        /* Ajout à la fin de la nouvelle */
+        expired->list[new_counter] =
+            _add_last(expired->list[new_counter], task);
+        expired->nb_tasks++;
+        task->counter = new_counter;
+        task->current_prio = new_counter;
+        return;
+    }
+
+    /* Sinon, on place la tache dans le nouveau tableau */
+    active->list[counter] =
+      _add_last(active->list[counter], task);
+    active->nb_tasks++;
+    task->counter = counter;
+    task->current_prio = counter;
+}
+
+void _schedule(void) {
+    struct task_struct * prev = _current_task;
+
+    /* Si la tache à demandé un yield on la met en moins prio */
+    if (prev != &_idle_task
+        && prev->state == TASK_READY
+        && prev->policy & SCHED_YIELD) {
+        _active->list[prev->current_prio] =
+          _del_from(_active->list[prev->current_prio], prev);
+        _active->list[0] =
+          _add_last(_active->list[0], prev);
+        prev->policy &= ~SCHED_YIELD;
+        prev->need_resched = 0;
+        prev->current_prio = 0;
+    }
+
+    /* Si toute les taches sont épuisées on switch les deux tableaux */
+    if (_rt_active->nb_tasks == 0) {
+      struct _prio_array * tmp = _rt_active;
+      _rt_active = _rt_expired;
+      _rt_expired = tmp;
+    }
+    if (_active->nb_tasks == 0) {
+      struct _prio_array * tmp = _active;
+      _active = _expired;
+      _expired = tmp;
+    }
+
+    /* Recherche du meilleur candidat parmi les taches actives */
+    struct task_struct * next = NULL;
+    for (ssize_t i = (MAX_PRIO << 1) - 1 ; i >= 0  ; i--) {
+        if (_rt_active->list[i] != NULL) {
+            next = _rt_active->list[i];
+            break;
+        } else if (next == NULL && _active->list[i] != NULL) {
+            next = _active->list[i];
+        }
+    }
+
+    /* Choix de idle si on trouve rien */
+    if (next == NULL)
+        next = &_idle_task;
+
+    _next_task = next;
+}
+
+/* Called when there is a time interruption */
+void __attribute__ ((naked)) __time_interrupt(void) {
+    __asm volatile("sub lr, lr, #4");
+    __asm volatile("srsdb sp!, 0x13");
+    __asm volatile("cps #0x13");
+
+    /* Sauvegarde le contexte courant */
+    DISABLE_IRQ();
+    __asm volatile("push {r0-r12, lr}");
+    __asm("mov %0, sp" : "=r"(_current_task->stack_pointer));
+
+    /* Met à jour le temps système */
+    _uptime++;
+
+    /* Enlève un tick au quantum de la tache courante */
+    _set_counter(_current_task, _current_task->counter - 1);
+
+    _schedule();
+    _current_task = _next_task;
+
+    /* On récupère le nouveau contexte */
+    __asm("mov sp, %0" : : "r"(_current_task->stack_pointer));
+    set_tick_and_enable_timer();
+    if (_current_task->state == TASK_NEW) {
+        _current_task->state = TASK_READY;
+        ENABLE_IRQ();
+        _current_task->entry_point(_current_task->args);
+        set_current_state(TASK_ZOMBIE);
+    } else {
+        ENABLE_IRQ();
+        __asm volatile("pop {r0-r12, lr}");
+    }
+
+    __asm volatile ("rfefd sp!");
+}
+
+void sched_start(void) {
+    DISABLE_IRQ();
+    _idle_task.prev = NULL;
+    _idle_task.next = NULL;
+    _current_task = &_idle_task;
+    /* for(int i = 0 ; i < 4 ; i++) */
+    /*     _prio_array[i].nb_tasks = 0; */
+    _schedule();
+    _current_task = _next_task;
+    _switch_to();
+}
+
+void sched_yield(void) {
+    _current_task->need_resched = 1;
+    _current_task->policy |= SCHED_YIELD;
+}
+
+void sched_forced_yield(void) {
+    _current_task->need_resched = 1;
+    _current_task->policy |= SCHED_YIELD;
+    _switch_to();
+    /* sched_switch_task(); */
+}
+
+int create_process(func_t * f, void * args, size_t size, int
+    policy, int prio) {
     struct task_struct * task;
     task = (struct task_struct *) malloc_alloc(sizeof(struct task_struct));
     if (task == NULL) {
@@ -204,65 +306,70 @@ int create_process(func_t * f, void * args, size_t size) {
     task->next = NULL;
     task->prev = NULL;
 
-    return _init_process(task, size, f, args);
+    return _init_process(task, size, f, args, policy, prio);
 }
 
-void schedule(void) {
-    /* Si on a des process prets */
-    if (_ready_list != NULL) {
-        /* Rajout de ce task à la fin de la liste */
-        _current_process = _ready_list;
-        _ready_list = _ready_list->next;
-    } else {
-        /* Sinon on utilise le task idle */
-        _current_process = &_idle_process;
+struct task_struct * get_current_process(void) {
+    return _current_task;
+}
+
+int set_current_state(enum task_state state) {
+    return set_process_state(_current_task, state);
+}
+
+int set_process_state(struct task_struct * task, enum task_state state) {
+    /* Vérif des valeurs */
+    if (task == NULL) {
+        return -1;
     }
-}
-
-void start_sched(void) {
-    _idle_process.prev = NULL;
-    _idle_process.next = NULL;
-    _current_process = &_idle_process;
-    yield();
-    while (1);
-}
-
-void yield(void) {
-    __asm volatile("push {r0-r12, lr}");
-    DISABLE_IRQ();
-
-    __asm("mov %0, sp" : "=r"(_current_process->stack_pointer));
-    schedule();
-    __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
-
-    set_tick_and_enable_timer();
-    if (_current_process->state == TASK_NEW) {
-        _start_current_process();
-    } else {
-        __asm volatile("pop {r0-r12, lr}");
+    if (state != TASK_NEW && task->state == state) {
+        return 0;
     }
-    ENABLE_IRQ();
-}
-
-void __attribute__ ((naked)) ctx_switch(void) {
-    __asm volatile("sub lr, lr, #4");
-    __asm volatile("srsdb sp!, 0x13");
-    __asm volatile("cps #0x13");
-
-    __asm volatile("push {r0-r12, lr}");
-    DISABLE_IRQ();
-
-    __asm("mov %0, sp" : "=r"(_current_process->stack_pointer));
-    schedule();
-    __asm("mov sp, %0" : : "r"(_current_process->stack_pointer));
-
-    set_tick_and_enable_timer();
-    if (_current_process->state == TASK_NEW) {
-        _start_current_process();
-    } else {
-        __asm volatile("pop {r0-r12, lr}");
+    if (task == &_idle_task) {
+        return 0;
     }
-    ENABLE_IRQ();
 
-    __asm volatile ("rfefd sp!");
+    struct _prio_array * active = _active;
+    if (task->policy == SCHED_RT)
+        active = _rt_active;
+
+    /* Si la tache n'est plus en exécution on l'enlève des files */
+    if (task->state == TASK_READY) {
+        active->nb_tasks--;
+        active->list[task->current_prio] =
+          _del_from(active->list[task->current_prio], task);
+    }
+
+    /* Si la tache était en attente, on l'enlève de la waiting queue */
+    if (task->state == TASK_WAITING) {
+        _waiting_list = _del_from(_waiting_list, task);
+    }
+
+    /* Si on passe en exécution */
+    if (state == TASK_READY || state == TASK_NEW) {
+        active->nb_tasks++;
+        active->list[task->counter] =
+          _add_last(active->list[task->counter], task);
+        task->current_prio = task->counter;
+    }
+
+    /* Si on passe en attente on l'ajoute dans la waiting list */
+    if (state == TASK_WAITING) {
+        _waiting_list =
+          _add_last(_waiting_list, task);
+    }
+
+    /* Si la tache est fini, on la supprime */
+    if (state == TASK_ZOMBIE) {
+        malloc_free((char *) task->stack_base);
+        malloc_free((char *) task);
+        _switch_to();
+        return 0;
+    }
+
+    task->state = state;
+    if (task->state == TASK_WAITING)
+        _switch_to();
+
+    return 0;
 }
