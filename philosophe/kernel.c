@@ -13,9 +13,8 @@ struct sem_s sem_philo[NBPHILO];
 struct sem_s sem_tab;
 int ids[NBPHILO];
 
-
-
-void doPhilosophe(int id){
+void doPhilosophe(void * args){
+    int id = (int) args;
     sem_down(&sem_tab);
     ETAT_PHILO temp=etat_philo[id];
     sem_up(&sem_tab);
@@ -25,8 +24,8 @@ void doPhilosophe(int id){
        while(i++<20000000);
        sem_up(&sem_philo[id]);
        sem_down(&sem_tab);
-       etat_philo[id]=PENSE; 
-       sem_up(&sem_tab);        
+       etat_philo[id]=PENSE;
+       sem_up(&sem_tab);
     }else if(temp==PENSE){
         int i =0;
         while(i++<2000000);
@@ -44,10 +43,9 @@ void doPhilosophe(int id){
     }
 }
 void start_philo() {
-
     sem_init(&sem_tab,1);
-    for(int i =0; i< NBPHILO;i++){           
-        ids[i]=i;  
+    for(int i =0; i< NBPHILO;i++){
+        ids[i]=i;
         etat_philo[i] = PENSE;
         sem_init(&sem_philo[i],1);
     }
@@ -55,7 +53,7 @@ void start_philo() {
     for(int i =0;i<NBPHILO;i++){
          /*void * args[1];
          args[0] = (void *) &ids[i];*/
-         create_process(&doPhilosophe,(void*) &ids[i],1024);
+         create_process(&doPhilosophe,(void*) ids[i], 1024, SCHED_OTHER, 5);
    }
 }
 /*
@@ -85,7 +83,7 @@ int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     init_hw();
     start_philo();
-    start_sched();
+    sched_start();
     return 0;
 }
 
