@@ -11,15 +11,15 @@ void processus_A(void * args) {
     while (1) {
         sem_down(sema);
         for (int j = 0 ; j < 10 ; j++) {
-            yield();
+            sched_forced_yield();
             led_on();
             for(int i = 0 ; i < SLEEP_TIME_A ; i++);
-            yield();
+            sched_forced_yield();
             led_off();
             for(int i = 0 ; i < SLEEP_TIME_A ; i++);
         }
         sem_up(sema);
-        yield();
+        sched_forced_yield();
     }
 }
 
@@ -28,15 +28,15 @@ void processus_B(void * args) {
     while (1) {
         sem_down(sema);
         for (int j = 0 ; j < 10 ; j++) {
-            yield();
+            sched_forced_yield();
             led_on();
             for(int i = 0 ; i < SLEEP_TIME_B ; i++);
-            yield();
+            sched_forced_yield();
             led_off();
             for(int i = 0 ; i < SLEEP_TIME_B ; i++);
         }
         sem_up(sema);
-        yield();
+        sched_forced_yield();
     }
 }
 
@@ -47,8 +47,8 @@ int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     struct sem_s sema;
     sem_init(&sema, 1);
-    create_process(&processus_A, (void *) &sema, 512);
-    create_process(&processus_B, (void *) &sema, 512);
-    start_sched();
+    create_process(&processus_A, (void *) &sema, 512, SCHED_OTHER, 20);
+    create_process(&processus_B, (void *) &sema, 512, SCHED_OTHER, 20);
+    sched_start();
     return 0;
 }

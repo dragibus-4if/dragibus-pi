@@ -12,15 +12,15 @@ void processus_A(void * args) {
     while (1) {
         mutex_acquire(mtxa);
         for (int j = 0 ; j < 10 ; j++) {
-            yield();
+            sched_forced_yield();
             led_on();
             for(int i = 0 ; i < SLEEP_TIME_A ; i++);
-            yield();
+            sched_forced_yield();
             led_off();
             for(int i = 0 ; i < SLEEP_TIME_A ; i++);
         }
         mutex_release(mtxa);
-        yield();
+        sched_forced_yield();
     }
 }
 
@@ -29,15 +29,15 @@ void processus_B(void * args) {
     while (1) {
         mutex_acquire(mtxa);
         for (int j = 0 ; j < 10 ; j++) {
-            yield();
+            sched_forced_yield();
             led_on();
             for(int i = 0 ; i < SLEEP_TIME_B ; i++);
-            yield();
+            sched_forced_yield();
             led_off();
             for(int i = 0 ; i < SLEEP_TIME_B ; i++);
         }
         mutex_release(mtxa);
-        yield();
+        sched_forced_yield();
     }
 }
 
@@ -47,8 +47,8 @@ int start_kernel(void) {
     init_hw();
     malloc_init((void *) HEAP_START);
     struct mutex_s  * mutexa = mutex_create();
-    create_process(&processus_A, (void *) mutexa, 512);
-    create_process(&processus_B, (void *) mutexa, 512);
-    start_sched();
+    create_process(&processus_A, (void *) mutexa, 512, SCHED_OTHER, 20);
+    create_process(&processus_B, (void *) mutexa, 512, SCHED_OTHER, 20);
+    sched_start();
     return 0;
 }
