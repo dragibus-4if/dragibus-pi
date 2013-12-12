@@ -44,6 +44,8 @@
 
 \begin{frame}
     \frametitle{Introduction}
+
+    % TODO
 \end{frame}
 
 \begin{frame}
@@ -70,32 +72,20 @@
 \end{frame}
 
 \begin{frame}[fragile]
-    \frametitle{Bloquage d'un processus}
-    \begin{lstlisting}[caption=Représentation structurelle d'un processus]
-        struct task {
-            /* Etat de la tache */
-            int state, needs_reschedule;
+    \frametitle{Problème de synchronisation (résolu)}
 
-            /* Politique d'ordonnancement */
-            int policy;
+    \begin{lstlisting}[caption=Opération atomique sur un sémaphore]
+        void sem_op(struct sem_s * sem, struct sem_op_s * op) {
+            DISABLE_IRQ();
 
-            /* Priorite */
-            time_t priority, realtime_priority,
-                current_priority;
+            /* operation sur le semaphore */
 
-            /* Processus suivant/precedent */
-            struct task * next, * prev;
-
-            /* contexte, informations temporelles, etc... */
-        };
+            ENABLE_IRQ();
+        }
     \end{lstlisting}
 \end{frame}
 
-\begin{frame}
-    \frametitle{Bloquage d'un processus}
-\end{frame}
-
-\section{Ordonnancement}
+\section{Ordonnancement sur mini-OS}
 
 \begin{frame}
     \frametitle{Les problématiques d'ordonnancement}
@@ -130,8 +120,56 @@
 \begin{frame}
     \frametitle{Politique d'ordonnancement choisie}
     \begin{center}
-        \huge prioritaire
+        \huge combinaison
     \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Ordonnancement d'une tâche}
+    \begin{lstlisting}[caption=Représentation structurelle d'un processus]
+        struct task {
+            /* Etat de la tache */
+            int state, needs_reschedule;
+
+            /* Politique d'ordonnancement */
+            int policy;
+
+            /* Priorite */
+            time_t priority, realtime_priority,
+                current_priority;
+
+            /* Processus suivant/precedent */
+            struct task * next, * prev;
+
+            /* contexte, informations temporelles, etc... */
+        };
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Ordonnancement d'une tâche}
+
+    % TODO
+\end{frame}
+
+\section{Ordonnancement sur Linux}
+
+\begin{frame}
+    \frametitle{Performances du mini-OS}
+
+    % TODO
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problématiques d'ordonnancement sous Linux}
+
+    % TODO
+\end{frame}
+
+\begin{frame}
+    \frametitle{Compromis CPU / Requêtes IO}
+
+    % TODO
 \end{frame}
 
 \section{Algorithmes et problématiques}
@@ -173,7 +211,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{Problèmes rencontrés}
+    \frametitle{Problèmes divers rencontrés}
 
     \uncover<1->{
         \begin{block}{Problème}
@@ -188,20 +226,6 @@
             suivant un \textbf{code morse}.
         \end{block}
     }
-\end{frame}
-
-\section{Remarques et suggestions}
-
-\begin{frame}
-    \frametitle{Performances de l'OS}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Problématiques d'ordonnancement sous Linux}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Compromis CPU / Requêtes IO}
 \end{frame}
 
 \end{document}
