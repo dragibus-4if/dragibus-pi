@@ -79,27 +79,28 @@ def get_sample_args():
             for long_priority in xrange(min_long_priority, max_long_priority+1):
                 yield (short_priority, long_priority, policy)
 
-def run_generate(args, **extra_options):
+def run_generate(args, force=False, **extra_options):
     signal.signal(short_kill_signal, signal.SIG_IGN)
     values = list(args)
     short_priority, long_priority, short_policy = values
     base_name = '%s-%s-%s' % (short_priority, long_priority, short_policy)
+    dataset_name = os.path.join('datasets', base_name + '.csv')
+    if os.path.exists(dataset_name) and not force:
+        print 'ignore %s' % base_name
+        return
+    print 'run %s' % base_name
     exe_name = os.path.join(exe_dir, base_name)
     values.insert(0, exe_name)
     keys = ('exe_name', 'short_priority', 'long_priority', 'short_policy')
     kwargs = dict(zip(keys, values))
     kwargs.update(extra_options)
-    print 'make %s' % kwargs
     make(**kwargs)
-    print 'run %s' % exe_name
     try:
         output = subprocess.check_output(['sudo', exe_name])
     except subprocess.CalledProcessError as e:
-        print 'run failed with exit code %s' % e.returncode
+        pass
     else:
-        fname = os.path.join('datasets', base_name + '.csv')
-        print 'save to %s' % fname
-        with open(fname, 'w') as fp:
+        with open(dataset_name, 'w') as fp:
             fp.write(output)
 
 parser = argparse.ArgumentParser()
