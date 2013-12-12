@@ -6,4 +6,5 @@ b start_kernel
 b ctx_switch
 b kernel.c:9
 b kernel.c:17
+b kernel.c:27
 source include.gdb
