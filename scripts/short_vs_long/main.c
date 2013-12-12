@@ -36,6 +36,10 @@
 #  define SHORT_PRIORITY ((SHORT_MAX_PRIORITY) + (SHORT_MIN_PRIORITY)) >> 1
 #endif
 
+#ifndef SHORT_KILL_SIGNAL
+#  define SHORT_KILL_SIGNAL SIGINT
+#endif
+
 static void _die_silently(int signo) {
     exit(EXIT_SUCCESS);
 }
@@ -67,7 +71,7 @@ int main(void) {
         /* mise en place de la priorité */
         if (setpriority(PRIO_PROCESS, 0, LONG_PRIORITY) == -1) {
             perror("setpriority");
-            kill(cpid, SIGINT);
+            kill(cpid, SHORT_KILL_SIGNAL);
             exit(EXIT_FAILURE);
         }
 
@@ -83,7 +87,7 @@ int main(void) {
         /* fin du long: mort du court */
         sem_wait(&stdout_lock);
         sem_post(&stdout_lock);
-        if (kill(cpid, SIGINT) == -1) {
+        if (kill(cpid, SHORT_KILL_SIGNAL) == -1) {
             perror("kill du processus fils");
             exit(EXIT_SUCCESS);
         }
@@ -93,9 +97,9 @@ int main(void) {
         new_action.sa_handler = _die_silently;
         sigemptyset (&new_action.sa_mask);
         new_action.sa_flags = 0;
-        sigaction (SIGINT, NULL, &old_action);
+        sigaction (SHORT_KILL_SIGNAL, NULL, &old_action);
         if (old_action.sa_handler != SIG_IGN) {
-            sigaction (SIGINT, &new_action, NULL);
+            sigaction (SHORT_KILL_SIGNAL, &new_action, NULL);
         }
 
         /* calculs */

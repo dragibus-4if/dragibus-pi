@@ -3,6 +3,7 @@
 
 import os
 import sys
+import signal
 import functools
 import subprocess
 import multiprocessing
@@ -16,6 +17,7 @@ min_short_priority = 1
 max_short_priority = 99
 min_long_priority = -20
 max_long_priority = 19
+short_kill_signal = signal.SIGTERM
 valid_short_policies = ('SCHED_RR', 'SCHED_FIFO',)
 
 def make(exe_name, debug=False, short_priority=None, long_priority=None,
@@ -25,7 +27,8 @@ def make(exe_name, debug=False, short_priority=None, long_priority=None,
     """
     # args de compilation
     cc = ['gcc', src]
-    cflags = ['std=c99', 'pthread', 'W', 'Wall']
+    cflags = ['std=c99', 'pthread', 'W', 'Wall',
+            'DSHORT_KILL_SIGNAL=%s' % short_kill_signal]
 
     # nom de l'exécutable
     cc += ['-o', exe_name]
@@ -77,6 +80,7 @@ def get_sample_args():
                 yield (short_priority, long_priority, policy)
 
 def run_generate(args, **extra_options):
+    signal.signal(short_kill_signal, signal.SIG_IGN)
     values = list(args)
     short_priority, long_priority, short_policy = values
     base_name = '%s-%s-%s' % (short_priority, long_priority, short_policy)
