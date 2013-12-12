@@ -11,32 +11,32 @@
 #include <stdio.h>
 
 #ifndef LONG_NB_COMPUTATIONS
-#define LONG_NB_COMPUTATIONS 42
+#  define LONG_NB_COMPUTATIONS 42
 #endif
 
 #ifndef LONG_COMPUTATION_TIME
-#define LONG_COMPUTATION_TIME 4200000
+#  define LONG_COMPUTATION_TIME 4200000
 #endif
 
 #ifndef LONG_PRIORITY
-#define LONG_PRIORITY 0
+#  define LONG_PRIORITY 0
 #endif
 
 #ifndef SHORT_COMPUTATION_TIME
-#define SHORT_COMPUTATION_TIME 420000
+#  define SHORT_COMPUTATION_TIME 420000
 #endif
 
 #ifndef SHORT_POLICY
-#define SHORT_POLICY SCHED_FIFO
+#  define SHORT_POLICY SCHED_FIFO
 #endif
 
 #ifndef SHORT_PRIORITY
-#define SHORT_MAX_PRIORITY sched_get_priority_max(SHORT_POLICY)
-#define SHORT_MIN_PRIORITY sched_get_priority_min(SHORT_POLICY)
-#define SHORT_PRIORITY ((SHORT_MAX_PRIORITY) + (SHORT_MIN_PRIORITY)) >> 1
+#  define SHORT_MAX_PRIORITY sched_get_priority_max(SHORT_POLICY)
+#  define SHORT_MIN_PRIORITY sched_get_priority_min(SHORT_POLICY)
+#  define SHORT_PRIORITY ((SHORT_MAX_PRIORITY) + (SHORT_MIN_PRIORITY)) >> 1
 #endif
 
-void _die_silently(int signo) {
+static void _die_silently(int signo) {
     exit(EXIT_SUCCESS);
 }
 

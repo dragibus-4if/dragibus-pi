@@ -3,12 +3,15 @@
 
 import os
 import sys
+import functools
 import subprocess
 import multiprocessing
-
-this_dir = os.path.dirname(os.path.realpath(__file__))
+import argparse
 
 # configuration
+this_dir = os.path.dirname(os.path.realpath(__file__))
+src_file = os.path.join(this_dir, 'main.c')
+exe_dir = os.path.join(this_dir, 'tmp')
 min_short_priority = 1
 max_short_priority = 99
 min_long_priority = -20
@@ -16,11 +19,11 @@ max_long_priority = 19
 valid_short_policies = ('SCHED_RR', 'SCHED_FIFO',)
 
 def make(exe_name, debug=False, short_priority=None, long_priority=None,
-        short_policy=None, src=os.path.join(this_dir, 'main.c')):
+        short_policy=None, src=src_file):
     """
-    Compiler l'exemple avec les options passées.
+    Compiler l'exemple avec les args passées.
     """
-    # options de compilation
+    # args de compilation
     cc = ['gcc', src]
     cflags = ['std=c99', 'pthread', 'W', 'Wall']
 
@@ -65,41 +68,48 @@ def make(exe_name, debug=False, short_priority=None, long_priority=None,
     code = subprocess.call(cc + map(lambda s: '-' + s, cflags),
             stderr=subprocess.PIPE)
     if code != 0:
-        raise RuntimeError('Erreur de compilation')
+        raise RuntimeError('erreur de compilation')
 
-def main():
-    """
-    Programme principal, doit être lancé en tant que sudo. Lance une
-    RuntimeError s'il y a une erreur.
-    """
-    if os.getuid() != 0:
-        raise RuntimeError('Doit être lancé en tant que sudo')
-    def sample_args():
-        a, b = min_short_priority, max_short_priority
-        for policy in valid_short_policies:
-            for short_priority in xrange(a, b+1):
-                c, d = min_long_priority, max_long_priority
-                for long_priority in xrange(c, d+1):
-                    yield (os.tmpnam(), short_priority, long_priority, policy)
+def get_sample_args():
+    for policy in valid_short_policies:
+        for short_priority in xrange(min_short_priority, max_short_priority+1):
+            for long_priority in xrange(min_long_priority, max_long_priority+1):
+                yield (short_priority, long_priority, policy)
 
-    def generate(enum_pair):
-        i, values = enum_pair
-        exe_name, short_priority, long_priority, policy = values
-        keys = ('exe_name', 'short_priority', 'long_priority', 'short_policy')
-        kwargs = dict(zip(keys, values))
-        make(**kwargs)
-        output = subprocess.check_output(exe_name)
-        fname = os.path.join(this_dir, 'datasets', '%s-%s-%s.csv' % \
-                (short_priority, long_priority, short_policy))
-        with open(fname, 'w') as fp:
-            fp.write(output)
+def run_generate(args, **extra_options):
+    values = list(args)
+    exe_name = os.tempnam(exe_dir)
+    short_priority, long_priority, policy = values
+    values.insert(0, exe_name)
+    keys = ('exe_name', 'short_priority', 'long_priority', 'short_policy')
+    kwargs = dict(zip(keys, values))
+    kwargs.update(extra_options)
+    print 'make %s' % kwargs
+    make(**kwargs)
+    print 'run %s' % exe_name
+    output = subprocess.check_output(['sudo', exe_name])
+    fname = os.path.join(this_dir, 'datasets', '%s-%s-%s.csv' % \
+            (short_priority, long_priority, short_policy))
+    print 'save to %s' % fname
+    with open(fname, 'w') as fp:
+        fp.write(output)
 
-    pool = multiprocessing.Pool()
-    pool.map(generate, list(enumerate(sample_args()))[:4])
+parser = argparse.ArgumentParser()
+parser.add_argument('--debug', default=False, action='store_true')
 
 if __name__ == '__main__':
     try:
-        main()
+        if os.getuid() != 0:
+            raise RuntimeError('doit être lancé en tant que sudo')
+        if not os.path.exists(exe_dir):
+            os.mkdir(exe_dir)
+        elif not os.path.isdir(exe_dir):
+            raise RuntimeError('%s sera écrasé par le répertoire temporaire' \
+                    % os.path.basename(exe_dir))
+        parsed_args = parser.parse_args()
+        pool = multiprocessing.Pool()
+        generate = functools.partial(run_generate, debug=parsed_args.debug)
+        pool.map(generate, list(get_sample_args()))
     except RuntimeError as e:
-        sys.stderr.write(str(e) + '\n')
+        sys.stderr.write("Erreur d'exécution: %s\n" % e)
         sys.exit(1)
