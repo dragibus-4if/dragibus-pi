@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#define MAX_PRIO 42
+#define MAX_PRIO 10
 
 enum task_state { TASK_NEW, TASK_READY, TASK_WAITING, TASK_ZOMBIE };
 enum sched_policy { SCHED_RT = 1, SCHED_OTHER = 2, SCHED_YIELD = 4 };

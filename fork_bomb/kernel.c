@@ -19,6 +19,7 @@ void fork_bomb(void * args) {
         for(size_t i = 0 ; i < SLEEP_TIME ; i++);
         sem_up(sem);
         create_process(&fork_bomb, args, 128, SCHED_OTHER, 20);
+        sched_forced_yield();
     }
 }
 

@@ -8,7 +8,6 @@ void turn_on(void * a) {
     while(1) {
         led_on();
         for(int i = 0 ; i < SLEEP_TIME ; i++);
-        sched_forced_yield();
     }
 }
 
@@ -16,15 +15,14 @@ void turn_off(void * a) {
     while(1) {
         led_off();
         for(int i = 0 ; i < SLEEP_TIME ; i++);
-        sched_forced_yield();
     }
 }
 
 int start_kernel(void) {
     malloc_init((void *) HEAP_START);
     init_hw();
-    create_process(&turn_on, (void *) NULL, 128, SCHED_OTHER, 20);
-    create_process(&turn_off, (void *) NULL, 128, SCHED_OTHER, 20);
+    create_process(&turn_on, (void *) NULL, 256, SCHED_OTHER, 5);
+    create_process(&turn_off, (void *) NULL, 256, SCHED_OTHER, 5);
     sched_start();
     return 0;
 }
