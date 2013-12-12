@@ -22,7 +22,8 @@ int main (int argc, char** argv)
 		int i=0;
 		if ( argc >= 3 ){
 		int prio = atoi(argv[1]);
-		setpriority(which,pid1,prio);}		
+		nice(prio);
+        }
 		for (sacha ; sacha < 151 ; sacha++)
 		{	
 			printf("Sacha : %d\n", sacha);
@@ -37,7 +38,9 @@ int main (int argc, char** argv)
 	{
 		int i=0;
 		if ( argc >= 3 ){
-		setpriority(which,pid2,atoi(argv[2]));}
+		int prio = atoi(argv[2]);
+		nice(prio);
+        }
 		for (regis ; regis < 151 ; regis++)
 		{
 			printf("Regis : %d\n", regis);
