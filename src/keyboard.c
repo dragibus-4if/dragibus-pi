@@ -1,14 +1,14 @@
 #include "keyboard.h"
 
 
- u16 keyPressed [6] = { 0 , 0 , 0 , 0 , 0, 0 };
+u16 keyPressed [6] = { 0 };
 
 //char keysNormal [104];
 //char keysShift [104];
 
 //http://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/input01.html
 
-
+int cpt =0;
 
 char keysNormal[104] = {
 	0x00, 0x00, 0x00, 0x00, 'a', 'b', 'c', 'd',
@@ -44,24 +44,18 @@ char keysShift [104] = {
 
 u32 kAddress = 0;
 
-void start_driver(){
-	led_off();
-	UsbInitialise();
-	while ( true ){
-		keyBoardUpdate();
-		keyBoardGetChar();
-	}
-	
 
-}
 
 void writeCharToPipe ( char c ){
 	//printf("%c", c);
 	if ( c == 0x00 ){
+	
+		return;
 		//led_off();
 	}
 	else{
 		//led_off();
+		
 	}
 }
 
@@ -80,50 +74,51 @@ void writeCharToPipe ( char c ){
 */
 void keyBoardGetChar(){
 	if ( kAddress == 0 ){
-		//led_on();
 		return;
 	}
-	struct KeyboardLeds leds = {.NumberLock=true, .CapsLock=true, .ScrollLock=true, .Compose=true, .Kana=true, .Power=true, .Mute=true, .Shift=true};
-	
-	Result status = KeyboardSetLeds( kAddress, leds);
-	if ( status != OK ){
-		//led_on();	
-	}
-	for ( u32 i = 0 ; i < 6 ; i ++ ){
-		u16 key = KeyboardGetKeyDown( kAddress, i );
-		if ( key == 0 ){ // appels suivant index croissant ou decroissant ?
-			//led_on();
+	//u32 nbKeysDown = KeyboardGetKeyDownCount( kAddress );
+	//for ( u32 i = (u32)(0) ; i<= (u32)(3) ; i ++ ){
+		u16 key = KeyboardGetKeyDown( kAddress, 0 );
+		/*if ( key == (u16)(0) ){ // appels suivant index croissant ou decroissant ?
+			led_on();
+			cpt++;
+			if ( cpt == 6) { led_off(); cpt=0}
 			return ;
-		}
-		//led_off();
-                if ( keyWasDown(key) !=0 ){ // lm'on ne traite la touche que si elle vient d'etre tapée
-			if ( key <= 103 ) {
-				struct KeyboardModifiers kMods = KeyboardGetModifiers ( kAddress );
+		} */
+		
+                //if ( keyWasDown(key) !=0 ){ // l'on ne traite la touche que si elle vient d'etre tapée
 			
-				if ( kMods.LeftShift || kMods.RightShift ){ //on matche la touche trouvée avec la table keysShift
-					char c = keysShift[ key ];
-					writeCharToPipe( c );	
-				}
-				else{
-					char c = keysNormal[ key ];
+			if ( key <= 103 ) {
+				//struct KeyboardModifiers kMods = KeyboardGetModifiers ( kAddress );
+			
+				//if ( kMods.LeftShift || kMods.RightShift ){ //on matche la touche trouvée avec la table keysShift
+				//	char c = keysShift[ key ];
+				//	writeCharToPipe( c );	
+				//}
+				//else{
+					
+					char c = keysNormal[ (int)(key) ];
 					writeCharToPipe( c );			
-				}
+				//}
 			
 				
 			}
-		}
-	}
+		//}
+	//}
 }
 
  void keyBoardUpdate(){
+
 	if ( kAddress == 0 ){
 		
-		UsbCheckForChange();
+		UsbCheckForChange(); //renvoie void -> pas de status à checker
 		u32 kBoardCount = KeyboardCount();
-		if ( kBoardCount == 0 ) {
-			//led_on();
+
+		/*if ( kBoardCount == (u32)(0) ) {
+			led_on(); while(true);
 			return;
-		}
+		}*/
+
 		kAddress = KeyboardGetAddress( 0 ) ;
 		if ( kAddress == 0 ){
 			//led_on();
@@ -131,20 +126,50 @@ void keyBoardGetChar(){
 		}
 		
 	}
-	//led_off();
 	
-	for ( u32 i = 0  ; i < 6 ; i ++ ){
+	struct KeyboardLeds leds = {.NumberLock=1, .CapsLock=0, .ScrollLock=0, .Compose=1, .Kana=1, .Power=0, .Mute=0, .Shift=0};
+	
+	/*Result status =*/ KeyboardSetLeds( kAddress, leds);
+	/*if ( status != OK ){
+		
+	}*/
+	
+	
+	 //led_on(); while(true);
+	
+	//u32 nbKeysDown = KeyboardGetKeyDownCount( kAddress );
+	
+	/*if ( /*nbKeysDown == (u32)(0) || nbKeysDown > (u32) (1000
+) ){ led_on(); while(true); }*/
+	
+	u32 l = 2;
+	for ( u32 i = 0  ; i < l ; i ++ ){
 		// pas sur de l'ordre dans lequel appeler 
                 //cette méthode pour restituer l'ordre
 	        // chronologique d'appui des touches ( index croissant ou décroissant)
-
-		keyPressed[i] = KeyboardGetKeyDown( kAddress, i );
+		keyPressed[(int)(i)] = KeyboardGetKeyDown( kAddress, i );	
 	}
+	
 	Result status = KeyboardPoll ( kAddress );
+	
 	if ( status != OK){
-		//led_on();
 	    	kAddress = 0;
+		led_off();
 	}
+	
 }
 
+
+
+
+void start_driver(){
+	
+	/*Result res = */UsbInitialise();
+
+	while ( true ){
+		keyBoardUpdate();
+		keyBoardGetChar();
+	}
+
+}
 
