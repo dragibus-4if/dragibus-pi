@@ -19,7 +19,7 @@ if len(d) != 2:
 # plot data
 pylab.plot(d[0], d[1], label=name)
 pylab.legend()
-pylab.title("Title of Plot")
-pylab.xlabel("X Axis Label")
-pylab.ylabel("Y Axis Label")
+pylab.title('Court vs Long')
+pylab.xlabel('temps')
+pylab.ylabel('processus')
 pylab.savefig('figures/%s' % name)
