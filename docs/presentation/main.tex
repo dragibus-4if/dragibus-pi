@@ -9,6 +9,7 @@
 
 \usepackage[french]{babel}
 \usepackage[utf8x]{inputenc}
+\usepackage{graphicx}
 
 \usepackage{listings}
 
@@ -43,12 +44,6 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{Introduction}
-
-    % TODO
-\end{frame}
-
-\begin{frame}
     \frametitle{Sommaire}
     \tableofcontents
 \end{frame}
@@ -74,12 +69,22 @@
 \begin{frame}[fragile]
     \frametitle{Problème de synchronisation (résolu)}
 
-    \begin{lstlisting}[caption=Opération atomique sur un sémaphore]
+    \begin{lstlisting}[caption=Opération sur un sémaphore]
         void sem_op(struct sem_s * sem, struct sem_op_s * op) {
-            DISABLE_IRQ();
 
             /* operation sur le semaphore */
 
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Problème de synchronisation (résolu)}
+
+    \begin{lstlisting}[caption=Opération {\bfseries atomique} sur un sémaphore]
+        void sem_op(struct sem_s * sem, struct sem_op_s * op) {
+            DISABLE_IRQ();
+            /* operation sur le semaphore */
             ENABLE_IRQ();
         }
     \end{lstlisting}
@@ -127,7 +132,7 @@
 \begin{frame}[fragile]
     \frametitle{Ordonnancement d'une tâche}
     \begin{lstlisting}[caption=Représentation structurelle d'un processus]
-        struct task {
+        struct task_s {
             /* Etat de la tache */
             int state, needs_reschedule;
 
@@ -139,7 +144,7 @@
                 current_priority;
 
             /* Processus suivant/precedent */
-            struct task * next, * prev;
+            struct task_s * next, * prev;
 
             /* contexte, informations temporelles, etc... */
         };
@@ -149,16 +154,37 @@
 \begin{frame}
     \frametitle{Ordonnancement d'une tâche}
 
-    % TODO
-\end{frame}
+    \begin{itemize}
+        \item division entre file d'exécution et file d'attente
+        \item plusieurs files d'exécution en fonction de la priorité
+        \item file de tâches expirées
+        \item temps d'exécution alloué à chaque tâche
+    \end{itemize}
 
-\section{Ordonnancement sur Linux}
+    \begin{center}
+        \bfseries
+        une tâche très prioritaire ne peut pas empêcher une tâche moins
+        prioritaire de s'exécuter
+    \end{center}
+\end{frame}
 
 \begin{frame}
     \frametitle{Performances du mini-OS}
 
-    % TODO
+    \begin{block}{Compromis temps-d'exécution/mémoire}
+        On sacrifie l'efficacité en mémoire de l'ordonnanceur en maintenant
+        constamment plusieurs listes d'exécution. \\
+        On gagne en efficacité temporelle car on profite des accés directs aux
+        têtes des listes d'exécution.
+    \end{block}
+
+    \begin{center}
+        \bfseries
+        Efficacité temporelle : $O(1)$
+    \end{center}
 \end{frame}
+
+\section{Ordonnancement sur Linux}
 
 \begin{frame}
     \frametitle{Problématiques d'ordonnancement sous Linux}
@@ -167,9 +193,72 @@
 \end{frame}
 
 \begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \huge
+        Concurrence entre deux processus ayant des politiques d'ordonnancement
+        différentes
+    \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Exemple: short vs long}
+
+    \begin{lstlisting}[caption=processus long]
+        void run_long_process {
+            sched_process(NORMAL, LONG_PRIORITY);
+            for (size_t i = 0; i < LONG_NB_COMPUTATIONS; i++) {
+                printf_safe("LONG\n");
+                /* calcul long */
+            }
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Exemple: short vs long}
+
+    \begin{lstlisting}[caption=processus court]
+        void run_short_process {
+            sched_process(REAL_TIME, SHORT_PRIORITY);
+            for (;;) {
+                printf_safe("SHORT\n");
+                /* calcul court */
+            }
+        }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \begin{figure}
+            \includegraphics[scale=0.3]{../../short_vs_long/figures/1-0-SCHED_RR.png}
+            \caption{Long à priorité normale}
+        \end{figure}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Exemple: short vs long}
+
+    \begin{center}
+        \begin{figure}
+            \includegraphics[scale=0.3]{../../short_vs_long/figures/1--10-SCHED_RR}
+            \caption{Long à priorité haute}
+        \end{figure}
+    \end{center}
+\end{frame}
+
+\begin{frame}
     \frametitle{Compromis CPU / Requêtes IO}
 
-    % TODO
+    \begin{itemize}
+        \item détection de l'activité d'une tâche
+        \item variation de la priorité
+    \end{itemize}
 \end{frame}
 
 \section{Algorithmes et problématiques}
@@ -178,8 +267,8 @@
     \frametitle{Analyse des algorithmes}
 
     \begin{lstlisting}[caption=Choix de la prochaine tâche à exécuter]
-        struct task * choose_next_task() {
-            struct task * next = NULL;
+        struct task_s * choose_next_task() {
+            struct task_s * next = NULL;
             for (unsigned int i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
                 if (realtime_active_tasks->queue[i]) {
                     return realtime_active_tasks->queue[i];
@@ -197,7 +286,7 @@
 
     \begin{lstlisting}[caption=Détection de l'activité d'une tâche (IO/CPU)]
         void detect_task_activity() {
-            struct task_struct * prev = current_task;
+            struct task_s * prev = current_task;
             if (prev != &idle_task && prev->state == TASK_READY && prev->policy & SCHED_YIELD) {
                 size_t k = prev->current_priority;
                 active_tasks->queue[k] = queue_del(active_tasks->queue[k], prev);
