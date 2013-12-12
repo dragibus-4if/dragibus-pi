@@ -12,9 +12,9 @@ done
 echo "Qui de Sacha et Régis, sont rival, va attraper en premier les 151 pokemons ?"
 echo "Sacha a une priorité de $1 et Régis une de $2"
 
-nice -n $1 ./op.sh &
+nice -n $1 ./op1.sh &
 pid_sacha=$!
-nice -n $2 ./op.sh &
+nice -n $2 ./op2.sh &
 pid_regis=$!
 
 wait $pid_sacha
