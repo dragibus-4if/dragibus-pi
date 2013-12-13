@@ -1,0 +1,6 @@
+\beamer@endinputifotherversion {3.27pt}
+\select@language {french}
+\beamer@sectionintoc {1}{Synchronisation}{4}{0}{1}
+\beamer@sectionintoc {2}{Ordonnancement sur mini-OS}{9}{0}{2}
+\beamer@sectionintoc {3}{Ordonnancement sur Linux}{22}{0}{3}
+\beamer@sectionintoc {4}{Algorithmes et probl\IeC {\'e}matiques}{31}{0}{4}

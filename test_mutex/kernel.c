@@ -47,8 +47,8 @@ int start_kernel(void) {
     init_hw();
     malloc_init((void *) HEAP_START);
     struct mutex_s  * mutexa = mutex_create();
-    create_process(&processus_A, (void *) mutexa, 512, SCHED_OTHER, 20);
-    create_process(&processus_B, (void *) mutexa, 512, SCHED_OTHER, 20);
+    create_process(&processus_A, (void *) mutexa, 512, SCHED_OTHER, 5);
+    create_process(&processus_B, (void *) mutexa, 512, SCHED_OTHER, 5);
     sched_start();
     return 0;
 }
