@@ -90,7 +90,7 @@
     \end{lstlisting}
 \end{frame}
 
-\section{Ordonnancement sur mini-OS}
+\section{Ordonnancement sur µOS}
 
 \begin{frame}
     \frametitle{Les problématiques d'ordonnancement}
@@ -169,7 +169,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{Performances du mini-OS}
+    \frametitle{Performances du µOS}
 
     \begin{block}{Compromis temps-d'exécution/mémoire}
         On sacrifie l'efficacité en mémoire de l'ordonnanceur en maintenant
@@ -178,10 +178,12 @@
         têtes des listes d'exécution.
     \end{block}
 
-    \begin{center}
-        \bfseries
-        Efficacité temporelle : $O(1)$
-    \end{center}
+    \uncover<2> {
+        \begin{center}
+            \bfseries
+            Efficacité temporelle : $O(1)$
+        \end{center}
+    }
 \end{frame}
 
 \section{Ordonnancement sur Linux}
@@ -259,6 +261,8 @@
         \item détection de l'activité d'une tâche
         \item variation de la priorité
     \end{itemize}
+
+    Nous avons choisi la même solution pour notre µOS
 \end{frame}
 
 \section{Algorithmes et problématiques}
@@ -270,10 +274,10 @@
         struct task_s * choose_next_task() {
             struct task_s * next = NULL;
             for (unsigned int i = 2*MAX_PRIO - 1 ; i >= 0 ; i--) {
-                if (realtime_active_tasks->queue[i]) {
-                    return realtime_active_tasks->queue[i];
-                } else if (!next && active_tasks->queue[i]) {
-                    next = active_tasks->queue[i];
+                if (realtime_active_tasks->pqueues[i]) {
+                    return realtime_active_tasks->pqueues[i];
+                } else if (!next && active_tasks->pqueues[i]) {
+                    next = active_tasks->pqueues[i];
                 }
             }
             return next;
@@ -289,8 +293,8 @@
             struct task_s * prev = current_task;
             if (prev != &idle_task && prev->state == TASK_READY && prev->policy & SCHED_YIELD) {
                 size_t k = prev->current_priority;
-                active_tasks->queue[k] = queue_del(active_tasks->queue[k], prev);
-                active_tasks->queue[0] = queue_push(active_tasks->queue[0], prev);
+                queue_del(active_tasks->pqueues[k], prev);
+                queue_push(active_tasks->pqueues[0], prev);
                 prev->policy &= ~SCHED_YIELD;
                 prev->need_reschedule = 0;
                 prev->current_priority = 0;
