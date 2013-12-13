@@ -155,17 +155,19 @@
     \frametitle{Ordonnancement d'une tâche}
 
     \begin{itemize}
-        \item division entre file d'exécution et file d'attente
-        \item plusieurs files d'exécution en fonction de la priorité
-        \item file de tâches expirées
-        \item temps d'exécution alloué à chaque tâche
+        \item<2-> division entre file d'exécution et file d'attente
+        \item<3-> plusieurs files d'exécution en fonction de la priorité
+        \item<4-> file de tâches expirées
+        \item<5-> temps d'exécution alloué à chaque tâche
     \end{itemize}
 
-    \begin{center}
-        \bfseries
-        une tâche très prioritaire ne peut pas empêcher une tâche moins
-        prioritaire de s'exécuter
-    \end{center}
+    \uncover<6>{
+        \begin{center}
+            \bfseries
+            une tâche très prioritaire ne peut pas empêcher une tâche moins
+            prioritaire de s'exécuter
+        \end{center}
+    }
 \end{frame}
 
 \begin{frame}
@@ -178,7 +180,7 @@
         têtes des listes d'exécution.
     \end{block}
 
-    \uncover<2> {
+    \uncover<2>{
         \begin{center}
             \bfseries
             Efficacité temporelle : $O(1)$
@@ -191,7 +193,13 @@
 \begin{frame}
     \frametitle{Problématiques d'ordonnancement sous Linux}
 
-    % TODO
+    \begin{itemize}
+        \item<2-> l'algorithme actuel n'est pas efficace pour un grand nombre
+            de processus
+        \item<3-> le quantum de temps alloué à un processus est statique, et
+            trop élevé pour des systèmes à charge élevée
+        \item<4-> le support pour les applications temps-réel n'est pas optimal
+    \end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -258,11 +266,16 @@
     \frametitle{Compromis CPU / Requêtes IO}
 
     \begin{itemize}
-        \item détection de l'activité d'une tâche
-        \item variation de la priorité
+        \item<2-> détection de l'activité d'une tâche
+        \item<3-> variation de la priorité
     \end{itemize}
 
-    Nous avons choisi la même solution pour notre µOS
+    \uncover<4->{
+        \begin{center}
+            \bfseries
+            Nous avons choisi la même solution pour notre µOS
+        \end{center}
+    }
 \end{frame}
 
 \section{Algorithmes et problématiques}
